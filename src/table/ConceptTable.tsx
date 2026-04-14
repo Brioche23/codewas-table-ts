@@ -244,7 +244,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
 
 // ─── main table ───────────────────────────────────────────────────────────
 
-interface ConceptTableProps {
+export interface ConceptTableProps {
   data: ConceptRow[]
 }
 

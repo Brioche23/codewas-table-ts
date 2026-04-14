@@ -2,7 +2,9 @@
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
 import ConceptTable from "./table/ConceptTable"
 
-import data from "../public/data/data.json"
+import rawData from "../public/data/data.json"
+
+const data = JSON.parse(JSON.stringify(rawData))
 
 // In a real app this comes from an API fetch / prop
 
