@@ -50,10 +50,10 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
   const fmt1 = (v: number) => (Number.isInteger(v) ? v : v.toFixed(1))
 
   return (
-    <Box display="flex" alignItems="center" gap={1} my={0.5}>
+    <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
       {/* Legend labels */}
-      <Box display="flex" flexDirection="column" gap={0.2} sx={{ minWidth: 56 }}>
-        <Box display="flex" alignItems="center" gap={0.5}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.2, minWidth: 56 }}>
+        <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
           <Box
             sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#e05c5c", flexShrink: 0 }}
           />
@@ -62,7 +62,7 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
             {unit}
           </Typography>
         </Box>
-        <Box display="flex" alignItems="center" gap={0.5}>
+        <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
           <Box
             sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4a90d9", flexShrink: 0 }}
           />
@@ -178,7 +178,7 @@ export function CategoryBar({
   )
 
   return (
-    <Box display="flex" flexDirection="column" gap={0.4}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
       <Bar
         pct={casePct}
         color="#e05c5c"

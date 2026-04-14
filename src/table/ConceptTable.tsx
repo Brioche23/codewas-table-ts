@@ -115,11 +115,11 @@ function BinaryDistributionTable({ rows }: { rows: BinaryDistribution[] }) {
 
 function TestResultRow({ test }: { test: Test }) {
   return (
-    <Box display="flex" gap={2} alignItems="center" flexWrap="wrap" mt={1}>
+    <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mt: 1 }}>
       <Typography variant="caption" color="text.secondary">
         {test.testName}
       </Typography>
-      <Box display="flex" gap={1} alignItems="center">
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <Typography variant="caption">p-value:</Typography>
         {pValueChip(test.pValue)}
       </Box>
@@ -137,8 +137,8 @@ function TestResultRow({ test }: { test: Test }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Box mb={2}>
-      <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
         {title}
       </Typography>
       {children}
@@ -163,7 +163,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
       {/* Binary */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Section title="Binary">
-          <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
             Exposed: {data.n_Binary.nCasesWithCategory} cases /{" "}
             {data.n_Binary.nControlsWithCategory} controls
           </Typography>
@@ -177,7 +177,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
       {/* Counts */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Section title="Counts">
-          <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
             Mean cases: {data.s_Counts.meanValueCases} (±{data.s_Counts.sdValueCases}) / Mean
             controls: {data.s_Counts.meanValueControls} (±{data.s_Counts.sdValueControls})
           </Typography>
@@ -192,7 +192,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
       {/* Age at First Event */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Section title="Age at First Event">
-          <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
             Mean cases: {fmt(data.s_AgeFirstEvent.meanValueCases, 1)}y (±
             {fmt(data.s_AgeFirstEvent.sdValueCases, 1)}) / Mean controls:{" "}
             {fmt(data.s_AgeFirstEvent.meanValueControls, 1)}y (±
@@ -209,7 +209,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
       {/* Days to First Event */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Section title="Days to First Event">
-          <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
             Mean cases: {fmt(data.s_DaysToFirstEvent.meanValueCases, 0)}d (±
             {fmt(data.s_DaysToFirstEvent.sdValueCases, 0)}) / Mean controls:{" "}
             {fmt(data.s_DaysToFirstEvent.meanValueControls, 0)}d (±
@@ -227,7 +227,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
       {!isEmpty(data.n_Categorical) && (
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Section title="Category">
-            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
               Exposed: {data.n_Categorical.nCasesWithCategory} cases /{" "}
               {data.n_Categorical.nControlsWithCategory} controls
             </Typography>
