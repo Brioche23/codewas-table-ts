@@ -1,6 +1,6 @@
 // visuals.tsx — lightweight inline charts, no extra charting library needed
 import { Box, Typography, Tooltip } from "@mui/material"
-import type { SummaryStats } from "./types"
+import type { SummaryStats } from "../utils/types"
 
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
