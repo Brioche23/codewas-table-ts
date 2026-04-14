@@ -16,12 +16,13 @@ import {
   TableHead,
   TableRow,
   Paper,
-  isEmpty,
 } from "@mui/material"
 
 import type { ConceptRow, DistributionRow, BinaryDistribution, Test } from "../utils/types"
 
 import { MeanComparisonChart, CategoryBar } from "../components/Visuals"
+
+import { isEmpty } from "lodash"
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
