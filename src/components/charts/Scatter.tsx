@@ -1,5 +1,6 @@
 import {
   FormControl,
+  Grid,
   InputLabel,
   MenuItem,
   Paper,
@@ -58,8 +59,8 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
   }
 
   return (
-    <Stack spacing={2}>
-      <Stack direction="row" spacing={2}>
+    <Grid spacing={2} size={{ xs: 12, md: 6 }}>
+      <Grid spacing={2} direction={"row"}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>X Axis</InputLabel>
           <Select<ScatterKey>
@@ -89,7 +90,7 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
             ))}
           </Select>
         </FormControl>
-      </Stack>
+      </Grid>
       <Paper sx={{ width: "100%", height: 400 }}>
         <ScatterChart
           hideLegend
@@ -135,7 +136,7 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
           {/* <RegressionLine seriesId="no-value" colorIndex={3} /> */}
         </ScatterChart>
       </Paper>
-    </Stack>
+    </Grid>
   )
 }
 

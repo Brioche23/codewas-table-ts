@@ -7,6 +7,7 @@ import {
   Typography,
   Skeleton,
   Box,
+  Grid,
 } from "@mui/material"
 import ConceptTable from "./table/ConceptTable"
 
@@ -65,18 +66,10 @@ export default function App() {
             <Typography>{data.length} rows</Typography>
           </Box>
 
-          <Box
-            id="overview-charts-wrapper"
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-              gap: 2,
-              py: 2,
-            }}
-          >
+          <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
             <CustomChart data={data} />
             <Scatter data={data} />
-          </Box>
+          </Grid>
         </Container>
         {/* {data ? <ConceptTable data={data} /> : <InputFileUpload setData={setData} />} */}
         {data ? (
