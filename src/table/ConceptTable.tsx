@@ -18,7 +18,13 @@ import {
   Paper,
 } from "@mui/material"
 
-import type { ConceptRow, DistributionRow, BinaryDistribution, Test } from "../utils/types"
+import type {
+  ConceptRow,
+  DistributionRow,
+  BinaryDistribution,
+  Test,
+  ConceptTableProps,
+} from "../utils/types"
 
 import { MeanComparisonChart, CategoryBar } from "../components/Visuals"
 
@@ -246,10 +252,6 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
 }
 
 // ─── main table ───────────────────────────────────────────────────────────
-
-export interface ConceptTableProps {
-  data: ConceptRow[]
-}
 
 export default function ConceptTable({ data }: ConceptTableProps) {
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.

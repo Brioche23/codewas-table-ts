@@ -74,3 +74,7 @@ export interface ConceptRow {
   d_Categorical: BinaryDistribution[]
   t_Categorical: Test[]
 }
+
+export interface ConceptTableProps {
+  data: ConceptRow[]
+}
