@@ -7,17 +7,15 @@ import {
   Typography,
   Skeleton,
   Box,
-  Paper,
 } from "@mui/material"
 import ConceptTable from "./table/ConceptTable"
 
 import rawData from "./data/data.json"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
-import InputFileUpload from "./components/FileUpload"
-import { useState } from "react"
-import type { ConceptRow, ConceptTableProps } from "./utils/types"
-import { BarChart, BarPlot, ChartsContainer } from "@mui/x-charts"
+// import InputFileUpload from "./components/FileUpload"
+// import { useState } from "react"
+import type { ConceptRow } from "./utils/types"
 import { CustomChart } from "./components/charts/CustomChart"
 import { Scatter } from "./components/charts/Scatter"
 
