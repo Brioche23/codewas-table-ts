@@ -5,7 +5,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Stack,
   useTheme,
   type SelectChangeEvent,
 } from "@mui/material"
