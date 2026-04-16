@@ -72,6 +72,8 @@ function BinaryDistributionTable({ rows }: { rows: BinaryDistribution[] }) {
   const totalCases = rows.reduce((sum, r) => sum + r.case, 0)
   const totalControls = rows.reduce((sum, r) => sum + r.control, 0)
 
+  console.log(rows)
+
   return (
     <Table size="small">
       <TableHead>
@@ -157,7 +159,8 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
         p: 3,
         display: "grid",
         gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-        gap: 3,
+        maxWidth: { xs: 500, md: 1200 },
+        gap: 2,
       }}
     >
       {/* Binary */}
@@ -261,7 +264,7 @@ export default function ConceptTable({ data }: ConceptTableProps) {
       {
         accessorKey: "conceptName",
         header: "Concept",
-        size: 260,
+        size: 200,
       },
       {
         accessorKey: "domainId",

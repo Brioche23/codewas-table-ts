@@ -1,6 +1,7 @@
 // visuals.tsx — lightweight inline charts, no extra charting library needed
 import { Box, Typography, Tooltip } from "@mui/material"
 import type { SummaryStats } from "../utils/types"
+import { scaleLinear } from "d3"
 
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
@@ -32,14 +33,14 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
   const domainRange = domainMax - domainMin || 1 // avoid /0
 
   const W = 180 // SVG width
-  const H = 36 // SVG height
+  const H = 40 // SVG height
   const PAD = 12 // left/right padding in px
 
-  // Map a value → SVG x coordinate
-  const toX = (v: number) => PAD + ((v - domainMin) / domainRange) * (W - PAD * 2)
-
-  const cx = toX(meanValueCases)
-  const cx2 = toX(meanValueControls)
+  const scaleX = scaleLinear()
+    .domain([domainMin, domainMax])
+    .range([PAD, W - PAD])
+  const cx = scaleX(meanValueCases)
+  const cx2 = scaleX(meanValueControls)
 
   // SD band half-widths in px
   const sdW = (sdValueCases / domainRange) * (W - PAD * 2)
@@ -52,23 +53,25 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
   return (
     <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
       {/* Legend labels */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.2, minWidth: 56 }}>
-        <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
+      <Box sx={{ display: "flex", flexDirection: "row", gap: 2, minWidth: 56 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, my: 0.5 }}>
           <Box
             sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#e05c5c", flexShrink: 0 }}
           />
           <Typography variant="caption" noWrap>
-            {fmt1(meanValueCases)}
-            {unit}
+            Cases
+            {/* {fmt1(meanValueCases)}
+            {unit} */}
           </Typography>
         </Box>
-        <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, my: 0.5 }}>
           <Box
             sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4a90d9", flexShrink: 0 }}
           />
           <Typography variant="caption" noWrap>
-            {fmt1(meanValueControls)}
-            {unit}
+            Control
+            {/* {fmt1(meanValueControls)}
+            {unit} */}
           </Typography>
         </Box>
       </Box>
@@ -90,34 +93,40 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
         arrow
       >
         <svg width={W} height={H} style={{ overflow: "visible", cursor: "default" }}>
-          {/* Baseline */}
-          <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#ccc" strokeWidth={1} />
+          <g className="cases">
+            {/* Baseline */}
+            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#ccc" strokeWidth={1} />
+            {/* SD band — cases */}
+            <rect
+              x={cx - sdW}
+              y={cy - 5}
+              width={sdW * 2}
+              height={10}
+              fill="#e05c5c"
+              fillOpacity={0.15}
+              rx={2}
+            />
+            {/* Dot — cases */}
+            <circle cx={cx} cy={cy} r={5} fill="#e05c5c" />
+          </g>
 
-          {/* SD band — cases */}
-          <rect
-            x={cx - sdW}
-            y={cy - 5}
-            width={sdW * 2}
-            height={10}
-            fill="#e05c5c"
-            fillOpacity={0.15}
-            rx={2}
-          />
-          {/* SD band — controls */}
-          <rect
-            x={cx2 - sdW2}
-            y={cy - 5}
-            width={sdW2 * 2}
-            height={10}
-            fill="#4a90d9"
-            fillOpacity={0.15}
-            rx={2}
-          />
+          <g className="controls" transform={`translate(0, 15)`}>
+            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#ccc" strokeWidth={1} />
 
-          {/* Dot — cases */}
-          <circle cx={cx} cy={cy} r={5} fill="#e05c5c" />
-          {/* Dot — controls */}
-          <circle cx={cx2} cy={cy} r={5} fill="#4a90d9" />
+            {/* SD band — controls */}
+            <rect
+              x={cx2 - sdW2}
+              y={cy - 5}
+              width={sdW2 * 2}
+              height={10}
+              fill="#4a90d9"
+              fillOpacity={0.15}
+              rx={2}
+            />
+
+            {/* Dot — controls */}
+            <circle cx={cx2} cy={cy} r={5} fill="#4a90d9" />
+          </g>
         </svg>
       </Tooltip>
     </Box>
