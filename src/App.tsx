@@ -17,8 +17,9 @@ import { Footer } from "./components/Footer"
 // import InputFileUpload from "./components/FileUpload"
 // import { useState } from "react"
 import type { ConceptRow } from "./utils/types"
-import { CustomChart } from "./components/charts/CustomChart"
+import { CustomBarChart } from "./components/charts/CustomBarChart"
 import { Scatter } from "./components/charts/Scatter"
+import MainTable from "./table/MainTable"
 
 const data = JSON.parse(JSON.stringify(rawData)) as ConceptRow[]
 
@@ -60,22 +61,22 @@ export default function App() {
         maxWidth="xl"
         sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1 }}
       >
-        <Container>
+        {/* <Container>
           <Box>
             <Typography variant="h6">Data Overview</Typography>
             <Typography>{data.length} rows</Typography>
           </Box>
 
           <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
-            <CustomChart data={data} />
+            <CustomBarChart data={data} />
             <Scatter data={data} />
           </Grid>
-        </Container>
+        </Container> */}
         {/* {data ? <ConceptTable data={data} /> : <InputFileUpload setData={setData} />} */}
         {data ? (
           <Container>
             <Typography variant="h6">Data Table</Typography>
-            <ConceptTable data={data} />
+            <MainTable data={data} />
           </Container>
         ) : (
           <Skeleton variant="rectangular" width={200} height={200} />

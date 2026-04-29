@@ -2,7 +2,7 @@ import { Grid, Paper } from "@mui/material"
 import type { ConceptRow } from "../../utils/types"
 import { BarChart } from "@mui/x-charts"
 
-export function CustomChart({ data }: { data: ConceptRow[] }) {
+export function CustomBarChart({ data }: { data: ConceptRow[] }) {
   return (
     <Grid size={{ xs: 12, md: 6 }}>
       <Paper sx={{ width: "100%", height: 400 }}>

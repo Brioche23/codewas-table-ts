@@ -28,6 +28,8 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
     meanValueControls - sdValueControls,
     meanValueControls + sdValueControls,
   ]
+
+  console.log(allValues)
   const domainMin = Math.min(...allValues)
   const domainMax = Math.max(...allValues)
   const domainRange = domainMax - domainMin || 1 // avoid /0
@@ -53,7 +55,7 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
   return (
     <Box sx={{ alignItems: "center", gap: 1, my: 0.5 }}>
       {/* Legend labels */}
-      <Box sx={{ display: "flex", flexDirection: "row", gap: 2, minWidth: 56 }}>
+      <Box sx={{ display: "none", flexDirection: "row", gap: 2, minWidth: 56 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, my: 0.5 }}>
           <Box
             sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#e05c5c", flexShrink: 0 }}
