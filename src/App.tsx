@@ -6,10 +6,10 @@ import {
   Container,
   Typography,
   Skeleton,
-  Box,
-  Grid,
+  // Box,
+  // Grid,
 } from "@mui/material"
-import ConceptTable from "./table/ConceptTable"
+// import ConceptTable from "./table/ConceptTable"
 
 import rawData from "./data/data.json"
 import { Header } from "./components/Header"
@@ -17,8 +17,8 @@ import { Footer } from "./components/Footer"
 // import InputFileUpload from "./components/FileUpload"
 // import { useState } from "react"
 import type { ConceptRow } from "./utils/types"
-import { CustomBarChart } from "./components/charts/CustomBarChart"
-import { Scatter } from "./components/charts/Scatter"
+// import { CustomBarChart } from "./components/charts/CustomBarChart"
+// import { Scatter } from "./components/charts/Scatter"
 import MainTable from "./table/MainTable"
 
 const data = JSON.parse(JSON.stringify(rawData)) as ConceptRow[]

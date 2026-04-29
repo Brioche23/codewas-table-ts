@@ -1,35 +1,8 @@
 import { useMemo } from "react"
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnDef,
-  type MRT_Row,
-} from "material-react-table"
-
-import {
-  Box,
-  Chip,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Paper,
-  Divider,
-} from "@mui/material"
-
-import type {
-  ConceptRow,
-  DistributionRow,
-  BinaryDistribution,
-  Test,
-  ConceptTableProps,
-} from "../utils/types"
-
-import { MeanComparisonChart, CategoryBar } from "../components/Visuals"
-
-import { isEmpty } from "lodash"
+import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from "material-react-table"
+import { Box, Chip, Typography, Divider } from "@mui/material"
+import type { ConceptRow, ConceptTableProps } from "../utils/types"
+import { MeanComparisonChart, CategoryBar, CategoricalDistributionBar } from "../components/Visuals"
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -39,217 +12,6 @@ const pValueChip = (p: number | null) => {
   if (p === null) return <Chip label="n/a" size="small" />
   const color = p < 0.05 ? "success" : p < 0.1 ? "warning" : "default"
   return <Chip label={fmt(p)} size="small" color={color} />
-}
-
-// ─── sub-table: distribution percentiles ─────────────────────────────────
-
-function DistributionTable({ rows }: { rows: DistributionRow[] }) {
-  return (
-    <Table size="small">
-      <TableHead>
-        <TableRow sx={{ bgcolor: "action.hover" }}>
-          <TableCell>
-            <strong>Measure</strong>
-          </TableCell>
-          <TableCell align="right">
-            <strong>Cases</strong>
-          </TableCell>
-          <TableCell align="right">
-            <strong>Controls</strong>
-          </TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((r) => (
-          <TableRow key={r.Measure} hover>
-            <TableCell>{r.Measure}</TableCell>
-            <TableCell align="right">{r.Cases}</TableCell>
-            <TableCell align="right">{r.Controls}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  )
-}
-
-// ─── sub-table: binary distribution (Yes/No counts) ──────────────────────
-
-function BinaryDistributionTable({ rows }: { rows: BinaryDistribution[] }) {
-  // Pre-compute totals once so every CategoryBar uses the same denominator
-  const totalCases = rows.reduce((sum, r) => sum + r.case, 0)
-  const totalControls = rows.reduce((sum, r) => sum + r.control, 0)
-
-  console.log(rows)
-
-  return (
-    <Table size="small">
-      <TableHead>
-        <TableRow sx={{ bgcolor: "action.hover" }}>
-          <TableCell>
-            <strong>Value</strong>
-          </TableCell>
-          <TableCell align="right">
-            <strong>Cases</strong>
-          </TableCell>
-          <TableCell align="right">
-            <strong>Controls</strong>
-          </TableCell>
-          <TableCell>
-            <strong>Distribution</strong>
-          </TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((r) => (
-          <TableRow key={r.value} hover>
-            <TableCell>{r.value}</TableCell>
-            <TableCell align="right">{r.case}</TableCell>
-            <TableCell align="right">{r.control}</TableCell>
-            <TableCell>
-              <CategoryBar
-                caseCount={r.case}
-                controlCount={r.control}
-                totalCases={totalCases}
-                totalControls={totalControls}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  )
-}
-
-// ─── test result summary row ──────────────────────────────────────────────
-
-function TestResultRow({ test }: { test: Test }) {
-  return (
-    <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", mt: 1 }}>
-      <Typography variant="caption" color="text.secondary">
-        {test.testName}
-      </Typography>
-      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-        <Typography variant="caption">p-value:</Typography>
-        {pValueChip(test.pValue)}
-      </Box>
-      <Typography variant="caption">
-        Effect size: <strong>{fmt(test.effectSize)}</strong>
-      </Typography>
-      <Typography variant="caption">
-        SMD: <strong>{fmt(test.standarizeMeanDifference)}</strong>
-      </Typography>
-    </Box>
-  )
-}
-
-// ─── section block ────────────────────────────────────────────────────────
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700 }}>
-        {title}
-      </Typography>
-      {children}
-    </Box>
-  )
-}
-
-// ─── expanded detail panel ────────────────────────────────────────────────
-
-function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
-  const data = row.original
-
-  return (
-    <Box
-      sx={{
-        p: 3,
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-        maxWidth: { xs: 500, md: 1200 },
-        gap: 2,
-      }}
-    >
-      {/* Binary */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Section title="Binary">
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-            Exposed: {data.n_Binary.nCasesWithCategory} cases /{" "}
-            {data.n_Binary.nControlsWithCategory} controls
-          </Typography>
-          <BinaryDistributionTable rows={data.d_Binary} />
-          {data.t_Binary.map((t, i) => (
-            <TestResultRow key={i} test={t} />
-          ))}
-        </Section>
-      </Paper>
-
-      {/* Counts */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Section title="Counts">
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-            Mean cases: {data.s_Counts.meanValueCases} (±{data.s_Counts.sdValueCases}) / Mean
-            controls: {data.s_Counts.meanValueControls} (±{data.s_Counts.sdValueControls})
-          </Typography>
-          {/* <MeanComparisonChart stats={data.s_Counts} /> */}
-          {data.d_Counts[0] && <DistributionTable rows={data.d_Counts[0]} />}
-          {data.t_Counts.map((t, i) => (
-            <TestResultRow key={i} test={t} />
-          ))}
-        </Section>
-      </Paper>
-
-      {/* Age at First Event */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Section title="Age at First Event">
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-            Mean cases: {fmt(data.s_AgeFirstEvent.meanValueCases, 1)}y (±
-            {fmt(data.s_AgeFirstEvent.sdValueCases, 1)}) / Mean controls:{" "}
-            {fmt(data.s_AgeFirstEvent.meanValueControls, 1)}y (±
-            {fmt(data.s_AgeFirstEvent.sdValueControls, 1)})
-          </Typography>
-          <MeanComparisonChart stats={data.s_AgeFirstEvent} unit="y" />
-          {data.d_AgeFirstEvent[0] && <DistributionTable rows={data.d_AgeFirstEvent[0]} />}
-          {data.t_AgeFirstEvent.map((t, i) => (
-            <TestResultRow key={i} test={t} />
-          ))}
-        </Section>
-      </Paper>
-
-      {/* Days to First Event */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Section title="Days to First Event">
-          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-            Mean cases: {fmt(data.s_DaysToFirstEvent.meanValueCases, 0)}d (±
-            {fmt(data.s_DaysToFirstEvent.sdValueCases, 0)}) / Mean controls:{" "}
-            {fmt(data.s_DaysToFirstEvent.meanValueControls, 0)}d (±
-            {fmt(data.s_DaysToFirstEvent.sdValueControls, 0)})
-          </Typography>
-          <MeanComparisonChart stats={data.s_DaysToFirstEvent} unit="d" />
-
-          {data.d_DaysToFirstEvent[0] && <DistributionTable rows={data.d_DaysToFirstEvent[0]} />}
-          {data.t_DaysToFirstEvent.map((t, i) => (
-            <TestResultRow key={i} test={t} />
-          ))}
-        </Section>
-      </Paper>
-      {/* Category */}
-      {!isEmpty(data.n_Categorical) && (
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Section title="Category">
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-              Exposed: {data.n_Categorical.nCasesWithCategory} cases /{" "}
-              {data.n_Categorical.nControlsWithCategory} controls
-            </Typography>
-            <BinaryDistributionTable rows={data.d_Categorical} />
-            {data.t_Categorical.map((t, i) => (
-              <TestResultRow key={i} test={t} />
-            ))}
-          </Section>
-        </Paper>
-      )}
-    </Box>
-  )
 }
 
 interface CasesControlsProps {
@@ -350,6 +112,27 @@ export default function MainTable({ data }: ConceptTableProps) {
                 controls={row.original.n_Binary.nControlsWithCategory}
               />
             ),
+            filterVariant: "range",
+          },
+          {
+            // Derived column — not a direct key in the data
+            id: "proportion",
+            header: "Proportion",
+            accessorFn: (row) =>
+              `${row.n_Binary.nCasesWithCategory} ${row.n_Binary.nControlsWithCategory}`,
+            Cell: ({ row }) => {
+              const totalCases = row.original.d_Binary[0].case + row.original.d_Binary[1].case
+              const totalControls =
+                row.original.d_Binary[0].control + row.original.d_Binary[1].control
+              return (
+                <CategoryBar
+                  caseCount={row.original.d_Binary[0].case}
+                  controlCount={row.original.d_Binary[0].control}
+                  totalCases={totalCases}
+                  totalControls={totalControls}
+                />
+              )
+            },
             filterVariant: "range",
           },
           {
@@ -503,7 +286,7 @@ export default function MainTable({ data }: ConceptTableProps) {
                 : "",
             Cell: ({ row }) =>
               row.original.n_Categorical.nCasesWithCategory ? (
-                <Typography>Categorical Distribution chart</Typography>
+                <CategoricalDistributionBar />
               ) : (
                 <Typography>N/A</Typography>
               ),

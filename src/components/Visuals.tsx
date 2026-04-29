@@ -203,3 +203,11 @@ export function CategoryBar({
     </Box>
   )
 }
+
+export function CategoricalDistributionBar({}) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
+      <Typography>Categorical Distribution Bar</Typography>
+    </Box>
+  )
+}
