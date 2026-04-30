@@ -18,9 +18,9 @@ export interface BinaryDistribution {
 }
 
 export interface Test {
-  pValue: number | null
-  effectSize: number | null
-  standarizeMeanDifference: number | null
+  pValue: number
+  effectSize: number
+  standarizeMeanDifference: number
   testName: string
 }
 

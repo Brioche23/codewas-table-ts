@@ -1,6 +1,10 @@
 import { Container, Typography } from "@mui/material"
 
-export function Footer({ text }: string) {
+interface FooterProps {
+  text: string
+}
+
+export function Footer({ text }: FooterProps) {
   return (
     <Container
       maxWidth="xl"
