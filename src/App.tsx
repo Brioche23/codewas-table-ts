@@ -4,34 +4,26 @@ import {
   createTheme,
   CssBaseline,
   Container,
-  // Typography,
-  // Skeleton,
-  // Box,
-  // Grid,
+  Typography,
+  Box,
+  Grid,
+  Alert,
+  Skeleton,
 } from "@mui/material"
-// import ConceptTable from "./table/ConceptTable"
 
-// import rawData from "./data/data.json"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
-// import { useState } from "react"
-// import type { ConceptRow } from "./utils/types"
-// import { CustomBarChart } from "./components/charts/CustomBarChart"
-// import { Scatter } from "./components/charts/Scatter"
+import { CustomBarChart } from "./components/charts/CustomBarChart"
+import { Scatter } from "./components/charts/Scatter"
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"
-
-// const data = JSON.parse(JSON.stringify(rawData)) as ConceptRow[]
-
-// In a real app this comes from an API fetch / prop
 
 const theme = createTheme({
   colorSchemes: {
     light: true,
     dark: true,
   },
-  // palette: { mode: "light" },
   typography: {
     fontFamily: [
       "Hack",
@@ -50,16 +42,13 @@ const theme = createTheme({
 })
 
 export default function App() {
-  const { data, setData, loading, error } = useDataSource()
+  const { data, setData, loading, error, filePath } = useDataSource()
 
-  if (loading) return <p>Loading data from URL...</p>
-  if (error) return <p>Error: {error}</p>
+  const hasCharts = false
 
-  // const [data, setData] = useState<ConceptRow[] | null>(null)
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-
       <Header />
       <Container
         id="main"
@@ -67,28 +56,29 @@ export default function App() {
         maxWidth="xl"
         sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1 }}
       >
-        {/* <Container>
-          <Box>
-            <Typography variant="h6">Data Overview</Typography>
-            <Typography>{data.length} rows</Typography>
-          </Box>
-
-          <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
-            <CustomBarChart data={data} />
-            <Scatter data={data} />
-          </Grid>
-        </Container> */}
-        {data ? <MainTable data={data} /> : <InputFileUpload setData={setData} />}
-        {/* {data ? (
-          <Container>
-            <Typography variant="h6">Data Table</Typography>
-            <MainTable data={data} />
-          </Container>
+        {loading && <Alert severity="info">Loading data from URL...</Alert>}
+        {error && <Alert severity="error">Error: {error}</Alert>}
+        {!data ? (
+          <InputFileUpload setData={setData} />
         ) : (
-          <Skeleton variant="rectangular" width={200} height={200} />
-        )} */}
+          <Container>
+            <Box>
+              <Typography variant="h6">Data Overview</Typography>
+              <Typography>{data.length} rows</Typography>
+            </Box>
+            {hasCharts && (
+              <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
+                <CustomBarChart data={data} />
+                <Scatter data={data} />
+              </Grid>
+            )}
+            <Box>
+              <MainTable data={data} />
+            </Box>
+          </Container>
+        )}
       </Container>
-      <Footer />
+      <Footer text={filePath} />
     </ThemeProvider>
   )
 }

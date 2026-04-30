@@ -5,10 +5,13 @@ export function useDataSource() {
   const [data, setData] = useState<ConceptRow[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [filePath, setPath] = useState<string | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const path = params.get("path")
+
+    setPath(path)
 
     if (!path) return // no param → let FileUpload handle it
 
@@ -23,5 +26,5 @@ export function useDataSource() {
       .finally(() => setLoading(false))
   }, []) // runs once on mount
 
-  return { data, setData, loading, error }
+  return { data, setData, loading, error, filePath }
 }

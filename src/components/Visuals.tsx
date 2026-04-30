@@ -1,7 +1,17 @@
 // visuals.tsx — lightweight inline charts, no extra charting library needed
-import { Box, Typography, Tooltip } from "@mui/material"
-import type { SummaryStats } from "../utils/types"
-import { scaleLinear } from "d3"
+import {
+  Box,
+  Typography,
+  Tooltip,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+} from "@mui/material"
+import type { BinaryDistribution, DistributionRow, SummaryStats } from "../utils/types"
+import { scaleOrdinal, scaleLinear } from "d3-scale"
+import { schemeTableau10 } from "d3-scale-chromatic"
 
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
@@ -13,12 +23,55 @@ import { scaleLinear } from "d3"
 //
 // The ±SD is shown as a shaded band around each dot.
 
+interface GenericTableProps<T extends object> {
+  rows: T[]
+  size?: "small" | "medium"
+  rowColor?: (row: T) => string
+}
+
+function GenericTable<T extends object>({ rows, size = "small", rowColor }: GenericTableProps<T>) {
+  if (rows.length === 0) return null
+
+  const headers = Object.keys(rows[0]) as (keyof T)[]
+
+  return (
+    <Box>
+      <Table size={size}>
+        <TableHead>
+          <TableRow>
+            {headers.map((header) => (
+              <TableCell key={String(header)}>{String(header)}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row, i) => (
+            <TableRow
+              key={i}
+              sx={{
+                "&:last-child td, &:last-child th": { border: 0 },
+                ...(rowColor && {
+                  background: `${rowColor(row)}`,
+                }),
+              }}
+            >
+              {headers.map((header) => (
+                <TableCell key={String(header)}>{String(row[header])}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  )
+}
 interface MeanComparisonChartProps {
   stats: SummaryStats
+  distributions: DistributionRow[][]
   unit?: string // e.g. "y" for years, "d" for days, "" for counts
 }
 
-export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartProps) {
+export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanComparisonChartProps) {
   const { meanValueCases, meanValueControls, sdValueCases, sdValueControls } = stats
 
   // Build a domain that comfortably fits both means ± their SDs
@@ -29,7 +82,6 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
     meanValueControls + sdValueControls,
   ]
 
-  console.log(allValues)
   const domainMin = Math.min(...allValues)
   const domainMax = Math.max(...allValues)
   const domainRange = domainMax - domainMin || 1 // avoid /0
@@ -82,14 +134,15 @@ export function MeanComparisonChart({ stats, unit = "" }: MeanComparisonChartPro
       <Tooltip
         title={
           <Box>
-            <div>
+            <Typography variant="body2">
               Cases: {fmt1(meanValueCases)}
               {unit} ± {fmt1(sdValueCases)}
-            </div>
-            <div>
+            </Typography>
+            <Typography variant="body2">
               Controls: {fmt1(meanValueControls)}
               {unit} ± {fmt1(sdValueControls)}
-            </div>
+            </Typography>
+            <GenericTable rows={distributions[0]} />
           </Box>
         }
         arrow
@@ -204,10 +257,82 @@ export function CategoryBar({
   )
 }
 
-export function CategoricalDistributionBar({}) {
+const CATEGORICAL_VALUES = [
+  "Very low",
+  "Low",
+  "Normal",
+  "High",
+  "Very high",
+  "Abnormal",
+  "High abnormal",
+  // 'N/A',
+] as const
+
+type CategoricalValue = (typeof CATEGORICAL_VALUES)[number]
+
+const colorScale = scaleOrdinal<CategoricalValue, string>()
+  .domain(CATEGORICAL_VALUES)
+  .range(schemeTableau10)
+
+interface CategoricalDistributionBarProps {
+  totalCases: number
+  totalControls: number
+  distributions: BinaryDistribution[]
+}
+
+export function CategoricalDistributionBar({
+  totalCases,
+  totalControls,
+  distributions,
+}: CategoricalDistributionBarProps) {
+  const distributionsWithPercentage = distributions.map((d) => ({
+    value: d.value,
+    "case%": Math.round(((d.case * 100) / totalCases) * 100) / 100,
+    "control%": Math.round(((d.control * 100) / totalControls) * 100) / 100,
+  }))
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
-      <Typography>Categorical Distribution Bar</Typography>
+      <Tooltip
+        title={
+          <GenericTable
+            rows={distributionsWithPercentage}
+            rowColor={(row) => colorScale(row.value as CategoricalValue)}
+          />
+        }
+      >
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {/* Cases bar */}
+          <Box
+            sx={{ display: "flex", width: "100%", height: 16, borderRadius: 1, overflow: "hidden" }}
+          >
+            {distributionsWithPercentage.map((d, i) => (
+              <Box
+                key={i}
+                sx={{
+                  width: `${d["case%"]}%`,
+                  bgcolor: colorScale(d.value as CategoricalValue),
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* Controls bar */}
+          <Box
+            sx={{ display: "flex", width: "100%", height: 16, borderRadius: 1, overflow: "hidden" }}
+          >
+            {distributionsWithPercentage.map((d, i) => (
+              <Box
+                key={i}
+                sx={{
+                  width: `${d["control%"]}%`,
+                  bgcolor: colorScale(d.value as CategoricalValue),
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      </Tooltip>
     </Box>
   )
 }

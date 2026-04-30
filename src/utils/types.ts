@@ -66,7 +66,7 @@ export interface ConceptRow {
   // Continuous / Categorical (may be empty objects)
   n_Continuous: ContinuousCount
   s_Continuous: SummaryStats
-  d_Continuous: DistributionRow[]
+  d_Continuous: DistributionRow[][]
   t_Continuous: Test[]
 
   // Categorical (is Binary)
