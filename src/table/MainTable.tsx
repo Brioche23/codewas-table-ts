@@ -148,7 +148,8 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             // Derived column — not a direct key in the data
             id: "-log10Binary",
-            header: "-log10",
+            header: "-log10 Odds Ratio",
+            accessorFn: (row) => `${row.t_Binary[0].effectSize}`,
           },
         ],
       },

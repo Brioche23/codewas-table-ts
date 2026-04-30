@@ -4,24 +4,25 @@ import {
   createTheme,
   CssBaseline,
   Container,
-  Typography,
-  Skeleton,
+  // Typography,
+  // Skeleton,
   // Box,
   // Grid,
 } from "@mui/material"
 // import ConceptTable from "./table/ConceptTable"
 
-import rawData from "./data/data.json"
+// import rawData from "./data/data.json"
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
-// import InputFileUpload from "./components/FileUpload"
+import InputFileUpload from "./components/FileUpload"
 // import { useState } from "react"
-import type { ConceptRow } from "./utils/types"
+// import type { ConceptRow } from "./utils/types"
 // import { CustomBarChart } from "./components/charts/CustomBarChart"
 // import { Scatter } from "./components/charts/Scatter"
 import MainTable from "./table/MainTable"
+import { useDataSource } from "./hooks/useDataSource"
 
-const data = JSON.parse(JSON.stringify(rawData)) as ConceptRow[]
+// const data = JSON.parse(JSON.stringify(rawData)) as ConceptRow[]
 
 // In a real app this comes from an API fetch / prop
 
@@ -49,6 +50,11 @@ const theme = createTheme({
 })
 
 export default function App() {
+  const { data, setData, loading, error } = useDataSource()
+
+  if (loading) return <p>Loading data from URL...</p>
+  if (error) return <p>Error: {error}</p>
+
   // const [data, setData] = useState<ConceptRow[] | null>(null)
   return (
     <ThemeProvider theme={theme}>
@@ -72,15 +78,15 @@ export default function App() {
             <Scatter data={data} />
           </Grid>
         </Container> */}
-        {/* {data ? <ConceptTable data={data} /> : <InputFileUpload setData={setData} />} */}
-        {data ? (
+        {data ? <MainTable data={data} /> : <InputFileUpload setData={setData} />}
+        {/* {data ? (
           <Container>
             <Typography variant="h6">Data Table</Typography>
             <MainTable data={data} />
           </Container>
         ) : (
           <Skeleton variant="rectangular" width={200} height={200} />
-        )}
+        )} */}
       </Container>
       <Footer />
     </ThemeProvider>
