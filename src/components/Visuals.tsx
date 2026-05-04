@@ -142,7 +142,7 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               Controls: {fmt1(meanValueControls)}
               {unit} ± {fmt1(sdValueControls)}
             </Typography>
-            <GenericTable rows={distributions[0]} />
+            {distributions && <GenericTable rows={distributions[0]} />}
           </Box>
         }
         arrow

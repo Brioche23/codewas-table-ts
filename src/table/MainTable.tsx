@@ -21,19 +21,26 @@ interface CasesControlsProps {
   controls: number
   casesSD?: number
   controlsSD?: number
+  nDecimals?: number
 }
 
-function CasesControlCell({ cases, casesSD, controls, controlsSD }: CasesControlsProps) {
+function CasesControlCell({
+  cases,
+  casesSD,
+  controls,
+  controlsSD,
+  nDecimals = 2,
+}: CasesControlsProps) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {cases} {casesSD && `± ${casesSD}`}
+        {cases.toFixed(nDecimals)} {casesSD && `± ${casesSD.toFixed(nDecimals)}`}
       </Typography>
 
       <Divider sx={{ my: "4px" }} />
 
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {controls} {controlsSD && `± ${controlsSD}`}
+        {controls.toFixed(nDecimals)} {controlsSD && `± ${controlsSD.toFixed(nDecimals)}`}
       </Typography>
     </Box>
   )
@@ -92,6 +99,7 @@ export default function MainTable({ data }: ConceptTableProps) {
               <CasesControlCell
                 cases={row.original.n_Binary.nCasesWithCategory}
                 controls={row.original.n_Binary.nControlsWithCategory}
+                nDecimals={0}
               />
             ),
             filterVariant: "range",
@@ -310,6 +318,7 @@ export default function MainTable({ data }: ConceptTableProps) {
                 <CasesControlCell
                   cases={row.original.n_Categorical.nCasesWithCategory}
                   controls={row.original.n_Categorical.nControlsWithCategory}
+                  nDecimals={0}
                 />
               ) : (
                 <Typography>N/A</Typography>
@@ -370,6 +379,7 @@ export default function MainTable({ data }: ConceptTableProps) {
                 <CasesControlCell
                   cases={row.original.n_Continuous.nCasesYesWithValue}
                   controls={row.original.n_Continuous.nControlsYesWithValue}
+                  nDecimals={0}
                 />
               ) : (
                 <Typography>N/A</Typography>

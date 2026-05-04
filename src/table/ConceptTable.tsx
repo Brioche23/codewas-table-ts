@@ -26,7 +26,7 @@ import type {
   ConceptTableProps,
 } from "../utils/types"
 
-import { MeanComparisonChart, CategoryBar } from "../components/Visuals"
+import { CategoryBar } from "../components/Visuals"
 
 import { isEmpty } from "lodash"
 
@@ -190,7 +190,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
             Mean cases: {data.s_Counts.meanValueCases} (±{data.s_Counts.sdValueCases}) / Mean
             controls: {data.s_Counts.meanValueControls} (±{data.s_Counts.sdValueControls})
           </Typography>
-          <MeanComparisonChart stats={data.s_Counts} />
+          {/* <MeanComparisonChart stats={data.s_Counts} /> */}
           {data.d_Counts[0] && <DistributionTable rows={data.d_Counts[0]} />}
           {data.t_Counts.map((t, i) => (
             <TestResultRow key={i} test={t} />
@@ -207,7 +207,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
             {fmt(data.s_AgeFirstEvent.meanValueControls, 1)}y (±
             {fmt(data.s_AgeFirstEvent.sdValueControls, 1)})
           </Typography>
-          <MeanComparisonChart stats={data.s_AgeFirstEvent} unit="y" />
+          {/* <MeanComparisonChart stats={data.s_AgeFirstEvent} unit="y" /> */}
           {data.d_AgeFirstEvent[0] && <DistributionTable rows={data.d_AgeFirstEvent[0]} />}
           {data.t_AgeFirstEvent.map((t, i) => (
             <TestResultRow key={i} test={t} />
@@ -224,7 +224,7 @@ function ConceptDetailPanel({ row }: { row: MRT_Row<ConceptRow> }) {
             {fmt(data.s_DaysToFirstEvent.meanValueControls, 0)}d (±
             {fmt(data.s_DaysToFirstEvent.sdValueControls, 0)})
           </Typography>
-          <MeanComparisonChart stats={data.s_DaysToFirstEvent} unit="d" />
+          {/* <MeanComparisonChart stats={data.s_DaysToFirstEvent} unit="d" /> */}
 
           {data.d_DaysToFirstEvent[0] && <DistributionTable rows={data.d_DaysToFirstEvent[0]} />}
           {data.t_DaysToFirstEvent.map((t, i) => (
