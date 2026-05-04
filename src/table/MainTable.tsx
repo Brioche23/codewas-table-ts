@@ -1,6 +1,11 @@
-import { useMemo } from "react"
-import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from "material-react-table"
-import { Box, Chip, Typography, Divider } from "@mui/material"
+import { useMemo, useState } from "react"
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_TableInstance,
+} from "material-react-table"
+import { Box, Chip, Typography, Divider, Container, Modal, Button, Table } from "@mui/material"
 import type { ConceptRow, ConceptTableProps } from "../utils/types"
 import { MeanComparisonChart, CategoryBar, CategoricalDistributionBar } from "../components/Visuals"
 
@@ -49,6 +54,8 @@ function CasesControlCell({
 // ─── main table ───────────────────────────────────────────────────────────
 
 export default function MainTable({ data }: ConceptTableProps) {
+  const [columnFilters, setColumnFilters] = useState([])
+
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
   const columns = useMemo<MRT_ColumnDef<ConceptRow>[]>(
@@ -462,6 +469,9 @@ export default function MainTable({ data }: ConceptTableProps) {
   const table = useMaterialReactTable({
     columns,
     data,
+
+    state: { columnFilters },
+    onColumnFiltersChange: setColumnFilters,
     // enableGrouping: true,
     // ── expand ──
     // renderDetailPanel: ({ row }) => <ConceptDetailPanel row={row} />,
@@ -481,5 +491,99 @@ export default function MainTable({ data }: ConceptTableProps) {
     muiTableContainerProps: { sx: { maxHeight: "70vh" } },
   })
 
-  return <MaterialReactTable table={table} />
+  return (
+    <Container component="section">
+      <FilterChips table={table} />
+      <MaterialReactTable table={table} />
+    </Container>
+  )
+}
+
+function FilterChips({ table }: { table: MRT_TableInstance<ConceptRow> }) {
+  const [open, setOpen] = useState(false)
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    p: 4,
+  }
+
+  const isFilterActive = (value: unknown): boolean => {
+    if (value === undefined || value === null || value === "") return false
+    if (Array.isArray(value)) return value.some((v) => v !== undefined && v !== "")
+    return true
+  }
+
+  const columnFilters = table
+    .getState()
+    .columnFilters.filter((filter) => isFilterActive(filter.value))
+
+  if (columnFilters.length === 0) return null
+
+  return (
+    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+      {columnFilters.map((filter) => {
+        const column = table.getColumn(filter.id)
+        const label = column?.columnDef.header ?? filter.id
+        const value = Array.isArray(filter.value)
+          ? `${filter.value[0]} – ${filter.value[1]}` // range filters
+          : String(filter.value)
+
+        return (
+          <Chip
+            key={filter.id}
+            label={`${label}: ${value}`}
+            onDelete={() => column.setFilterValue(undefined)} // clears just this filter
+          />
+        )
+      })}
+
+      <Chip label="Clear all" variant="outlined" onClick={() => table.resetColumnFilters()} />
+      <Chip label="Save Preset" variant="outlined" onClick={handleOpen} />
+
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            Save filter preset
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+            Checkboxes with filter
+          </Typography>
+          <Table>
+            {columnFilters.map((filter) => {
+              const column = table.getColumn(filter.id)
+              const label = column?.columnDef.header ?? filter.id
+              const value = Array.isArray(filter.value)
+                ? `${filter.value[0]} – ${filter.value[1]}` // range filters
+                : String(filter.value)
+
+              return (
+                <Chip
+                  key={filter.id}
+                  label={`${label}: ${value}`}
+                  onDelete={() => column.setFilterValue(undefined)} // clears just this filter
+                />
+              )
+            })}
+          </Table>
+
+          <Button>Save</Button>
+          <Button onClick={handleClose}> Cancel</Button>
+        </Box>
+      </Modal>
+    </Box>
+  )
 }
