@@ -13,6 +13,9 @@ import type { BinaryDistribution, DistributionRow, SummaryStats } from "../utils
 import { scaleOrdinal, scaleLinear } from "d3-scale"
 import { schemeTableau10 } from "d3-scale-chromatic"
 
+const casesColor = "#00ff00"
+const controlsColor = "#d29659"
+
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
 // Renders a small dot-and-line chart comparing cases vs controls means.
@@ -110,7 +113,7 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
       <Box sx={{ display: "none", flexDirection: "row", gap: 2, minWidth: 56 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, my: 0.5 }}>
           <Box
-            sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#e05c5c", flexShrink: 0 }}
+            sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: casesColor, flexShrink: 0 }}
           />
           <Typography variant="caption" noWrap>
             Cases
@@ -120,7 +123,7 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, my: 0.5 }}>
           <Box
-            sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#4a90d9", flexShrink: 0 }}
+            sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: controlsColor, flexShrink: 0 }}
           />
           <Typography variant="caption" noWrap>
             Control
@@ -157,12 +160,12 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               y={cy - 5}
               width={sdW * 2}
               height={10}
-              fill="#e05c5c"
+              fill={casesColor}
               fillOpacity={0.15}
               rx={2}
             />
             {/* Dot — cases */}
-            <circle cx={cx} cy={cy} r={5} fill="#e05c5c" />
+            <circle cx={cx} cy={cy} r={5} fill={casesColor} />
           </g>
 
           <g className="controls" transform={`translate(0, 15)`}>
@@ -174,13 +177,13 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               y={cy - 5}
               width={sdW2 * 2}
               height={10}
-              fill="#4a90d9"
+              fill={controlsColor}
               fillOpacity={0.15}
               rx={2}
             />
 
             {/* Dot — controls */}
-            <circle cx={cx2} cy={cy} r={5} fill="#4a90d9" />
+            <circle cx={cx2} cy={cy} r={5} fill={controlsColor} />
           </g>
         </svg>
       </Tooltip>
@@ -245,12 +248,12 @@ export function CategoryBar({
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4 }}>
       <Bar
         pct={casePct}
-        color="#e05c5c"
+        color={casesColor}
         label={`Cases: ${caseCount} / ${totalCases} (${(casePct * 100).toFixed(1)}%)`}
       />
       <Bar
         pct={ctrlPct}
-        color="#4a90d9"
+        color={controlsColor}
         label={`Controls: ${controlCount} / ${totalControls} (${(ctrlPct * 100).toFixed(1)}%)`}
       />
     </Box>

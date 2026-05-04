@@ -44,35 +44,35 @@ export interface ConceptRow {
   domainId: string
 
   // Binary
-  n_Binary: BinaryCount
-  d_Binary: BinaryDistribution[]
-  t_Binary: Test[]
+  n_Binary: BinaryCount[]
+  d_Binary: BinaryDistribution[][]
+  t_Binary: Test[][]
 
   // Counts
-  s_Counts: SummaryStats
-  d_Counts: DistributionRow[][]
-  t_Counts: Test[]
+  s_Counts: SummaryStats[]
+  d_Counts: DistributionRow[][][]
+  t_Counts: Test[][]
 
   // Age at first event
-  s_AgeFirstEvent: SummaryStats
-  d_AgeFirstEvent: DistributionRow[][]
-  t_AgeFirstEvent: Test[]
+  s_AgeFirstEvent: SummaryStats[]
+  d_AgeFirstEvent: DistributionRow[][][]
+  t_AgeFirstEvent: Test[][]
 
   // Days to first event
-  s_DaysToFirstEvent: SummaryStats
-  d_DaysToFirstEvent: DistributionRow[][]
-  t_DaysToFirstEvent: Test[]
+  s_DaysToFirstEvent: SummaryStats[]
+  d_DaysToFirstEvent: DistributionRow[][][]
+  t_DaysToFirstEvent: Test[][]
 
   // Continuous / Categorical (may be empty objects)
-  n_Continuous: ContinuousCount
-  s_Continuous: SummaryStats
-  d_Continuous: DistributionRow[][]
-  t_Continuous: Test[]
+  n_Continuous: ContinuousCount[]
+  s_Continuous: SummaryStats[]
+  d_Continuous: DistributionRow[][][]
+  t_Continuous: Test[][]
 
   // Categorical (is Binary)
-  n_Categorical: BinaryCount
+  n_Categorical: BinaryCount[]
   d_Categorical: BinaryDistribution[]
-  t_Categorical: Test[]
+  t_Categorical: Test[][]
 }
 
 export interface ConceptTableProps {

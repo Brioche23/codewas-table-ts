@@ -12,7 +12,7 @@ const valueChip = (value: number | null, threshold: number) => {
   console.log(value)
   if (value === null) return <Chip label="n/a" size="small" />
 
-  const color = value >= threshold ? "success" : value >= threshold * 0.75 ? "warning" : "error"
+  const color = value >= threshold ? "success" : "error"
 
   return <Chip label={fmt(value)} size="small" color={color} />
 }
@@ -94,11 +94,11 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControl",
             header: "Cases / Control",
             accessorFn: (row) =>
-              `${row.n_Binary.nCasesWithCategory} ${row.n_Binary.nControlsWithCategory}`,
+              `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
             Cell: ({ row }) => (
               <CasesControlCell
-                cases={row.original.n_Binary.nCasesWithCategory}
-                controls={row.original.n_Binary.nControlsWithCategory}
+                cases={row.original.n_Binary[0].nCasesWithCategory}
+                controls={row.original.n_Binary[0].nControlsWithCategory}
                 nDecimals={0}
               />
             ),
@@ -109,15 +109,16 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "proportion",
             header: "Proportion",
             accessorFn: (row) =>
-              `${row.n_Binary.nCasesWithCategory} ${row.n_Binary.nControlsWithCategory}`,
+              `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
             Cell: ({ row }) => {
-              const totalCases = row.original.d_Binary[0].case + row.original.d_Binary[1].case
+              if (!row.original.d_Binary[0][0].case) return <p>N/A</p>
+              const totalCases = row.original.d_Binary[0][0].case + row.original.d_Binary[0][1].case
               const totalControls =
-                row.original.d_Binary[0].control + row.original.d_Binary[1].control
+                row.original.d_Binary[0][0].control + row.original.d_Binary[0][1].control
               return (
                 <CategoryBar
-                  caseCount={row.original.d_Binary[0].case}
-                  controlCount={row.original.d_Binary[0].control}
+                  caseCount={row.original.d_Binary[0][0].case}
+                  controlCount={row.original.d_Binary[0][0].control}
                   totalCases={totalCases}
                   totalControls={totalControls}
                 />
@@ -128,9 +129,10 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "-log10Binary",
             header: "-log10 (p-Value)",
-            accessorFn: (row) => (row.t_Binary[0] ? -Math.log10(row.t_Binary[0].pValue) : null),
+            accessorFn: (row) =>
+              row.t_Binary[0] ? -Math.log10(row.t_Binary?.[0]?.[0]?.pValue) : null,
             size: 150,
-            Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
             filterVariant: "range",
             sortUndefined: "last",
           },
@@ -139,8 +141,9 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "oddsRatioBinary",
             header: "Odds Ratio",
-            accessorFn: (row) => row.t_Binary[0].effectSize,
-            Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.25),
+            accessorFn: (row) => row.t_Binary?.[0]?.[0]?.effectSize ?? null,
+            Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
+            filterVariant: "range",
           },
         ],
       },
@@ -152,13 +155,14 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "casesControlCount",
             header: "Mean",
-            accessorFn: (row) => `${row.s_Counts.meanValueCases} ${row.s_Counts.meanValueControls}`,
+            accessorFn: (row) =>
+              `${row.s_Counts[0].meanValueCases} ${row.s_Counts[0].meanValueControls}`,
             Cell: ({ row }) => (
               <CasesControlCell
-                cases={row.original.s_Counts.meanValueCases}
-                controls={row.original.s_Counts.meanValueControls}
-                casesSD={row.original.s_Counts.sdValueCases}
-                controlsSD={row.original.s_Counts.sdValueControls}
+                cases={row.original.s_Counts[0].meanValueCases}
+                controls={row.original.s_Counts[0].meanValueControls}
+                casesSD={row.original.s_Counts[0].sdValueCases}
+                controlsSD={row.original.s_Counts[0].sdValueControls}
               />
             ),
             filterVariant: "range",
@@ -167,12 +171,13 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "distributionCount",
             header: "Distribution",
-            accessorFn: (row) => `${row.s_Counts.meanValueCases} ${row.s_Counts.meanValueControls}`,
+            accessorFn: (row) =>
+              `${row.s_Counts[0].meanValueCases} ${row.s_Counts[0].meanValueControls}`,
 
             Cell: ({ row }) => (
               <MeanComparisonChart
-                stats={row.original.s_Counts}
-                distributions={row.original.d_Counts}
+                stats={row.original.s_Counts[0]}
+                distributions={row.original.d_Counts[0]}
               />
             ),
             filterVariant: "range",
@@ -180,7 +185,8 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "-log10Count",
             header: "-log10 (p-Value)",
-            accessorFn: (row) => (row.t_Counts[0] ? -Math.log10(row.t_Counts[0].pValue) : null),
+            accessorFn: (row) =>
+              row.t_Counts[0][0] ? -Math.log10(row.t_Counts[0][0].pValue) : null,
             size: 150,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
             filterVariant: "range",
@@ -190,8 +196,9 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "rateRatioCount",
             header: "Rate ratio",
-            accessorFn: (row) => row.t_Counts[0].effectSize,
+            accessorFn: (row) => row.t_Counts[0][0]?.effectSize ?? null,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            filterVariant: "range",
           },
         ],
       },
@@ -204,13 +211,13 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControlAge",
             header: "Mean",
             accessorFn: (row) =>
-              `${row.s_AgeFirstEvent.meanValueCases} ${row.s_AgeFirstEvent.meanValueControls}`,
+              `${row.s_AgeFirstEvent[0].meanValueCases} ${row.s_AgeFirstEvent[0].meanValueControls}`,
             Cell: ({ row }) => (
               <CasesControlCell
-                cases={row.original.s_AgeFirstEvent.meanValueCases}
-                controls={row.original.s_AgeFirstEvent.meanValueControls}
-                casesSD={row.original.s_AgeFirstEvent.sdValueCases}
-                controlsSD={row.original.s_AgeFirstEvent.sdValueControls}
+                cases={row.original.s_AgeFirstEvent[0].meanValueCases}
+                controls={row.original.s_AgeFirstEvent[0].meanValueControls}
+                casesSD={row.original.s_AgeFirstEvent[0].sdValueCases}
+                controlsSD={row.original.s_AgeFirstEvent[0].sdValueControls}
               />
             ),
             filterVariant: "range",
@@ -220,12 +227,12 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "distributionAge",
             header: "Distribution",
             accessorFn: (row) =>
-              `${row.s_AgeFirstEvent.meanValueCases} ${row.s_AgeFirstEvent.meanValueControls}`,
+              `${row.s_AgeFirstEvent[0].meanValueCases} ${row.s_AgeFirstEvent[0].meanValueControls}`,
 
             Cell: ({ row }) => (
               <MeanComparisonChart
-                stats={row.original.s_AgeFirstEvent}
-                distributions={row.original.d_AgeFirstEvent}
+                stats={row.original.s_AgeFirstEvent[0]}
+                distributions={row.original.d_AgeFirstEvent[0]}
               />
             ),
             filterVariant: "range",
@@ -234,7 +241,7 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "-log10Age",
             header: "-log10 (p-Value)",
             accessorFn: (row) =>
-              row.t_AgeFirstEvent[0] ? -Math.log10(row.t_AgeFirstEvent[0].pValue) : null,
+              row.t_AgeFirstEvent[0][0] ? -Math.log10(row.t_AgeFirstEvent[0][0].pValue) : null,
             size: 150,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
             filterVariant: "range",
@@ -244,8 +251,9 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "meanDifferenceAge",
             header: "Mean Difference",
-            accessorFn: (row) => row.t_AgeFirstEvent[0].effectSize,
+            accessorFn: (row) => row.t_AgeFirstEvent[0][0]?.effectSize ?? null,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            filterVariant: "range",
           },
         ],
       },
@@ -258,13 +266,13 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControlDays",
             header: "Mean",
             accessorFn: (row) =>
-              `${row.s_DaysToFirstEvent.meanValueCases} ${row.s_DaysToFirstEvent.meanValueControls}`,
+              `${row.s_DaysToFirstEvent[0].meanValueCases} ${row.s_DaysToFirstEvent[0].meanValueControls}`,
             Cell: ({ row }) => (
               <CasesControlCell
-                cases={row.original.s_DaysToFirstEvent.meanValueCases}
-                controls={row.original.s_DaysToFirstEvent.meanValueControls}
-                casesSD={row.original.s_DaysToFirstEvent.sdValueCases}
-                controlsSD={row.original.s_DaysToFirstEvent.sdValueControls}
+                cases={row.original.s_DaysToFirstEvent[0].meanValueCases}
+                controls={row.original.s_DaysToFirstEvent[0].meanValueControls}
+                casesSD={row.original.s_DaysToFirstEvent[0].sdValueCases}
+                controlsSD={row.original.s_DaysToFirstEvent[0].sdValueControls}
               />
             ),
             filterVariant: "range",
@@ -274,12 +282,12 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "distributionDays",
             header: "Distribution",
             accessorFn: (row) =>
-              `${row.s_DaysToFirstEvent.meanValueCases} ${row.s_DaysToFirstEvent.meanValueControls}`,
+              `${row.s_DaysToFirstEvent[0].meanValueCases} ${row.s_DaysToFirstEvent[0].meanValueControls}`,
 
             Cell: ({ row }) => (
               <MeanComparisonChart
-                stats={row.original.s_DaysToFirstEvent}
-                distributions={row.original.d_DaysToFirstEvent}
+                stats={row.original.s_DaysToFirstEvent[0]}
+                distributions={row.original.d_DaysToFirstEvent[0]}
               />
             ),
             filterVariant: "range",
@@ -288,7 +296,9 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "-log10Days",
             header: "-log10 (p-Value)",
             accessorFn: (row) =>
-              row.t_DaysToFirstEvent[0] ? -Math.log10(row.t_DaysToFirstEvent[0].pValue) : null,
+              row.t_DaysToFirstEvent[0][0]
+                ? -Math.log10(row.t_DaysToFirstEvent[0][0].pValue)
+                : null,
             size: 150,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
             filterVariant: "range",
@@ -297,8 +307,9 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "meanDifferenceDays",
             header: "Mean Difference",
-            accessorFn: (row) => row.t_DaysToFirstEvent[0].effectSize,
+            accessorFn: (row) => row.t_DaysToFirstEvent[0][0]?.effectSize ?? null,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            filterVariant: "range",
           },
         ],
       },
@@ -310,14 +321,14 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControlCategory",
             header: "Cases / Controls",
             accessorFn: (row) =>
-              row.n_Categorical.nCasesWithCategory
-                ? `${row.n_Categorical.nCasesWithCategory} ${row.n_Categorical.nControlsWithCategory}`
+              row.n_Categorical[0]
+                ? `${row.n_Categorical[0].nCasesWithCategory} ${row.n_Categorical[0].nControlsWithCategory}`
                 : "",
             Cell: ({ row }) =>
-              row.original.n_Categorical.nCasesWithCategory ? (
+              row.original.n_Categorical[0] ? (
                 <CasesControlCell
-                  cases={row.original.n_Categorical.nCasesWithCategory}
-                  controls={row.original.n_Categorical.nControlsWithCategory}
+                  cases={row.original.n_Categorical[0].nCasesWithCategory}
+                  controls={row.original.n_Categorical[0].nControlsWithCategory}
                   nDecimals={0}
                 />
               ) : (
@@ -329,14 +340,14 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "distributionCategory",
             header: "Distribution",
             accessorFn: (row) =>
-              row.n_Categorical.nCasesWithCategory
-                ? `${row.n_Categorical.nCasesWithCategory} ${row.n_Categorical.nControlsWithCategory}`
+              row.n_Categorical[0]
+                ? `${row.n_Categorical[0].nCasesWithCategory} ${row.n_Categorical[0].nControlsWithCategory}`
                 : "",
             Cell: ({ row }) =>
-              row.original.n_Categorical.nCasesWithCategory ? (
+              row.original.n_Categorical[0] ? (
                 <CategoricalDistributionBar
-                  totalCases={row.original.n_Categorical.nCasesWithCategory}
-                  totalControls={row.original.n_Categorical.nControlsWithCategory}
+                  totalCases={row.original.n_Categorical[0].nCasesWithCategory}
+                  totalControls={row.original.n_Categorical[0].nControlsWithCategory}
                   distributions={row.original.d_Categorical}
                 />
               ) : (
@@ -349,7 +360,7 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "-log10Category",
             header: "-log10 (p-Value)",
             accessorFn: (row) =>
-              row.t_Categorical[0] ? -Math.log10(row.t_Categorical[0].pValue) : null,
+              row.t_Categorical[0] ? -Math.log10(row.t_Categorical[0][0].pValue) : null,
             size: 150,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
             filterVariant: "range",
@@ -358,8 +369,9 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "CramersVCategory",
             header: "Cramers'V",
-            accessorFn: (row) => (row.t_Categorical[0] ? row.t_Categorical[0].effectSize : null),
+            accessorFn: (row) => (row.t_Categorical[0] ? row.t_Categorical[0][0].effectSize : null),
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            filterVariant: "range",
           },
         ],
       },
@@ -371,14 +383,14 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControlContinuous",
             header: "Cases / Controls",
             accessorFn: (row) =>
-              row.n_Continuous.nCasesYesWithValue
-                ? `${row.n_Continuous.nCasesYesWithValue} ${row.n_Continuous.nControlsYesWithValue}`
+              row.n_Continuous[0]
+                ? `${row.n_Continuous[0].nCasesYesWithValue} ${row.n_Continuous[0].nControlsYesWithValue}`
                 : "",
             Cell: ({ row }) =>
-              row.original.n_Continuous.nCasesYesWithValue ? (
+              row.original.n_Continuous[0] ? (
                 <CasesControlCell
-                  cases={row.original.n_Continuous.nCasesYesWithValue}
-                  controls={row.original.n_Continuous.nControlsYesWithValue}
+                  cases={row.original.n_Continuous[0].nCasesYesWithValue}
+                  controls={row.original.n_Continuous[0].nControlsYesWithValue}
                   nDecimals={0}
                 />
               ) : (
@@ -390,16 +402,16 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "casesControlMeanContinuous",
             header: "Mean",
             accessorFn: (row) =>
-              row.s_Continuous.meanValueCases
-                ? `${row.s_Continuous.meanValueCases} ${row.s_Continuous.meanValueControls}`
+              row.s_Continuous[0]
+                ? `${row.s_Continuous[0].meanValueCases} ${row.s_Continuous[0].meanValueControls}`
                 : "",
             Cell: ({ row }) =>
-              row.original.s_Continuous.meanValueCases ? (
+              row.original.s_Continuous[0] ? (
                 <CasesControlCell
-                  cases={row.original.s_Continuous.meanValueCases}
-                  controls={row.original.s_Continuous.meanValueControls}
-                  casesSD={row.original.s_Continuous.sdValueCases}
-                  controlsSD={row.original.s_Continuous.sdValueControls}
+                  cases={row.original.s_Continuous[0].meanValueCases}
+                  controls={row.original.s_Continuous[0].meanValueControls}
+                  casesSD={row.original.s_Continuous[0].sdValueCases}
+                  controlsSD={row.original.s_Continuous[0].sdValueControls}
                 />
               ) : (
                 <Typography>N/A</Typography>
@@ -410,14 +422,14 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "distributionContinuous",
             header: "Distribution",
             accessorFn: (row) =>
-              row.s_Continuous.meanValueCases
-                ? `${row.s_Continuous.meanValueCases} ${row.s_Continuous.meanValueControls}`
+              row.s_Continuous[0]
+                ? `${row.s_Continuous[0].meanValueCases} ${row.s_Continuous[0].meanValueControls}`
                 : "",
             Cell: ({ row }) =>
-              row.original.s_Continuous.meanValueCases ? (
+              row.original.s_Continuous[0] ? (
                 <MeanComparisonChart
-                  stats={row.original.s_Continuous}
-                  distributions={row.original.d_Continuous}
+                  stats={row.original.s_Continuous[0]}
+                  distributions={row.original.d_Continuous[0]}
                 />
               ) : (
                 <Typography>N/A</Typography>
@@ -428,7 +440,7 @@ export default function MainTable({ data }: ConceptTableProps) {
             id: "-log10Continuous",
             header: "-log10 (p-Value)",
             accessorFn: (row) =>
-              row.t_Continuous[0] ? -Math.log10(row.t_Continuous[0].pValue) : null,
+              row.t_Continuous[0] ? -Math.log10(row.t_Continuous[0][0].pValue) : null,
             size: 150,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
             filterVariant: "range",
@@ -437,8 +449,9 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "varianceRatioContinuous",
             header: "Variance Ratio",
-            accessorFn: (row) => (row.t_Continuous[0] ? row.t_Continuous[0].effectSize : null),
+            accessorFn: (row) => row.t_Continuous[0]?.[0]?.effectSize ?? null,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+            filterVariant: "range",
           },
         ],
       },

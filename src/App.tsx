@@ -50,6 +50,15 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Header />
+
+      <Container component="section">
+        <Typography variant="h6">Filters</Typography>
+        <Box sx={{ display: "flex", background: "" }}>
+          <Box>Filter</Box>
+          <Box>Filter</Box>
+          <Box>Filter</Box>
+        </Box>
+      </Container>
       <Container
         id="main"
         component={"main"}
