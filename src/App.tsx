@@ -44,7 +44,7 @@ const theme = createTheme({
 export default function App() {
   const { data, setData, loading, error, filePath } = useDataSource()
 
-  const hasCharts = true
+  const hasCharts = false
 
   return (
     <ThemeProvider theme={theme}>
