@@ -9,11 +9,11 @@ export function CustomBarChart({ data }: { data: ConceptRow[] }) {
         <BarChart
           series={[
             {
-              data: data.map((d) => d.d_Binary[0].case),
+              data: data.map((d) => d.d_Binary[0][0].case),
               label: "case",
               type: "bar",
             },
-            { data: data.map((d) => d.d_Binary[0].control), label: "control", type: "bar" },
+            { data: data.map((d) => d.d_Binary[0][0].control), label: "control", type: "bar" },
           ]}
           xAxis={[
             {

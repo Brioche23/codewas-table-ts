@@ -49,8 +49,8 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
 
   const scatterDataset = data.map((d) => ({
     name: d.conceptName,
-    x1: d.t_Binary[0][scatterPlotDimensions.x],
-    y1: d.t_Binary[0][scatterPlotDimensions.y],
+    x1: d.t_Binary[0][0][scatterPlotDimensions.x],
+    y1: d.t_Binary[0][0][scatterPlotDimensions.y],
   }))
 
   const handleChange = (axis: keyof ScatterDimensions) => (e: SelectChangeEvent<ScatterKey>) => {
