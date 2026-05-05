@@ -80,7 +80,7 @@ export function FilterChips({ table, onSave }: FilterChipsProps) {
   if (columnFilters.length === 0) return null
 
   return (
-    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
       {columnFilters.map((filter) => {
         const column = table.getColumn(filter.id)
         const label = column?.columnDef.header ?? filter.id

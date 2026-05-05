@@ -58,7 +58,7 @@ export default function MainTable({ data }: ConceptTableProps) {
   })
 
   return (
-    <Container component="section">
+    <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <FilterWrapper table={table} />
       <MaterialReactTable table={table} />
     </Container>

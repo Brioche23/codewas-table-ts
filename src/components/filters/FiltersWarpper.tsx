@@ -1,9 +1,10 @@
-import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
+import type { MRT_TableInstance } from "material-react-table"
 import type { ConceptRow, FilterPreset } from "../../utils/types"
 import { useState } from "react"
-import { Box } from "@mui/material"
+import { Box, Divider } from "@mui/material"
 import { FilterChips } from "./FilterChips"
 import { FilterPresets } from "./FilterPresets"
+import { FilterStats } from "./FilterStats"
 
 const STORAGE_KEY = "mrt-filter-presets"
 
@@ -22,6 +23,7 @@ function savePresets(presets: FilterPreset[]): void {
 // FilterWrapper.tsx
 export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> }) {
   const [presets, setPresets] = useState<FilterPreset[]>(loadPresets)
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("")
 
   const handleSave = (preset: FilterPreset) => {
     const updated = [...presets, preset]
@@ -41,19 +43,39 @@ export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> 
     savePresets(next)
   }
 
-  const handleApply = (filters: MRT_ColumnFiltersState) => {
-    table.setColumnFilters(filters)
+  const handleApply = (preset: FilterPreset) => {
+    setSelectedPresetId(preset.id)
+    table.setColumnFilters(preset.filters)
   }
 
   return (
-    <Box>
-      <FilterChips table={table} onSave={handleSave} />
-      <FilterPresets
-        presets={presets}
-        onApply={handleApply}
-        onDelete={handleDelete}
-        onEdit={handleEdit}
-      />
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        alignItems: "center",
+        minHeight: 100,
+      }}
+    >
+      <FilterStats table={table} />
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          alignItems: "center",
+        }}
+      >
+        <FilterChips table={table} onSave={handleSave} />
+        <Divider orientation="vertical" flexItem />
+        <FilterPresets
+          presets={presets}
+          selectedPresetId={selectedPresetId}
+          onApply={handleApply}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+        />
+      </Box>
     </Box>
   )
 }

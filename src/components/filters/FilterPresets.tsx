@@ -1,4 +1,3 @@
-import type { MRT_ColumnFiltersState } from "material-react-table"
 import type { FilterPreset } from "../../utils/types"
 import { useState } from "react"
 import {
@@ -17,7 +16,8 @@ import { Edit } from "@mui/icons-material"
 
 type FilterPresetsProps = {
   presets: FilterPreset[]
-  onApply: (filters: MRT_ColumnFiltersState) => void
+  selectedPresetId: string
+  onApply: (preset: FilterPreset) => void
   onDelete: (id: string) => void
   onEdit: (updated: FilterPreset) => void
 }
@@ -42,7 +42,13 @@ const modalStyle = {
   gap: 2,
 }
 
-export function FilterPresets({ presets, onApply, onDelete, onEdit }: FilterPresetsProps) {
+export function FilterPresets({
+  presets,
+  selectedPresetId,
+  onApply,
+  onDelete,
+  onEdit,
+}: FilterPresetsProps) {
   const [editingPreset, setEditingPreset] = useState<FilterPreset | null>(null)
   const [editName, setEditName] = useState("")
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
@@ -82,12 +88,13 @@ export function FilterPresets({ presets, onApply, onDelete, onEdit }: FilterPres
   if (presets.length === 0) return null
 
   return (
-    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
       {presets.map((preset) => (
         <Chip
+          variant={selectedPresetId === preset.id ? "filled" : "outlined"}
           key={preset.id}
           label={preset.name}
-          onClick={() => onApply(preset.filters)}
+          onClick={() => onApply(preset)}
           onDelete={() => onDelete(preset.id)}
           icon={
             <Edit
