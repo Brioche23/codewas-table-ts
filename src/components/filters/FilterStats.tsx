@@ -24,8 +24,6 @@ export function FilterStats({ table }: { table: MRT_TableInstance<ConceptRow> })
     startTimeRef.current = null
   }, [filteredRows]) // filteredRows changes after MRT finishes computing
 
-  //   if (columnFilters.length === 0) return null
-
   return (
     <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
       <Typography variant="body2" color="text.secondary">
