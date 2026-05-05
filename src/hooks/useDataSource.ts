@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import type { ConceptRow } from "../utils/types"
 
 export function useDataSource() {
@@ -28,21 +28,3 @@ export function useDataSource() {
 
   return { data, setData, loading, error, filePath }
 }
-
-// const useNormalizedData = (rawData: ConceptRow[] | null) => {
-//   const normalize = (value) => {
-//     if (!value) return []
-//     return Array.isArray(value) ? value : [value]
-//   }
-
-//   // When you fetch/transform your data:
-//   const normalized = useMemo(() => {
-//     return rawData.map((row) => ({
-//       ...row,
-//       s_Counts: normalize(row.s_Counts),
-//       t_Binary: normalize(row.t_Binary),
-//     }))
-//   }, [rawData])
-
-//   return normalized
-// }
