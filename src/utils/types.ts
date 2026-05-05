@@ -1,3 +1,5 @@
+import type { MRT_ColumnFiltersState } from "material-react-table"
+
 // ─── Distribution row (used in d_Binary, d_Counts, d_AgeFirstEvent, d_DaysToFirstEvent) ───
 export interface DistributionRow {
   Measure: string
@@ -77,4 +79,11 @@ export interface ConceptRow {
 
 export interface ConceptTableProps {
   data: ConceptRow[]
+}
+
+// Shape of a saved preset stored in localStorage
+export type FilterPreset = {
+  id: string // unique id, e.g. crypto timestamp
+  name: string
+  filters: MRT_ColumnFiltersState // only the filters the user checked
 }

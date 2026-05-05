@@ -3,11 +3,14 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
-  type MRT_TableInstance,
+  type MRT_ColumnFiltersState,
 } from "material-react-table"
-import { Box, Chip, Typography, Divider, Container, Modal, Button, Table } from "@mui/material"
+import { Box, Chip, Typography, Divider, Container, Tooltip } from "@mui/material"
 import type { ConceptRow, ConceptTableProps } from "../utils/types"
 import { MeanComparisonChart, CategoryBar, CategoricalDistributionBar } from "../components/Visuals"
+import { FilterWrapper } from "../components/filters/FiltersWarpper"
+
+const COLUMNS_COLORS = { color1: "#ffffff", color2: "#e3e3e3" }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -20,6 +23,13 @@ const valueChip = (value: number | null, threshold: number) => {
   const color = value >= threshold ? "success" : "error"
 
   return <Chip label={fmt(value)} size="small" color={color} />
+}
+
+function groupCellProps(color: string): Partial<MRT_ColumnDef<ConceptRow>> {
+  return {
+    muiTableBodyCellProps: { sx: { backgroundColor: color } },
+    muiTableHeadCellProps: { sx: { backgroundColor: color } },
+  }
 }
 interface CasesControlsProps {
   cases: number
@@ -54,7 +64,7 @@ function CasesControlCell({
 // ─── main table ───────────────────────────────────────────────────────────
 
 export default function MainTable({ data }: ConceptTableProps) {
-  const [columnFilters, setColumnFilters] = useState([])
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([])
 
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
@@ -63,43 +73,38 @@ export default function MainTable({ data }: ConceptTableProps) {
       {
         id: "info",
         header: "Info",
-        size: 280,
+        size: 150,
+        minSize: 40,
+        maxSize: 300,
+        ...groupCellProps(COLUMNS_COLORS.color1),
         accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
+
         Cell: ({ row }) => (
-          <Box>
-            <Typography>{row.original.conceptName}</Typography>
-            <Typography>{row.original.conceptId}</Typography>
-            <Typography>{row.original.domainId}</Typography>
+          <Box sx={{ width: 150 }}>
+            <Tooltip title={row.original.conceptName} placement="right">
+              <Typography variant="body2" noWrap>
+                {row.original.conceptName}
+              </Typography>
+            </Tooltip>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              {row.original.conceptId}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              {row.original.domainId}
+            </Typography>
           </Box>
         ),
-        // columns: [
-        //   {
-        //     accessorKey: "conceptId",
-        //     header: "ID",
-        //     size: 80,
-        //   },
-        //   {
-        //     accessorKey: "conceptName",
-        //     header: "Concept",
-        //     size: 200,
-        //   },
-        //   {
-        //     accessorKey: "domainId",
-        //     header: "Domain",
-        //     size: 120,
-        //     // Filter by domain prefix (e.g. "Source:ATC")
-        //     filterVariant: "select",
-        //   },
-        // ],
       },
       {
         id: "binary",
         header: "Binary",
+        ...groupCellProps(COLUMNS_COLORS.color2),
         columns: [
           {
             // Derived column — not a direct key in the data
             id: "casesControl",
             header: "Cases / Control",
+            ...groupCellProps(COLUMNS_COLORS.color2),
             accessorFn: (row) =>
               `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
             Cell: ({ row }) => (
@@ -115,6 +120,7 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "proportion",
             header: "Proportion",
+            ...groupCellProps(COLUMNS_COLORS.color2),
             accessorFn: (row) =>
               `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
             Cell: ({ row }) => {
@@ -136,6 +142,7 @@ export default function MainTable({ data }: ConceptTableProps) {
           {
             id: "-log10Binary",
             header: "-log10 (p-Value)",
+            ...groupCellProps(COLUMNS_COLORS.color2),
             accessorFn: (row) =>
               row.t_Binary[0] ? -Math.log10(row.t_Binary?.[0]?.[0]?.pValue) : null,
             size: 150,
@@ -148,6 +155,7 @@ export default function MainTable({ data }: ConceptTableProps) {
             // Derived column — not a direct key in the data
             id: "oddsRatioBinary",
             header: "Odds Ratio",
+            ...groupCellProps(COLUMNS_COLORS.color2),
             accessorFn: (row) => row.t_Binary?.[0]?.[0]?.effectSize ?? null,
             Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
             filterVariant: "range",
@@ -476,11 +484,14 @@ export default function MainTable({ data }: ConceptTableProps) {
     // ── expand ──
     // renderDetailPanel: ({ row }) => <ConceptDetailPanel row={row} />,
     // ── pagination ──
+    enableColumnPinning: true,
     initialState: {
       // grouping: ["conceptId", "conceptName"],
       pagination: { pageSize: 20, pageIndex: 0 },
+      columnPinning: { left: ["info"] },
       density: "compact",
     },
+
     // ── filtering ──
     enableColumnFilters: true,
     enableGlobalFilter: true,
@@ -493,97 +504,8 @@ export default function MainTable({ data }: ConceptTableProps) {
 
   return (
     <Container component="section">
-      <FilterChips table={table} />
+      <FilterWrapper table={table} />
       <MaterialReactTable table={table} />
     </Container>
-  )
-}
-
-function FilterChips({ table }: { table: MRT_TableInstance<ConceptRow> }) {
-  const [open, setOpen] = useState(false)
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
-
-  const style = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 400,
-    bgcolor: "background.paper",
-    border: "2px solid #000",
-    boxShadow: 24,
-    p: 4,
-  }
-
-  const isFilterActive = (value: unknown): boolean => {
-    if (value === undefined || value === null || value === "") return false
-    if (Array.isArray(value)) return value.some((v) => v !== undefined && v !== "")
-    return true
-  }
-
-  const columnFilters = table
-    .getState()
-    .columnFilters.filter((filter) => isFilterActive(filter.value))
-
-  if (columnFilters.length === 0) return null
-
-  return (
-    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-      {columnFilters.map((filter) => {
-        const column = table.getColumn(filter.id)
-        const label = column?.columnDef.header ?? filter.id
-        const value = Array.isArray(filter.value)
-          ? `${filter.value[0]} – ${filter.value[1]}` // range filters
-          : String(filter.value)
-
-        return (
-          <Chip
-            key={filter.id}
-            label={`${label}: ${value}`}
-            onDelete={() => column.setFilterValue(undefined)} // clears just this filter
-          />
-        )
-      })}
-
-      <Chip label="Clear all" variant="outlined" onClick={() => table.resetColumnFilters()} />
-      <Chip label="Save Preset" variant="outlined" onClick={handleOpen} />
-
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Save filter preset
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Checkboxes with filter
-          </Typography>
-          <Table>
-            {columnFilters.map((filter) => {
-              const column = table.getColumn(filter.id)
-              const label = column?.columnDef.header ?? filter.id
-              const value = Array.isArray(filter.value)
-                ? `${filter.value[0]} – ${filter.value[1]}` // range filters
-                : String(filter.value)
-
-              return (
-                <Chip
-                  key={filter.id}
-                  label={`${label}: ${value}`}
-                  onDelete={() => column.setFilterValue(undefined)} // clears just this filter
-                />
-              )
-            })}
-          </Table>
-
-          <Button>Save</Button>
-          <Button onClick={handleClose}> Cancel</Button>
-        </Box>
-      </Modal>
-    </Box>
   )
 }
