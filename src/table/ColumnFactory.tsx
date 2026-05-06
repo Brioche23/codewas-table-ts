@@ -130,43 +130,59 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
   ),
 }
 
+// ─── Safe accessors ───────────────────────────────────────────────────────────
+// Centralised so Cell and accessorFn always use the same guard logic
+
+const getBinaryCount = (row: ConceptRow) => row.n_Binary?.[0] ?? null
+const getBinaryDist = (row: ConceptRow) => row.d_Binary?.[0] ?? null // BinaryDistribution[]
+const getBinaryTest = (row: ConceptRow) => row.t_Binary?.[0]?.[0] ?? null
+
 export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "binary",
   header: "Binary",
   ...groupCellProps(COLUMNS_COLORS.color2),
   columns: [
     {
-      // Derived column — not a direct key in the data
       id: "casesControl",
       header: "Cases / Control",
       ...groupCellProps(COLUMNS_COLORS.color2),
-      accessorFn: (row) =>
-        `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
-      Cell: ({ row }) => (
-        <CasesControlCell
-          cases={row.original.n_Binary[0].nCasesWithCategory}
-          controls={row.original.n_Binary[0].nControlsWithCategory}
-          nDecimals={0}
-        />
-      ),
+      accessorFn: (row) => {
+        const n = getBinaryCount(row)
+        return n ? `${n.nCasesWithCategory} ${n.nControlsWithCategory}` : null
+      },
+      Cell: ({ row }) => {
+        const n = getBinaryCount(row.original)
+        if (!n) return <Typography>N/A</Typography>
+        return (
+          <CasesControlCell
+            cases={n.nCasesWithCategory}
+            controls={n.nControlsWithCategory}
+            nDecimals={0}
+          />
+        )
+      },
       filterVariant: "range",
     },
     {
-      // Derived column — not a direct key in the data
       id: "proportion",
       header: "Proportion",
       ...groupCellProps(COLUMNS_COLORS.color2),
-      accessorFn: (row) =>
-        `${row.n_Binary[0].nCasesWithCategory} ${row.n_Binary[0].nControlsWithCategory}`,
+      accessorFn: (row) => {
+        const dist = getBinaryDist(row)
+        if (!dist?.[0] || !dist?.[1]) return null
+        return `${dist[0].case} ${dist[0].control}`
+      },
       Cell: ({ row }) => {
-        if (!row.original.d_Binary[0][0].case) return <p>N/A</p>
-        const totalCases = row.original.d_Binary[0][0].case + row.original.d_Binary[0][1].case
-        const totalControls =
-          row.original.d_Binary[0][0].control + row.original.d_Binary[0][1].control
+        const dist = getBinaryDist(row.original)
+        if (dist?.[0]?.case === undefined || dist?.[1]?.case === undefined) {
+          return <Typography>N/A</Typography>
+        }
+        const totalCases = dist[0].case + dist[1].case
+        const totalControls = dist[0].control + dist[1].control
         return (
           <CategoryBar
-            caseCount={row.original.d_Binary[0][0].case}
-            controlCount={row.original.d_Binary[0][0].control}
+            caseCount={dist[0].case}
+            controlCount={dist[0].control}
             totalCases={totalCases}
             totalControls={totalControls}
           />
@@ -178,19 +194,21 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       id: "-log10Binary",
       header: "-log10 (p-Value)",
       ...groupCellProps(COLUMNS_COLORS.color2),
-      accessorFn: (row) => (row.t_Binary[0] ? -Math.log10(row.t_Binary?.[0]?.[0]?.pValue) : null),
+      accessorFn: (row) => {
+        const t = getBinaryTest(row)
+        if (!t || t.pValue <= 0) return null
+        return -Math.log10(t.pValue)
+      },
       size: 150,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
       filterVariant: "range",
       sortUndefined: "last",
     },
-
     {
-      // Derived column — not a direct key in the data
       id: "oddsRatioBinary",
       header: "Odds Ratio",
       ...groupCellProps(COLUMNS_COLORS.color2),
-      accessorFn: (row) => row.t_Binary?.[0]?.[0]?.effectSize ?? null,
+      accessorFn: (row) => getBinaryTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
     },
@@ -248,54 +266,69 @@ export const STAT_GROUPS: StatGroupConfig[] = [
   },
 ]
 
+// ─── Safe accessors ───────────────────────────────────────────────────────────
+
+const getCategoricalCount = (row: ConceptRow) => row.n_Categorical?.[0] ?? null
+const getCategoricalDist = (row: ConceptRow) => row.d_Categorical ?? null // BinaryDistribution[]
+const getCategoricalTest = (row: ConceptRow) => row.t_Categorical?.[0]?.[0] ?? null
+
 export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "category",
   header: "Category",
+  ...groupCellProps(COLUMNS_COLORS.color1), // add color if missing
   columns: [
     {
       id: "casesControlCategory",
       header: "Cases / Controls",
-      accessorFn: (row) =>
-        row.n_Categorical[0]
-          ? `${row.n_Categorical[0].nCasesWithCategory} ${row.n_Categorical[0].nControlsWithCategory}`
-          : "",
-      Cell: ({ row }) =>
-        row.original.n_Categorical[0] ? (
+      ...groupCellProps(COLUMNS_COLORS.color1),
+      accessorFn: (row) => {
+        const n = getCategoricalCount(row)
+        return n ? `${n.nCasesWithCategory} ${n.nControlsWithCategory}` : null
+      },
+      Cell: ({ row }) => {
+        const n = getCategoricalCount(row.original)
+        if (!n) return <Typography>N/A</Typography>
+        return (
           <CasesControlCell
-            cases={row.original.n_Categorical[0].nCasesWithCategory}
-            controls={row.original.n_Categorical[0].nControlsWithCategory}
+            cases={n.nCasesWithCategory}
+            controls={n.nControlsWithCategory}
             nDecimals={0}
           />
-        ) : (
-          <Typography>N/A</Typography>
-        ),
+        )
+      },
       filterVariant: "range",
     },
     {
       id: "distributionCategory",
       header: "Distribution",
-      accessorFn: (row) =>
-        row.n_Categorical[0]
-          ? `${row.n_Categorical[0].nCasesWithCategory} ${row.n_Categorical[0].nControlsWithCategory}`
-          : "",
-      Cell: ({ row }) =>
-        row.original.n_Categorical[0] ? (
+      ...groupCellProps(COLUMNS_COLORS.color1),
+      accessorFn: (row) => {
+        const n = getCategoricalCount(row)
+        return n ? `${n.nCasesWithCategory} ${n.nControlsWithCategory}` : null
+      },
+      Cell: ({ row }) => {
+        const n = getCategoricalCount(row.original)
+        const d = getCategoricalDist(row.original)
+        if (!n || !d) return <Typography>N/A</Typography>
+        return (
           <CategoricalDistributionBar
-            totalCases={row.original.n_Categorical[0].nCasesWithCategory}
-            totalControls={row.original.n_Categorical[0].nControlsWithCategory}
-            distributions={row.original.d_Categorical}
+            totalCases={n.nCasesWithCategory}
+            totalControls={n.nControlsWithCategory}
+            distributions={d}
           />
-        ) : (
-          <Typography>N/A</Typography>
-        ),
+        )
+      },
       filterVariant: "range",
     },
-
     {
       id: "-log10Category",
       header: "-log10 (p-Value)",
-      accessorFn: (row) =>
-        row.t_Categorical[0] ? -Math.log10(row.t_Categorical?.[0]?.[0]?.pValue) : null,
+      ...groupCellProps(COLUMNS_COLORS.color1),
+      accessorFn: (row) => {
+        const t = getCategoricalTest(row)
+        if (!t || t.pValue <= 0) return null
+        return -Math.log10(t.pValue)
+      },
       size: 150,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
       filterVariant: "range",
@@ -304,7 +337,8 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "CramersVCategory",
       header: "Cramers'V",
-      accessorFn: (row) => row.t_Categorical?.[0]?.[0]?.effectSize ?? null,
+      ...groupCellProps(COLUMNS_COLORS.color1),
+      accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
       filterVariant: "range",
     },
