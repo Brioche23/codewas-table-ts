@@ -295,7 +295,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       id: "-log10Category",
       header: "-log10 (p-Value)",
       accessorFn: (row) =>
-        row.t_Categorical[0] ? -Math.log10(row.t_Categorical[0][0].pValue) : null,
+        row.t_Categorical[0] ? -Math.log10(row.t_Categorical?.[0]?.[0]?.pValue) : null,
       size: 150,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
       filterVariant: "range",
@@ -304,7 +304,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "CramersVCategory",
       header: "Cramers'V",
-      accessorFn: (row) => (row.t_Categorical[0] ? row.t_Categorical[0][0].effectSize : null),
+      accessorFn: (row) => row.t_Categorical?.[0]?.[0]?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
       filterVariant: "range",
     },
