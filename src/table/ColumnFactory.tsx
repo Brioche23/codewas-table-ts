@@ -269,7 +269,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
 // ─── Safe accessors ───────────────────────────────────────────────────────────
 
 const getCategoricalCount = (row: ConceptRow) => row.n_Categorical?.[0] ?? null
-const getCategoricalDist = (row: ConceptRow) => row.d_Categorical ?? null // BinaryDistribution[]
+const getCategoricalDist = (row: ConceptRow) => row.d_Categorical?.[0] ?? null // BinaryDistribution[]
 const getCategoricalTest = (row: ConceptRow) => row.t_Categorical?.[0]?.[0] ?? null
 
 export const categoryColumn: MRT_ColumnDef<ConceptRow> = {

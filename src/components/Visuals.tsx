@@ -288,6 +288,7 @@ export function CategoricalDistributionBar({
   totalControls,
   distributions,
 }: CategoricalDistributionBarProps) {
+  console.log(distributions)
   const distributionsWithPercentage = distributions.map((d) => ({
     value: d.value,
     "case%": Math.round(((d.case * 100) / totalCases) * 100) / 100,

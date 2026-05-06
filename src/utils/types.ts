@@ -73,7 +73,7 @@ export interface ConceptRow {
 
   // Categorical (is Binary)
   n_Categorical: BinaryCount[]
-  d_Categorical: BinaryDistribution[]
+  d_Categorical: BinaryDistribution[][]
   t_Categorical: Test[][]
 }
 
