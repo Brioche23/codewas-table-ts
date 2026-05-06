@@ -85,7 +85,7 @@ export function makeStatGroup({
           return t ? -Math.log10(t.pValue) : null
         },
         size: 150,
-        Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+        Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
         filterVariant: "range",
         sortUndefined: "last",
       },
@@ -221,7 +221,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     header: "Count",
     color: COLUMNS_COLORS.color1,
     effectSizeHeader: "Rate Ratio",
-    effectSizeThreshold: 1.3,
+    effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_Counts[0] ?? null,
       d: (row) => row.d_Counts[0][0] ?? null, // DistributionRow[][][0][0] = DistributionRow[]
@@ -233,7 +233,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     header: "Age First Event",
     color: COLUMNS_COLORS.color2,
     effectSizeHeader: "Mean Difference",
-    effectSizeThreshold: 1.3,
+    effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_AgeFirstEvent[0] ?? null,
       d: (row) => row.d_AgeFirstEvent[0][0] ?? null,
@@ -245,7 +245,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     header: "Days To First Event",
     color: COLUMNS_COLORS.color1,
     effectSizeHeader: "Mean Difference",
-    effectSizeThreshold: 1.3,
+    effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_DaysToFirstEvent[0] ?? null,
       d: (row) => row.d_DaysToFirstEvent[0][0] ?? null,
@@ -257,7 +257,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     header: "Continuous",
     color: COLUMNS_COLORS.color2,
     effectSizeHeader: "Variance Ratio",
-    effectSizeThreshold: 1.3,
+    effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_Continuous[0] ?? null,
       d: (row) => row.d_Continuous[0]?.[0] ?? null,
@@ -330,7 +330,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
         return -Math.log10(t.pValue)
       },
       size: 150,
-      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
       sortUndefined: "last",
     },
@@ -339,7 +339,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       header: "Cramers'V",
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
-      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.3),
+      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
     },
   ],
