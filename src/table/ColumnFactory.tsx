@@ -223,9 +223,9 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeHeader: "Rate Ratio",
     effectSizeThreshold: 1.2,
     paths: {
-      s: (row) => row.s_Counts[0] ?? null,
-      d: (row) => row.d_Counts[0][0] ?? null, // DistributionRow[][][0][0] = DistributionRow[]
-      t: (row) => row.t_Counts[0]?.[0] ?? null,
+      s: (row) => row.s_Counts?.[0] ?? null,
+      d: (row) => row.d_Counts?.[0][0] ?? null, // DistributionRow[][][0][0] = DistributionRow[]
+      t: (row) => row.t_Counts?.[0]?.[0] ?? null,
     },
   },
   {
@@ -235,9 +235,9 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeHeader: "Mean Difference",
     effectSizeThreshold: 1.2,
     paths: {
-      s: (row) => row.s_AgeFirstEvent[0] ?? null,
-      d: (row) => row.d_AgeFirstEvent[0][0] ?? null,
-      t: (row) => row.t_AgeFirstEvent[0]?.[0] ?? null,
+      s: (row) => row.s_AgeFirstEvent?.[0] ?? null,
+      d: (row) => row.d_AgeFirstEvent?.[0][0] ?? null,
+      t: (row) => row.t_AgeFirstEvent?.[0]?.[0] ?? null,
     },
   },
   {
@@ -247,9 +247,9 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeHeader: "Mean Difference",
     effectSizeThreshold: 1.2,
     paths: {
-      s: (row) => row.s_DaysToFirstEvent[0] ?? null,
-      d: (row) => row.d_DaysToFirstEvent[0][0] ?? null,
-      t: (row) => row.t_DaysToFirstEvent[0]?.[0] ?? null,
+      s: (row) => row.s_DaysToFirstEvent?.[0] ?? null,
+      d: (row) => row.d_DaysToFirstEvent?.[0][0] ?? null,
+      t: (row) => row.t_DaysToFirstEvent?.[0]?.[0] ?? null,
     },
   },
   {
@@ -259,9 +259,9 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeHeader: "Variance Ratio",
     effectSizeThreshold: 1.2,
     paths: {
-      s: (row) => row.s_Continuous[0] ?? null,
-      d: (row) => row.d_Continuous[0]?.[0] ?? null,
-      t: (row) => row.t_Continuous[0]?.[0] ?? null,
+      s: (row) => row.s_Continuous?.[0] ?? null,
+      d: (row) => row.d_Continuous?.[0]?.[0] ?? null,
+      t: (row) => row.t_Continuous?.[0]?.[0] ?? null,
     },
   },
 ]
