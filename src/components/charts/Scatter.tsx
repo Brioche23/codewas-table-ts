@@ -48,6 +48,8 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
   })
 
   const scatterDataset = data.map((d) => ({
+    uniqID: `${d.conceptId}-${d.conceptName}-${d.domainId}`,
+    id: d.conceptId,
     name: d.conceptName,
     x1: d.t_Binary[0][0][scatterPlotDimensions.x],
     y1: d.t_Binary[0][0][scatterPlotDimensions.y],
@@ -97,7 +99,7 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
           series={[
             {
               id: "has-value",
-              datasetKeys: { x: "x1", y: "y1", id: "name" },
+              datasetKeys: { x: "x1", y: "y1", id: "uniqID" },
               markerSize: 3,
               label: "Concept",
               color: palette[2],

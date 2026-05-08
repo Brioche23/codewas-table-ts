@@ -20,7 +20,16 @@ import {
 // ─── main table ───────────────────────────────────────────────────────────
 
 export default function MainTable({ data }: ConceptTableProps) {
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+    {
+      id: "casesControl",
+      value: ["5", null],
+    },
+    {
+      id: "-log10Binary",
+      value: ["5", null],
+    },
+  ])
 
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
@@ -29,6 +38,7 @@ export default function MainTable({ data }: ConceptTableProps) {
     [],
   )
 
+  console.log(columnFilters)
   const table = useMaterialReactTable({
     columns,
     data,
@@ -42,6 +52,12 @@ export default function MainTable({ data }: ConceptTableProps) {
     enableColumnPinning: true,
     initialState: {
       // grouping: ["conceptId", "conceptName"],
+      sorting: [
+        {
+          id: "oddsRatioBinary", //sort by age by default on page load
+          desc: true,
+        },
+      ],
       pagination: { pageSize: 20, pageIndex: 0 },
       columnPinning: { left: ["info"] },
       density: "compact",

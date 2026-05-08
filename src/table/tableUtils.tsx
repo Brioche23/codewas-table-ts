@@ -3,7 +3,6 @@ import type { MRT_ColumnDef } from "material-react-table"
 import type { ConceptRow } from "../utils/types"
 
 export const valueChip = (value: number | null, threshold: number) => {
-  console.log(value)
   if (value === null) return <Chip label="n/a" size="small" />
 
   const color = value >= threshold ? "success" : "error"

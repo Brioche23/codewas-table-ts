@@ -36,7 +36,7 @@ export default function InputFileUpload({ setData }: { setData: (data: ConceptRo
       tabIndex={-1}
       startIcon={<CloudUploadIcon />}
     >
-      Upload files
+      Upload file
       <VisuallyHiddenInput type="file" onChange={handleFileChange} accept=".json" />
     </Button>
   )

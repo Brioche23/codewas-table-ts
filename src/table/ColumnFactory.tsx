@@ -134,7 +134,7 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
 // Centralised so Cell and accessorFn always use the same guard logic
 
 const getBinaryCount = (row: ConceptRow) => row.n_Binary?.[0] ?? null
-const getBinaryDist = (row: ConceptRow) => row.d_Binary?.[0] ?? null // BinaryDistribution[]
+const getBinaryDist = (row: ConceptRow) => row.d_Binary?.[0] ?? null
 const getBinaryTest = (row: ConceptRow) => row.t_Binary?.[0]?.[0] ?? null
 
 export const binaryColumn: MRT_ColumnDef<ConceptRow> = {

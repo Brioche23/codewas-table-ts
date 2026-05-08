@@ -62,6 +62,10 @@ export default function App() {
           <InputFileUpload setData={setData} />
         ) : (
           <Container>
+            <Box>
+              <InputFileUpload setData={setData} />
+            </Box>
+
             {hasCharts && (
               <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
                 <CustomBarChart data={data} />
