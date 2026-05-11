@@ -1,14 +1,5 @@
 // App.tsx — wire up the table with your JSON data
-import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Container,
-  Box,
-  Grid,
-  Alert,
-  // Skeleton,
-} from "@mui/material"
+import { ThemeProvider, createTheme, CssBaseline, Container, Box, Grid, Alert } from "@mui/material"
 
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -62,10 +53,6 @@ export default function App() {
           <InputFileUpload setData={setData} />
         ) : (
           <Container>
-            <Box>
-              <InputFileUpload setData={setData} />
-            </Box>
-
             {hasCharts && (
               <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
                 <CustomBarChart data={data} />
@@ -73,7 +60,7 @@ export default function App() {
               </Grid>
             )}
             <Box>
-              <MainTable data={data} />
+              <MainTable data={data} setData={setData} />
             </Box>
           </Container>
         )}

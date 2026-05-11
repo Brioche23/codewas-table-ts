@@ -16,10 +16,11 @@ import {
   makeStatGroup,
   categoryColumn,
 } from "./ColumnFactory"
+import { TopToolbar } from "./TopToolbar"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
-export default function MainTable({ data }: ConceptTableProps) {
+export default function MainTable({ data, setData }: ConceptTableProps) {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
       id: "casesControl",
@@ -38,11 +39,9 @@ export default function MainTable({ data }: ConceptTableProps) {
     [],
   )
 
-  console.log(columnFilters)
   const table = useMaterialReactTable({
     columns,
     data,
-
     state: { columnFilters },
     onColumnFiltersChange: setColumnFilters,
     // enableGrouping: true,
@@ -71,6 +70,7 @@ export default function MainTable({ data }: ConceptTableProps) {
     // ── misc ──
     enableStickyHeader: true,
     muiTableContainerProps: { sx: { maxHeight: "70vh" } },
+    renderTopToolbarCustomActions: ({ table }) => <TopToolbar table={table} setData={setData} />,
   })
 
   return (

@@ -79,6 +79,7 @@ export interface ConceptRow {
 
 export interface ConceptTableProps {
   data: ConceptRow[]
+  setData: React.Dispatch<React.SetStateAction<ConceptRow[] | null>>
 }
 
 // Shape of a saved preset stored in localStorage

@@ -1,8 +1,8 @@
 import { styled } from "@mui/material/styles"
 import Button from "@mui/material/Button"
-import CloudUploadIcon from "@mui/icons-material/CloudUpload"
 import type React from "react"
 import type { ConceptRow } from "../utils/types"
+import { FileUpload } from "@mui/icons-material"
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -29,14 +29,8 @@ export default function InputFileUpload({ setData }: { setData: (data: ConceptRo
     reader.readAsText(file)
   }
   return (
-    <Button
-      component="label"
-      role={undefined}
-      variant="contained"
-      tabIndex={-1}
-      startIcon={<CloudUploadIcon />}
-    >
-      Upload file
+    <Button component="label" role={undefined} tabIndex={-1} startIcon={<FileUpload />}>
+      Upload
       <VisuallyHiddenInput type="file" onChange={handleFileChange} accept=".json" />
     </Button>
   )
