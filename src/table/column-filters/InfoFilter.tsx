@@ -33,7 +33,7 @@ export function InfoFilter({ table }: InfoFilterProps) {
   }
 
   return (
-    <Box>
+    <Box sx={{ minWidth: 150 }}>
       <TextField
         label="Name"
         size="small"

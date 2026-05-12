@@ -16,7 +16,7 @@ export function CasesControlCell({
   nDecimals = 2,
 }: CasesControlsProps) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {cases.toFixed(nDecimals)} {casesSD && `± ${casesSD.toFixed(nDecimals)}`}
       </Typography>

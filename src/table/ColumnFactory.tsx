@@ -7,6 +7,7 @@ import { COLUMNS_COLORS } from "../utils/constants"
 import { CasesControlCell } from "./custom-cells/CasesControlsCell"
 import { Info } from "@mui/icons-material"
 import { InfoFilter } from "./column-filters/InfoFilter"
+import { SlopeChart } from "../components/charts/SlopeChart"
 
 // ─── Factory config ───────────────────────────────────────────────────────────
 
@@ -117,12 +118,12 @@ export function makeStatGroup({
 // Lives outside the component — no deps on props/state, never triggers re-renders
 
 export const infoColumn: MRT_ColumnDef<ConceptRow> = {
-  id: "info",
+  id: "main_info",
   header: "Info",
   columns: [
     {
       id: "info",
-      header: "Info",
+      header: "Name/ConceptID/Domain",
       Header: ({ column }) => (
         <Tooltip title={column.columnDef.header} placement="top">
           <Info />
@@ -138,7 +139,7 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       Filter: ({ table }) => <InfoFilter table={table} />,
 
       Cell: ({ row }) => (
-        <Box sx={{ width: 150 }}>
+        <Box sx={{ width: 190 }}>
           <Tooltip title={row.original.conceptName} placement="right">
             <Typography variant="body2" noWrap>
               {row.original.conceptName}
@@ -159,6 +160,7 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       header: "Name",
       accessorKey: "conceptName",
       filterVariant: "text", // plain string filter, MRT handles it natively
+      filterFn: "contains",
       visibleInShowHideMenu: false, // don't clutter the column visibility menu
     },
     {
@@ -166,6 +168,8 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       header: "Concept ID",
       accessorKey: "conceptId",
       filterVariant: "text",
+      filterFn: "includes",
+
       visibleInShowHideMenu: false,
     },
     {
@@ -173,6 +177,7 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       header: "Domain",
       accessorKey: "domainId",
       filterVariant: "multi-select",
+      filterFn: "arrIncludesSome",
       filterSelectOptions: ["Condition", "Source:ICD10", "Source:ICPC", "Source:ENDPOINT"],
       visibleInShowHideMenu: false,
     },
@@ -189,8 +194,14 @@ const getBinaryTest = (row: ConceptRow) => row.t_Binary?.[0]?.[0] ?? null
 export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "binary",
   header: "Binary",
-
   ...groupCellProps(COLUMNS_COLORS.color2),
+  Header: () => (
+    <div>
+      <p>Binary</p>
+      <SlopeChart />
+    </div>
+  ),
+
   columns: [
     {
       id: "casesControl",
@@ -258,6 +269,16 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           <p>-log10</p>
         </Tooltip>
       ),
+      aggregationFn: "max", //show the max age in the group (lots of pre-built aggregationFns to choose from)
+      //required to render an aggregated cell
+      AggregatedCell: ({ cell }) => (
+        <>
+          <span>Highest</span>
+          <Box sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}>
+            {cell.getValue<number>()}
+          </Box>
+        </>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
         const t = getBinaryTest(row)
@@ -275,6 +296,15 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
         <Tooltip title={column.columnDef.header} placement="top">
           <p>OR</p>
         </Tooltip>
+      ),
+      aggregationFn: "mean",
+      AggregatedCell: ({ cell }) => (
+        <>
+          <span>Mean</span>
+          <Box sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}>
+            {cell.getValue<number>()}
+          </Box>
+        </>
       ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => getBinaryTest(row)?.effectSize ?? null,

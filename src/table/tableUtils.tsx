@@ -22,7 +22,6 @@ export function groupCellProps(color: string): Partial<MRT_ColumnDef<ConceptRow>
           flexDirection: "column",
           gap: 1,
           p: 1,
-          maxWidth: 120,
         },
         "& .MuiCollapse-wrapperInner > .MuiBox-root": {
           display: "flex",

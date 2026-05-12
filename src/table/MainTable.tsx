@@ -47,7 +47,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
       columnVisibility: {
         conceptName: false,
         conceptId: false,
-        domainId: false,
+        // domainId: false,
       },
     },
     onColumnFiltersChange: setColumnFilters,
@@ -55,7 +55,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
 
     defaultColumn: {
       minSize: 20,
-      size: 100, // starting point — override per column as needed
+      size: 115, // starting point — override per column as needed
       maxSize: 400,
     },
     // enableGrouping: true,
@@ -64,7 +64,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
-      // grouping: ["conceptId", "conceptName"],
+      grouping: ["domainId"],
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load
@@ -81,8 +81,12 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     enableGlobalFilter: true,
     // ── sorting ──
     enableSorting: true,
+
+    // ── grouping ──
+    enableGrouping: true,
     // ── misc ──
     enableStickyHeader: true,
+
     muiTableContainerProps: { sx: { maxHeight: "70vh" } },
     renderTopToolbarCustomActions: ({ table }) => <TopToolbar table={table} setData={setData} />,
 
