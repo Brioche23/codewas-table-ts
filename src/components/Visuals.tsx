@@ -89,7 +89,7 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
   const domainMax = Math.max(...allValues)
   const domainRange = domainMax - domainMin || 1 // avoid /0
 
-  const W = 180 // SVG width
+  const W = 150 // SVG width
   const H = 40 // SVG height
   const PAD = 12 // left/right padding in px
 
@@ -288,7 +288,6 @@ export function CategoricalDistributionBar({
   totalControls,
   distributions,
 }: CategoricalDistributionBarProps) {
-  console.log(distributions)
   const distributionsWithPercentage = distributions.map((d) => ({
     value: d.value,
     "case%": Math.round(((d.case * 100) / totalCases) * 100) / 100,

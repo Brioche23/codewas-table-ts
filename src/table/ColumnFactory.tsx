@@ -5,6 +5,8 @@ import { CategoricalDistributionBar, CategoryBar, MeanComparisonChart } from "..
 import { groupCellProps, valueChip } from "./tableUtils"
 import { COLUMNS_COLORS } from "../utils/constants"
 import { CasesControlCell } from "./custom-cells/CasesControlsCell"
+import { Info } from "@mui/icons-material"
+import { InfoFilter } from "./column-filters/InfoFilter"
 
 // ─── Factory config ───────────────────────────────────────────────────────────
 
@@ -63,6 +65,7 @@ export function makeStatGroup({
       {
         id: `distribution${id}`,
         header: "Distribution",
+
         ...groupCellProps(color),
         accessorFn: (row) => {
           const s = paths.s(row)
@@ -85,7 +88,7 @@ export function makeStatGroup({
           return t ? -Math.log10(t.pValue) : null
         },
         size: 150,
-        Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
+        Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
         filterVariant: "range",
         sortUndefined: "last",
       },
@@ -107,27 +110,64 @@ export function makeStatGroup({
 export const infoColumn: MRT_ColumnDef<ConceptRow> = {
   id: "info",
   header: "Info",
-  size: 150,
-  minSize: 40,
-  maxSize: 300,
-  ...groupCellProps(COLUMNS_COLORS.color1),
-  accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
+  columns: [
+    {
+      id: "info",
+      header: "Info",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <Info />
+        </Tooltip>
+      ),
 
-  Cell: ({ row }) => (
-    <Box sx={{ width: 150 }}>
-      <Tooltip title={row.original.conceptName} placement="right">
-        <Typography variant="body2" noWrap>
-          {row.original.conceptName}
-        </Typography>
-      </Tooltip>
-      <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-        {row.original.conceptId}
-      </Typography>
-      <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-        {row.original.domainId}
-      </Typography>
-    </Box>
-  ),
+      size: 200,
+      minSize: 40,
+      maxSize: 300,
+      ...groupCellProps(COLUMNS_COLORS.color1),
+      accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
+      // enableColumnFilter: false,
+      Filter: ({ table }) => <InfoFilter table={table} />,
+
+      Cell: ({ row }) => (
+        <Box sx={{ width: 150 }}>
+          <Tooltip title={row.original.conceptName} placement="right">
+            <Typography variant="body2" noWrap>
+              {row.original.conceptName}
+            </Typography>
+          </Tooltip>
+          <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+            {row.original.conceptId}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+            {row.original.domainId}
+          </Typography>
+        </Box>
+      ),
+    },
+    // Hidden — filter only
+    {
+      id: "conceptName",
+      header: "Name",
+      accessorKey: "conceptName",
+      filterVariant: "text", // plain string filter, MRT handles it natively
+      visibleInShowHideMenu: false, // don't clutter the column visibility menu
+    },
+    {
+      id: "conceptId",
+      header: "Concept ID",
+      accessorKey: "conceptId",
+      filterVariant: "text",
+      visibleInShowHideMenu: false,
+    },
+    {
+      id: "domainId",
+      header: "Domain",
+      accessorKey: "domainId",
+      filterVariant: "multi-select",
+      filterSelectOptions: ["Condition", "Source:ICD10", "Source:ICPC", "Source:ENDPOINT"],
+      visibleInShowHideMenu: false,
+    },
+  ],
 }
 
 // ─── Safe accessors ───────────────────────────────────────────────────────────
@@ -140,11 +180,17 @@ const getBinaryTest = (row: ConceptRow) => row.t_Binary?.[0]?.[0] ?? null
 export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "binary",
   header: "Binary",
+
   ...groupCellProps(COLUMNS_COLORS.color2),
   columns: [
     {
       id: "casesControl",
       header: "Cases / Control",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>C/C</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
         const n = getBinaryCount(row)
@@ -330,7 +376,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
         return -Math.log10(t.pValue)
       },
       size: 150,
-      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
+      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
       filterVariant: "range",
       sortUndefined: "last",
     },

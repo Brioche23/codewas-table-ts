@@ -42,8 +42,16 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
   const table = useMaterialReactTable({
     columns,
     data,
-    state: { columnFilters },
+    state: {
+      columnFilters,
+      columnVisibility: {
+        conceptName: false,
+        conceptId: false,
+        domainId: false,
+      },
+    },
     onColumnFiltersChange: setColumnFilters,
+    layoutMode: "grid-no-grow",
     // enableGrouping: true,
     // ── expand ──
     // renderDetailPanel: ({ row }) => <ConceptDetailPanel row={row} />,
@@ -71,6 +79,14 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     enableStickyHeader: true,
     muiTableContainerProps: { sx: { maxHeight: "70vh" } },
     renderTopToolbarCustomActions: ({ table }) => <TopToolbar table={table} setData={setData} />,
+
+    // Apply to all header cells globally
+    muiTableHeadCellProps: {
+      sx: { flex: "0 0 auto" },
+    },
+    muiTableFooterCellProps: {
+      sx: { flex: "0 0 auto" },
+    },
   })
 
   return (
