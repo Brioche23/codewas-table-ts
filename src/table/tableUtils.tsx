@@ -13,7 +13,25 @@ export const valueChip = (value: number | null, threshold: number) => {
 export function groupCellProps(color: string): Partial<MRT_ColumnDef<ConceptRow>> {
   return {
     muiTableBodyCellProps: { sx: { backgroundColor: color } },
-    muiTableHeadCellProps: { sx: { backgroundColor: color } },
+    muiTableHeadCellProps: {
+      sx: {
+        backgroundColor: color,
+
+        "& .MuiCollapse-wrapperInner": {
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 1,
+          maxWidth: 120,
+        },
+        "& .MuiCollapse-wrapperInner > .MuiBox-root": {
+          display: "flex",
+          gap: 0.5,
+          flexDirection: "column",
+          width: "100%",
+        },
+      },
+    },
   }
 }
 

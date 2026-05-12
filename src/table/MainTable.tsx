@@ -52,6 +52,12 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     },
     onColumnFiltersChange: setColumnFilters,
     layoutMode: "grid-no-grow",
+
+    defaultColumn: {
+      minSize: 20,
+      size: 100, // starting point — override per column as needed
+      maxSize: 400,
+    },
     // enableGrouping: true,
     // ── expand ──
     // renderDetailPanel: ({ row }) => <ConceptDetailPanel row={row} />,
@@ -82,10 +88,17 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
 
     // Apply to all header cells globally
     muiTableHeadCellProps: {
-      sx: { flex: "0 0 auto" },
+      sx: {
+        flex: "0 0 auto",
+      },
     },
+
     muiTableFooterCellProps: {
       sx: { flex: "0 0 auto" },
+    },
+    muiFilterTextFieldProps: {
+      variant: "outlined",
+      size: "small",
     },
   })
 

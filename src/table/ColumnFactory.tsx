@@ -65,7 +65,7 @@ export function makeStatGroup({
       {
         id: `distribution${id}`,
         header: "Distribution",
-
+        size: 160,
         ...groupCellProps(color),
         accessorFn: (row) => {
           const s = paths.s(row)
@@ -82,12 +82,16 @@ export function makeStatGroup({
       {
         id: `-log10${id}`,
         header: "-log10 (p-Value)",
+        Header: ({ column }) => (
+          <Tooltip title={column.columnDef.header} placement="top">
+            <p>-log</p>
+          </Tooltip>
+        ),
         ...groupCellProps(color),
         accessorFn: (row) => {
           const t = paths.t(row)
           return t ? -Math.log10(t.pValue) : null
         },
-        size: 150,
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
         filterVariant: "range",
         sortUndefined: "last",
@@ -95,6 +99,11 @@ export function makeStatGroup({
       {
         id: `effectSize${id}`,
         header: effectSizeHeader,
+        Header: ({ column }) => (
+          <Tooltip title={column.columnDef.header} placement="top">
+            <p>{column.columnDef.header.slice(0, 2)}</p>
+          </Tooltip>
+        ),
         ...groupCellProps(color),
         accessorFn: (row) => paths.t(row)?.effectSize ?? null,
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), effectSizeThreshold),
@@ -212,6 +221,11 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "proportion",
       header: "Proportion",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>%</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
         const dist = getBinaryDist(row)
@@ -239,13 +253,17 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "-log10Binary",
       header: "-log10 (p-Value)",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>-log10</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
         const t = getBinaryTest(row)
         if (!t || t.pValue <= 0) return null
         return -Math.log10(t.pValue)
       },
-      size: 150,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
       filterVariant: "range",
       sortUndefined: "last",
@@ -253,6 +271,11 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "oddsRatioBinary",
       header: "Odds Ratio",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>OR</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => getBinaryTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
@@ -326,6 +349,11 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "casesControlCategory",
       header: "Cases / Controls",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>C/C</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => {
         const n = getCategoricalCount(row)
@@ -369,6 +397,11 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "-log10Category",
       header: "-log10 (p-Value)",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>-log10</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => {
         const t = getCategoricalTest(row)
@@ -383,6 +416,11 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
     {
       id: "CramersVCategory",
       header: "Cramers'V",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>Cram</p>
+        </Tooltip>
+      ),
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
