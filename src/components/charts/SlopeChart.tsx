@@ -1,11 +1,12 @@
 import * as THREE from "three"
 import { Canvas, useThree } from "@react-three/fiber"
-import { Line } from "@react-three/drei"
+import { Line, Text } from "@react-three/drei"
 
 import { extent, scaleLinear, type ScaleLinear } from "d3"
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react"
 
 import { Box } from "@mui/material"
+import { YAxis } from "./YAxis"
 
 type SlopeChartData = {
   id: string
@@ -32,7 +33,7 @@ type HoveredLineProps = {
 
 const CANVAS_SIZE = {
   width: 400,
-  height: 200,
+  height: 250,
 }
 
 const ZOOM = 50
@@ -55,11 +56,11 @@ export function SlopeChart({ data }: SlopeChartProps) {
     () =>
       scaleLinear()
         .domain(ext)
-        .range([-worldHeight / 2, worldHeight / 2]),
+        .range([-worldHeight / 2, worldHeight / 2 - 0.3]),
     [worldHeight, ext],
   )
 
-  const [x1, x2] = [-worldWidth / 2 + 0.1, worldWidth / 2 - 0.1]
+  const [x1, x2] = [-worldWidth / 2 + 1, worldWidth / 2 - 1]
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -106,19 +107,25 @@ export function SlopeChart({ data }: SlopeChartProps) {
         }}
       >
         <AllLines data={sortedData} yScale={yScale} x1={x1} x2={x2} />
-      </Canvas>
-      <Canvas
-        orthographic
-        camera={{ zoom: ZOOM, position: [0, 0, 100] }}
-        // frameloop="demand" // only renders when invalidated
-        style={{ position: "absolute", inset: 0 }}
-        onCreated={({ gl }) => {
-          // Ensures context is properly re-initialized on HMR
-          gl.setPixelRatio(window.devicePixelRatio)
-        }}
-      >
+        <YAxis
+          yScale={yScale}
+          x={x1}
+          worldWidth={worldWidth}
+          domain={ext}
+          tickCount={10}
+          label="cases"
+        />
+        <YAxis
+          yScale={yScale}
+          x={x2}
+          worldWidth={worldWidth}
+          domain={ext}
+          tickCount={10}
+          label="controls"
+        />
         <HoveredLine data={sortedData} index={hoveredIndex} yScale={yScale} x1={x1} x2={x2} />
       </Canvas>
+
       {hoveredIndex && <p>id: {data[hoveredIndex].id}</p>}
     </Box>
   )
@@ -169,7 +176,7 @@ function HoveredLine({ data, index, yScale, x1, x2 }: HoveredLineProps) {
   const y2 = yScale(data[index].end)
 
   return (
-    <group position={[0, 0, 0]}>
+    <group position={[0, 0, 1]}>
       <Line
         points={[
           [x1, y1, 0],

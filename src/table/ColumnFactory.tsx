@@ -46,14 +46,34 @@ export function makeStatGroup({
     id,
     header,
     ...groupCellProps(color),
+
+    Header: (table) => {
+      const allValues = table.table.getFilteredRowModel().rows.map((row) => ({
+        id: row.getValue<string>("conceptId"),
+        data: row.getValue<SummaryStats>(`mean${id}`), // remove nulls
+      }))
+
+      const slopeChartData = allValues.map((d) => ({
+        id: d.id,
+        start: d.data?.meanValueCases ?? 0,
+        end: d.data?.meanValueControls ?? 0,
+      }))
+
+      return (
+        <div>
+          <p>Binary</p>
+          <SlopeChart data={slopeChartData} />
+        </div>
+      )
+    },
     columns: [
       {
         id: `mean${id}`,
         header: "Mean",
         ...groupCellProps(color),
         accessorFn: (row) => {
-          const s = paths.s(row)
-          return s ? `${s.meanValueCases} ${s.meanValueControls}` : null
+          return paths.s(row) ?? null
+          // return s ? `${s.meanValueCases} ${s.meanValueControls}` : null
         },
         Cell: ({ row }) => {
           const s = paths.s(row.original)
@@ -68,6 +88,21 @@ export function makeStatGroup({
           )
         },
         filterVariant: "range",
+        filterFn: (row, columnId, filterValue) => {
+          const [min, max] = filterValue
+
+          const nMin = min ?? 0
+          const nMax = max ?? 99999
+
+          const n = row.getValue<SummaryStats>(columnId)
+          if (!n) return false
+
+          const val = n.meanValueCases
+
+          if (min !== "" && min !== undefined && val < nMin) return false
+          if (max !== "" && max !== undefined && val > nMax) return false
+          return true
+        },
       },
       {
         id: `distribution${id}`,
@@ -230,7 +265,6 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       </div>
     )
   },
-
   columns: [
     {
       id: "casesControl",
