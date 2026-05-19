@@ -1,5 +1,11 @@
 import type { MRT_ColumnDef } from "material-react-table"
-import type { ConceptRow, SummaryStats, DistributionRow, Test } from "../utils/types"
+import {
+  type ConceptRow,
+  type SummaryStats,
+  type DistributionRow,
+  type Test,
+  type BinaryCount,
+} from "../utils/types"
 import { Box, Tooltip, Typography } from "@mui/material"
 import { CategoricalDistributionBar, CategoryBar, MeanComparisonChart } from "../components/Visuals"
 import { groupCellProps, valueChip } from "./tableUtils"
@@ -195,12 +201,25 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "binary",
   header: "Binary",
   ...groupCellProps(COLUMNS_COLORS.color2),
-  Header: () => (
-    <div>
-      <p>Binary</p>
-      <SlopeChart />
-    </div>
-  ),
+  Header: (table) => {
+    const allValues = table.table
+      .getFilteredRowModel()
+      .rows.map((row) => row.getValue<BinaryCount>("casesControl"))
+      .filter(Boolean) // remove nulls
+
+    return (
+      <div>
+        <p>Binary</p>
+        <Box
+          sx={{
+            display: "flex",
+            placeContent: "center",
+          }}
+        ></Box>
+        <SlopeChart data={allValues} />
+      </div>
+    )
+  },
 
   columns: [
     {
@@ -213,8 +232,7 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
-        const n = getBinaryCount(row)
-        return n ? `${n.nCasesWithCategory} ${n.nControlsWithCategory}` : null
+        return getBinaryCount(row)
       },
       Cell: ({ row }) => {
         const n = getBinaryCount(row.original)
@@ -227,7 +245,27 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           />
         )
       },
+      sortingFn: (rowA, rowB, columnId) => {
+        const a = rowA.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
+        const b = rowB.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
+        return a - b
+      },
       filterVariant: "range",
+      filterFn: (row, columnId, filterValue) => {
+        const [min, max] = filterValue
+
+        const nMin = min ?? 0
+        const nMax = max ?? 99999
+
+        const n = row.getValue<BinaryCount>(columnId)
+        if (!n) return false
+
+        const val = n.nCasesWithCategory
+
+        if (min !== "" && min !== undefined && val < nMin) return false
+        if (max !== "" && max !== undefined && val > nMax) return false
+        return true
+      },
     },
     {
       id: "proportion",

@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline, Container, Box, Grid, Alert } 
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
-import { CustomBarChart } from "./components/charts/CustomBarChart"
+// import { CustomBarChart } from "./components/charts/CustomBarChart"
 import { Scatter } from "./components/charts/Scatter"
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"
@@ -55,7 +55,7 @@ export default function App() {
           <Container>
             {hasCharts && (
               <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
-                <CustomBarChart data={data} />
+                {/* <CustomBarChart data={data} /> */}
                 <Scatter data={data} />
               </Grid>
             )}

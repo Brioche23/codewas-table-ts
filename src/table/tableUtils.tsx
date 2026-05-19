@@ -17,6 +17,9 @@ export function groupCellProps(color: string): Partial<MRT_ColumnDef<ConceptRow>
       sx: {
         backgroundColor: color,
 
+        "& .Mui-TableHeadCell-Content-Wrapper": {
+          // transform: "rotate(-45deg)",
+        },
         "& .MuiCollapse-wrapperInner": {
           display: "flex",
           flexDirection: "column",
