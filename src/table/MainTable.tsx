@@ -47,7 +47,8 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
       columnVisibility: {
         conceptName: false,
         conceptId: false,
-        // domainId: false,
+        domainId: false,
+        // ancestorConceptId: false,
       },
     },
     onColumnFiltersChange: setColumnFilters,
@@ -64,7 +65,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
-      grouping: ["domainId"],
+      grouping: ["ancestorConceptId"],
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load

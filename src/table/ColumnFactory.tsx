@@ -175,7 +175,14 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       accessorKey: "conceptId",
       filterVariant: "text",
       filterFn: "includes",
-
+      visibleInShowHideMenu: false,
+    },
+    {
+      id: "ancestorConceptId",
+      header: "Ancestor Concept ID",
+      accessorKey: "ancestorConceptId",
+      filterVariant: "text",
+      filterFn: "includes",
       visibleInShowHideMenu: false,
     },
     {
@@ -204,19 +211,22 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   Header: (table) => {
     const allValues = table.table
       .getFilteredRowModel()
-      .rows.map((row) => row.getValue<BinaryCount>("casesControl"))
+      .rows.map((row) => ({
+        id: row.getValue<string>("conceptId"),
+        data: row.getValue<BinaryCount>("casesControl"),
+      }))
       .filter(Boolean) // remove nulls
+
+    const slopeChartData = allValues.map((d) => ({
+      id: d.id,
+      start: d.data.nCasesWithCategory,
+      end: d.data.nControlsWithCategory,
+    }))
 
     return (
       <div>
         <p>Binary</p>
-        <Box
-          sx={{
-            display: "flex",
-            placeContent: "center",
-          }}
-        ></Box>
-        <SlopeChart data={allValues} />
+        <SlopeChart data={slopeChartData} />
       </div>
     )
   },

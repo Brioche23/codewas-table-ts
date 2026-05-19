@@ -2,28 +2,37 @@ import * as THREE from "three"
 import { Canvas, useThree } from "@react-three/fiber"
 import { Line } from "@react-three/drei"
 
-import type { BinaryCount } from "../../utils/types"
 import { extent, scaleLinear, type ScaleLinear } from "d3"
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react"
 
+import { Box } from "@mui/material"
+
+type SlopeChartData = {
+  id: string
+  start: number
+  end: number
+}
+
 type SlopeChartProps = {
-  data: BinaryCount[]
+  data: SlopeChartData[]
 }
 type AllLinesProps = {
-  data: BinaryCount[]
-  domain: [number, number]
+  data: SlopeChartData[]
   yScale: ScaleLinear<number, number, never>
+  x1: number
+  x2: number
 }
 type HoveredLineProps = {
-  data: BinaryCount[]
-  domain: [number, number]
+  data: SlopeChartData[]
   index: number | null
   yScale: ScaleLinear<number, number, never>
+  x1: number
+  x2: number
 }
 
 const CANVAS_SIZE = {
   width: 400,
-  height: 250,
+  height: 200,
 }
 
 const ZOOM = 50
@@ -35,14 +44,11 @@ export function SlopeChart({ data }: SlopeChartProps) {
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  const allValues = data.map((d) => [d.nCasesWithCategory, d.nControlsWithCategory]).flat()
+  const allValues = data.map((d) => [d.start, d.end]).flat()
   const ext = extent(allValues) as [number, number]
   if (ext[0] === undefined) return null
 
-  const sortedData = useMemo(
-    () => [...data].sort((a, b) => +a.nCasesWithCategory - +b.nCasesWithCategory),
-    [data],
-  )
+  const sortedData = useMemo(() => [...data].sort((a, b) => +a.start - +b.start), [data])
 
   console.log(ext)
   const yScale = useMemo(
@@ -52,6 +58,8 @@ export function SlopeChart({ data }: SlopeChartProps) {
         .range([-worldHeight / 2, worldHeight / 2]),
     [worldHeight, ext],
   )
+
+  const [x1, x2] = [-worldWidth / 2 + 0.1, worldWidth / 2 - 0.1]
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -66,8 +74,7 @@ export function SlopeChart({ data }: SlopeChartProps) {
 
       data.forEach((d, i) => {
         // Interpolate the line's Y at the mouse's X position
-        const lineYAtMouseX =
-          d.nCasesWithCategory + xRatio * (d.nControlsWithCategory - d.nCasesWithCategory)
+        const lineYAtMouseX = d.start + xRatio * (d.end - d.start)
 
         const dist = Math.abs(yScale(lineYAtMouseX) - worldY)
         if (dist < closestDist) {
@@ -82,9 +89,9 @@ export function SlopeChart({ data }: SlopeChartProps) {
   )
 
   return (
-    <div
+    <Box
       id="canvas-container"
-      style={{ width: CANVAS_SIZE.width, height: CANVAS_SIZE.height, position: "relative" }}
+      sx={{ width: CANVAS_SIZE.width, height: CANVAS_SIZE.height, position: "relative" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setHoveredIndex(null)}
     >
@@ -98,7 +105,7 @@ export function SlopeChart({ data }: SlopeChartProps) {
           gl.setPixelRatio(window.devicePixelRatio)
         }}
       >
-        <AllLines data={sortedData} domain={ext} yScale={yScale} />
+        <AllLines data={sortedData} yScale={yScale} x1={x1} x2={x2} />
       </Canvas>
       <Canvas
         orthographic
@@ -110,31 +117,27 @@ export function SlopeChart({ data }: SlopeChartProps) {
           gl.setPixelRatio(window.devicePixelRatio)
         }}
       >
-        <HoveredLine data={sortedData} domain={ext} index={hoveredIndex} yScale={yScale} />
+        <HoveredLine data={sortedData} index={hoveredIndex} yScale={yScale} x1={x1} x2={x2} />
       </Canvas>
-    </div>
+      {hoveredIndex && <p>id: {data[hoveredIndex].id}</p>}
+    </Box>
   )
 }
 
-function AllLines({ data, domain, yScale }: AllLinesProps) {
-  const { viewport } = useThree()
-  const hh = viewport.height / 2
-
+function AllLines({ data, yScale, x1, x2 }: AllLinesProps) {
   const geometry = useMemo(() => {
     const positions = new Float32Array(data.length * 6) // 2 points * xyz = 6 floats per line
 
     data.forEach((d, i) => {
-      const [x1, x2] = [-viewport.width / 2, viewport.width / 2]
-
       const offset = i * 6
 
       // Point A
       positions[offset + 0] = x1
-      positions[offset + 1] = yScale(d.nCasesWithCategory)
+      positions[offset + 1] = yScale(d.start)
       positions[offset + 2] = 0
       // Point B
       positions[offset + 3] = x2
-      positions[offset + 4] = yScale(d.nControlsWithCategory)
+      positions[offset + 4] = yScale(d.end)
       positions[offset + 5] = 0
     })
 
@@ -144,7 +147,7 @@ function AllLines({ data, domain, yScale }: AllLinesProps) {
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3))
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3))
     return geo
-  }, [data, domain, viewport])
+  }, [data, x1, x2, yScale])
 
   return (
     <lineSegments geometry={geometry}>
@@ -153,9 +156,8 @@ function AllLines({ data, domain, yScale }: AllLinesProps) {
   )
 }
 
-function HoveredLine({ data, domain, index, yScale }: HoveredLineProps) {
-  const { viewport, invalidate } = useThree()
-  const hh = viewport.height / 2
+function HoveredLine({ data, index, yScale, x1, x2 }: HoveredLineProps) {
+  const { invalidate } = useThree()
 
   useEffect(() => {
     invalidate()
@@ -163,10 +165,8 @@ function HoveredLine({ data, domain, index, yScale }: HoveredLineProps) {
 
   if (index === null || !data[index]) return null
 
-  const [x1, x2] = [-viewport.width / 2, viewport.width / 2]
-
-  const y1 = yScale(data[index].nCasesWithCategory)
-  const y2 = yScale(data[index].nControlsWithCategory)
+  const y1 = yScale(data[index].start)
+  const y2 = yScale(data[index].end)
 
   return (
     <group position={[0, 0, 0]}>
@@ -178,14 +178,14 @@ function HoveredLine({ data, domain, index, yScale }: HoveredLineProps) {
         color="red"
         lineWidth={2}
       />
-      {/* <mesh position={[x1, y1, 0]}>
+      <mesh position={[x1, y1, 0]}>
         <circleGeometry args={[0.05, 10]} />
-        <meshBasicMaterial color="rgb(182, 148, 255)" />
+        <meshBasicMaterial color="red" />
       </mesh>
       <mesh position={[x2, y2, 0]}>
         <circleGeometry args={[0.05, 10]} />
-        <meshBasicMaterial color="rgb(182, 148, 255)" />
-      </mesh> */}
+        <meshBasicMaterial color="red" />
+      </mesh>
     </group>
   )
 }
