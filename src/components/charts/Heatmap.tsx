@@ -7,14 +7,15 @@ import type { ColumnsOption, ConceptRow } from "../../utils/types"
 import { scaleSequential, type ScaleSequential } from "d3-scale"
 import { interpolateRdYlBu } from "d3-scale-chromatic"
 import { OrthographicCamera } from "three"
+import type { MRT_TableInstance } from "material-react-table"
 
 type HeatmapProps = {
-  data: ConceptRow[]
+  table: MRT_TableInstance<ConceptRow>
   metricKey: string
   tableContainerRef: RefObject<HTMLDivElement | null>
 }
 type HeatmapCellsProps = {
-  data: ConceptRow[]
+  table: MRT_TableInstance<ConceptRow>
   columns: ColumnsOption[]
   metricKey: string
   width: number
@@ -29,12 +30,21 @@ type CameraProps = {
 
 const PADDING = 1
 
-function HeatmapCells({ data, columns, metricKey, width, height, colorScale }: HeatmapCellsProps) {
-  const rows = data.length
+const columns = [
+  "-log10Binary",
+  "-log10Category",
+  "-log10Count",
+  "-log10Age",
+  "-log10Days",
+  "-log10Continuous",
+]
+
+function HeatmapCells({ table, columns, metricKey, width, height, colorScale }: HeatmapCellsProps) {
+  const rows = table.getFilteredRowModel().rows
   const cols = columns.length
 
   const cellW = width / cols
-  const cellH = height / rows
+  const cellH = height / rows.length
 
   // R3F uses a coordinate system centered at (0,0)
   // so we offset by half the total size to start from top-left
@@ -43,11 +53,15 @@ function HeatmapCells({ data, columns, metricKey, width, height, colorScale }: H
 
   return (
     <>
-      {data.map((row, rowIdx) =>
+      {rows.map((row, rowIdx) =>
         columns.map((col, colIdx) => {
-          const raw = row[col.key]?.[0]?.[0]?.[metricKey]
+          const raw = row.getValue<number>(col)
+
           const p = raw ?? 0 // default to 1 (cold/blue) if missing
-          const color = colorScale(p)
+
+          const normalized = Math.pow(10, p)
+          const color = colorScale(normalized)
+          console.log(p)
 
           const x = offsetX + colIdx * cellW
           const y = offsetY - rowIdx * cellH
@@ -83,13 +97,13 @@ function OrthoCamera({ width, height }: CameraProps) {
   return null
 }
 
-export function Heatmap({ data, metricKey = "pValue", tableContainerRef }: HeatmapProps) {
+export function Heatmap({ table, metricKey = "pValue", tableContainerRef }: HeatmapProps) {
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const wrapperRef = useRef(null)
 
   // Replace pValueToColor with a d3 scale
   const colorScale = scaleSequential()
-    .domain([1, 0]) // p-value range
+    .domain([100000, 0]) // p-value range
     .interpolator(interpolateRdYlBu) // Red=low(significant) → Blue=high
 
   // Match height to the MRT table container
@@ -120,8 +134,8 @@ export function Heatmap({ data, metricKey = "pValue", tableContainerRef }: Heatm
         >
           <OrthoCamera width={canvasSize.width} height={canvasSize.height} />
           <HeatmapCells
-            data={data}
-            columns={COLUMNS}
+            table={table}
+            columns={columns}
             metricKey={metricKey}
             width={canvasSize.width}
             height={canvasSize.height}

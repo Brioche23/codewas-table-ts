@@ -137,7 +137,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
       <FilterWrapper table={table} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <MaterialReactTable table={table} />
-        <Heatmap data={data} metricKey="pValue" tableContainerRef={tableContainerRef} />
+        <Heatmap table={table} metricKey="pValue" tableContainerRef={tableContainerRef} />
       </Box>
     </Container>
   )
