@@ -4,6 +4,7 @@ import {
   useMaterialReactTable,
   type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
+  type MRT_GroupingState,
 } from "material-react-table"
 import { Container } from "@mui/material"
 import type { ConceptRow, ConceptTableProps } from "../utils/types"
@@ -21,6 +22,8 @@ import { TopToolbar } from "./TopToolbar"
 // ─── main table ───────────────────────────────────────────────────────────
 
 export default function MainTable({ data, setData }: ConceptTableProps) {
+  const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
+
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
       id: "casesControl",
@@ -39,10 +42,26 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     [],
   )
 
+  // Expanded rows: one row per ancestorConceptId
+  const expandedRows = useMemo(() => {
+    if (!data) return []
+    return data.flatMap((row) =>
+      (row.ancestorConceptIds ?? []).map((ancestorId) => ({
+        ...row,
+        ancestorConceptIds: [ancestorId], // scalar, so MRT can group on it
+      })),
+    )
+  }, [data])
+
+  const isGrouping = grouping.includes("ancestorConceptIds")
+
+  const tableData = useMemo(() => (isGrouping ? expandedRows : data), [isGrouping])
+
   const table = useMaterialReactTable({
     columns,
-    data,
+    data: tableData,
     state: {
+      grouping,
       columnFilters,
       columnVisibility: {
         conceptName: false,
@@ -59,13 +78,12 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
       size: 115, // starting point — override per column as needed
       maxSize: 400,
     },
-    // enableGrouping: true,
     // ── expand ──
     // renderDetailPanel: ({ row }) => <ConceptDetailPanel row={row} />,
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
-      grouping: ["ancestorConceptId"],
+      grouping: ["ancestorConceptIds"],
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load
@@ -75,6 +93,11 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
       pagination: { pageSize: 20, pageIndex: 0 },
       columnPinning: { left: ["info"] },
       density: "compact",
+    },
+    onGroupingChange: (updater) => {
+      // updater can be a value or a function (MRT uses the same pattern as React setState)
+      const newGrouping = typeof updater === "function" ? updater(grouping) : updater
+      setGrouping(newGrouping)
     },
 
     // ── filtering ──

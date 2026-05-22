@@ -1,31 +1,26 @@
 import * as THREE from "three"
-import { Canvas, useThree } from "@react-three/fiber"
-import { Line, Text } from "@react-three/drei"
+import { Canvas } from "@react-three/fiber"
 
 import { extent, scaleLinear, type ScaleLinear } from "d3"
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react"
+import { useCallback, useMemo, useState, type MouseEvent } from "react"
 
 import { Box } from "@mui/material"
 import { YAxis } from "./YAxis"
 
 type SlopeChartData = {
-  id: string
+  id: number
   start: number
   end: number
 }
 
 type SlopeChartProps = {
   data: SlopeChartData[]
+  visibleDataIds: number[]
 }
 type AllLinesProps = {
   data: SlopeChartData[]
-  yScale: ScaleLinear<number, number, never>
-  x1: number
-  x2: number
-}
-type HoveredLineProps = {
-  data: SlopeChartData[]
-  index: number | null
+  visibleDataIds: number[]
+
   yScale: ScaleLinear<number, number, never>
   x1: number
   x2: number
@@ -40,8 +35,9 @@ const ZOOM = 50
 const worldWidth = CANVAS_SIZE.width / ZOOM
 const worldHeight = CANVAS_SIZE.height / ZOOM
 
-export function SlopeChart({ data }: SlopeChartProps) {
+export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
   console.log(data)
+  console.log(visibleDataIds)
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
@@ -51,7 +47,6 @@ export function SlopeChart({ data }: SlopeChartProps) {
 
   const sortedData = useMemo(() => [...data].sort((a, b) => +a.start - +b.start), [data])
 
-  console.log(ext)
   const yScale = useMemo(
     () =>
       scaleLinear()
@@ -106,7 +101,13 @@ export function SlopeChart({ data }: SlopeChartProps) {
           gl.setPixelRatio(window.devicePixelRatio)
         }}
       >
-        <AllLines data={sortedData} yScale={yScale} x1={x1} x2={x2} />
+        <AllLines
+          data={sortedData}
+          visibleDataIds={visibleDataIds}
+          yScale={yScale}
+          x1={x1}
+          x2={x2}
+        />
         <YAxis
           yScale={yScale}
           x={x1}
@@ -123,7 +124,7 @@ export function SlopeChart({ data }: SlopeChartProps) {
           tickCount={10}
           label="controls"
         />
-        <HoveredLine data={sortedData} index={hoveredIndex} yScale={yScale} x1={x1} x2={x2} />
+        {/* <HoveredLine data={sortedData} index={hoveredIndex} yScale={yScale} x1={x1} x2={x2} /> */}
       </Canvas>
 
       {hoveredIndex && <p>id: {data[hoveredIndex].id}</p>}
@@ -131,68 +132,88 @@ export function SlopeChart({ data }: SlopeChartProps) {
   )
 }
 
-function AllLines({ data, yScale, x1, x2 }: AllLinesProps) {
-  const geometry = useMemo(() => {
-    const positions = new Float32Array(data.length * 6) // 2 points * xyz = 6 floats per line
+function AllLines({ data, visibleDataIds, yScale, x1, x2 }: AllLinesProps) {
+  const { selectedGeo, unselectedGeo } = useMemo(() => {
+    const selected = data.filter((d) => visibleDataIds.includes(d.id))
+    const unselected = data.filter((d) => !visibleDataIds.includes(d.id))
 
-    data.forEach((d, i) => {
-      const offset = i * 6
+    const buildGeo = (
+      items: SlopeChartData[],
+      color: string,
+      index: number = 0,
+    ): THREE.BufferGeometry => {
+      const positions = new Float32Array(items.length * 6)
+      const colors = new Float32Array(items.length * 6)
+      const c = new THREE.Color(color)
+      items.forEach((d, i) => {
+        const o = i * 6
+        positions[o] = x1
+        positions[o + 1] = yScale(d.start)
+        positions[o + 2] = index
+        positions[o + 3] = x2
+        positions[o + 4] = yScale(d.end)
+        positions[o + 5] = index
+        colors[o] = c.r
+        colors[o + 1] = c.g
+        colors[o + 2] = c.b
+        colors[o + 3] = c.r
+        colors[o + 4] = c.g
+        colors[o + 5] = c.b
+      })
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3))
+      geo.setAttribute("color", new THREE.BufferAttribute(colors, 3))
+      return geo
+    }
 
-      // Point A
-      positions[offset + 0] = x1
-      positions[offset + 1] = yScale(d.start)
-      positions[offset + 2] = 0
-      // Point B
-      positions[offset + 3] = x2
-      positions[offset + 4] = yScale(d.end)
-      positions[offset + 5] = 0
-    })
-
-    const colors = new Float32Array(data.length * 6) // RGB per vertex
-
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3))
-    return geo
-  }, [data, x1, x2, yScale])
+    return {
+      selectedGeo: buildGeo(selected, "red", 1),
+      unselectedGeo: buildGeo(unselected, "blue"),
+    }
+  }, [data, visibleDataIds, x1, x2, yScale])
 
   return (
-    <lineSegments geometry={geometry}>
-      <lineBasicMaterial color={"grey"} opacity={0.5} transparent />
-    </lineSegments>
+    <>
+      <lineSegments geometry={unselectedGeo}>
+        <lineBasicMaterial vertexColors opacity={0.1} transparent />
+      </lineSegments>
+      <lineSegments geometry={selectedGeo}>
+        <lineBasicMaterial vertexColors opacity={1} />
+      </lineSegments>
+    </>
   )
 }
 
-function HoveredLine({ data, index, yScale, x1, x2 }: HoveredLineProps) {
-  const { invalidate } = useThree()
+// function HoveredLine({ data, index, yScale, x1, x2 }: HoveredLineProps) {
+//   const { invalidate } = useThree()
 
-  useEffect(() => {
-    invalidate()
-  }, [index]) // tell R3F to re-render on index change
+//   useEffect(() => {
+//     invalidate()
+//   }, [index]) // tell R3F to re-render on index change
 
-  if (index === null || !data[index]) return null
+//   if (index === null || !data[index]) return null
 
-  const y1 = yScale(data[index].start)
-  const y2 = yScale(data[index].end)
+//   const y1 = yScale(data[index].start)
+//   const y2 = yScale(data[index].end)
 
-  return (
-    <group position={[0, 0, 1]}>
-      <Line
-        points={[
-          [x1, y1, 0],
-          [x2, y2, 0],
-        ]}
-        color="red"
-        lineWidth={2}
-      />
-      <mesh position={[x1, y1, 0]}>
-        <circleGeometry args={[0.05, 10]} />
-        <meshBasicMaterial color="red" />
-      </mesh>
-      <mesh position={[x2, y2, 0]}>
-        <circleGeometry args={[0.05, 10]} />
-        <meshBasicMaterial color="red" />
-      </mesh>
-    </group>
-  )
-}
+//   return (
+//     <group position={[0, 0, 1]}>
+//       <Line
+//         points={[
+//           [x1, y1, 0],
+//           [x2, y2, 0],
+//         ]}
+//         color="red"
+//         lineWidth={2}
+//       />
+//       <mesh position={[x1, y1, 0]}>
+//         <circleGeometry args={[0.05, 10]} />
+//         <meshBasicMaterial color="red" />
+//       </mesh>
+//       <mesh position={[x2, y2, 0]}>
+//         <circleGeometry args={[0.05, 10]} />
+//         <meshBasicMaterial color="red" />
+//       </mesh>
+//     </group>
+//   )
+// }

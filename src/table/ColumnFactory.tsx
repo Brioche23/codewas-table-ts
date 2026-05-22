@@ -1,4 +1,4 @@
-import type { MRT_ColumnDef } from "material-react-table"
+import type { MRT_ColumnDef, MRT_FilterFn } from "material-react-table"
 import {
   type ConceptRow,
   type SummaryStats,
@@ -12,8 +12,7 @@ import { groupCellProps, valueChip } from "./tableUtils"
 import { COLUMNS_COLORS } from "../utils/constants"
 import { CasesControlCell } from "./custom-cells/CasesControlsCell"
 import { Info } from "@mui/icons-material"
-import { InfoFilter } from "./column-filters/InfoFilter"
-import { SlopeChart } from "../components/charts/SlopeChart"
+import { SlopeHeader } from "./custom-cells/SlopeHeader"
 
 // ─── Factory config ───────────────────────────────────────────────────────────
 
@@ -32,6 +31,12 @@ type StatGroupConfig = {
   paths: StatGroupPaths
 }
 
+// define it outside the component
+const ancestorFilterFn: MRT_FilterFn<ConceptRow> = (row, columnId, filterValue: string) => {
+  const ids = row.getValue<number[]>(columnId)
+  if (!filterValue) return true
+  return ids.some((id) => String(id).includes(filterValue))
+}
 // ─── Factory function ─────────────────────────────────────────────────────────
 
 export function makeStatGroup({
@@ -47,25 +52,16 @@ export function makeStatGroup({
     header,
     ...groupCellProps(color),
 
-    Header: (table) => {
-      const allValues = table.table.getFilteredRowModel().rows.map((row) => ({
-        id: row.getValue<string>("conceptId"),
-        data: row.getValue<SummaryStats>(`mean${id}`), // remove nulls
-      }))
-
-      const slopeChartData = allValues.map((d) => ({
-        id: d.id,
-        start: d.data?.meanValueCases ?? 0,
-        end: d.data?.meanValueControls ?? 0,
-      }))
-
-      return (
-        <div>
-          <p>Binary</p>
-          <SlopeChart data={slopeChartData} />
-        </div>
-      )
-    },
+    Header: ({ table }) => (
+      <SlopeHeader
+        table={table}
+        label={header}
+        idKey="conceptId"
+        dataKey={`mean${id}`}
+        getStart={(d: SummaryStats) => d?.meanValueCases ?? 0}
+        getEnd={(d: SummaryStats) => d?.meanValueControls ?? 0}
+      />
+    ),
     columns: [
       {
         id: `mean${id}`,
@@ -176,8 +172,8 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       maxSize: 300,
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
-      // enableColumnFilter: false,
-      Filter: ({ table }) => <InfoFilter table={table} />,
+      enableColumnFilter: false,
+      // Filter: ({ table }) => <InfoFilter table={table} />,
 
       Cell: ({ row }) => (
         <Box sx={{ width: 190 }}>
@@ -209,15 +205,30 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       header: "Concept ID",
       accessorKey: "conceptId",
       filterVariant: "text",
-      filterFn: "includes",
+      filterFn: "includesString",
       visibleInShowHideMenu: false,
     },
     {
-      id: "ancestorConceptId",
+      id: "ancestorConceptIds",
       header: "Ancestor Concept ID",
-      accessorKey: "ancestorConceptId",
+      Header: ({ column }) => (
+        <Tooltip title={column.columnDef.header} placement="top">
+          <p>Ancestors</p>
+        </Tooltip>
+      ),
+      accessorKey: "ancestorConceptIds",
+      Cell: (row) => (
+        <Box>
+          {row.cell.getValue<number[]>().map((id) => (
+            <Typography variant="body2" key={id}>
+              {id}
+            </Typography>
+          ))}
+        </Box>
+      ),
+
+      filterFn: ancestorFilterFn,
       filterVariant: "text",
-      filterFn: "includes",
       visibleInShowHideMenu: false,
     },
     {
@@ -226,7 +237,6 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       accessorKey: "domainId",
       filterVariant: "multi-select",
       filterFn: "arrIncludesSome",
-      filterSelectOptions: ["Condition", "Source:ICD10", "Source:ICPC", "Source:ENDPOINT"],
       visibleInShowHideMenu: false,
     },
   ],
@@ -243,28 +253,16 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
   id: "binary",
   header: "Binary",
   ...groupCellProps(COLUMNS_COLORS.color2),
-  Header: (table) => {
-    const allValues = table.table
-      .getFilteredRowModel()
-      .rows.map((row) => ({
-        id: row.getValue<string>("conceptId"),
-        data: row.getValue<BinaryCount>("casesControl"),
-      }))
-      .filter(Boolean) // remove nulls
-
-    const slopeChartData = allValues.map((d) => ({
-      id: d.id,
-      start: d.data.nCasesWithCategory,
-      end: d.data.nControlsWithCategory,
-    }))
-
-    return (
-      <div>
-        <p>Binary</p>
-        <SlopeChart data={slopeChartData} />
-      </div>
-    )
-  },
+  Header: ({ table }) => (
+    <SlopeHeader
+      table={table}
+      label="Binary"
+      idKey="conceptId"
+      dataKey="casesControl"
+      getStart={(d: BinaryCount) => d?.nCasesWithCategory ?? 0}
+      getEnd={(d: BinaryCount) => d?.nControlsWithCategory ?? 0}
+    />
+  ),
   columns: [
     {
       id: "casesControl",

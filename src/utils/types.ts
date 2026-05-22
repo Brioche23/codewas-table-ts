@@ -41,8 +41,8 @@ export interface ContinuousCount {
 
 // ─── Top-level Concept row ───
 export interface ConceptRow {
-  ancestorConceptId: number
   conceptId: number
+  ancestorConceptIds: number[]
   conceptName: string
   domainId: string
 
