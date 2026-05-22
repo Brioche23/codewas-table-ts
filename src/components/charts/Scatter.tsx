@@ -27,6 +27,30 @@ type KeyOption = {
   key: ScatterKey
 }
 
+type Columns = Extract<
+  keyof ConceptRow,
+  | "t_Binary"
+  | "t_Counts"
+  | "t_AgeFirstEvent"
+  | "t_DaysToFirstEvent"
+  | "t_Continuous"
+  | "t_Categorical"
+>
+
+type ColumnsOption = {
+  label: string
+  key: Columns
+}
+
+const COLUMNS: ColumnsOption[] = [
+  { key: "t_Binary", label: "Binary" },
+  { key: "t_Counts", label: "Counts" },
+  { key: "t_AgeFirstEvent", label: "Age at First Event" },
+  { key: "t_DaysToFirstEvent", label: "Days to First Event" },
+  { key: "t_Continuous", label: "Continuous" },
+  { key: "t_Categorical", label: "Categorical" },
+] satisfies ColumnsOption[]
+
 const KEYS: KeyOption[] = [
   { label: "P-Value", key: "pValue" },
   { label: "Effect Size", key: "effectSize" },
@@ -34,56 +58,75 @@ const KEYS: KeyOption[] = [
 ]
 
 type ScatterDimensions = {
-  x: ScatterKey
-  y: ScatterKey
+  x: Columns
+  y: Columns
 }
-
 export function Scatter({ data }: { data: ConceptRow[] }) {
   const theme = useTheme()
   const palette = rainbowSurgePalette(theme.palette.mode)
 
+  // Now a single key selector drives the metric, COLUMNS drive the axes
+  const [scatterPlotValue, setScatterPlotValue] = useState<ScatterKey>(KEYS[0].key)
   const [scatterPlotDimensions, setScatterPlotDimensions] = useState<ScatterDimensions>({
-    x: KEYS[0].key,
-    y: KEYS[1].key,
+    x: COLUMNS[0].key,
+    y: COLUMNS[1].key,
   })
 
   const scatterDataset = data.map((d) => ({
     uniqID: `${d.conceptId}-${d.conceptName}-${d.domainId}`,
     id: d.conceptId,
     name: d.conceptName,
-    x1: d.t_Binary[0][0][scatterPlotDimensions.x],
-    y1: d.t_Binary[0][0][scatterPlotDimensions.y],
+    x1: d[scatterPlotDimensions.x]?.[0]?.[0]?.[scatterPlotValue] ?? 0,
+    y1: d[scatterPlotDimensions.y]?.[0]?.[0]?.[scatterPlotValue] ?? 0,
   }))
 
-  const handleChange = (axis: keyof ScatterDimensions) => (e: SelectChangeEvent<ScatterKey>) => {
-    setScatterPlotDimensions((prev) => ({ ...prev, [axis]: e.target.value as ScatterKey }))
+  const handleAxisChange = (axis: keyof ScatterDimensions) => (e: SelectChangeEvent<Columns>) => {
+    setScatterPlotDimensions((prev) => ({ ...prev, [axis]: e.target.value as Columns }))
+  }
+
+  const handleKeyChange = (e: SelectChangeEvent<ScatterKey>) => {
+    setScatterPlotValue(e.target.value as ScatterKey)
   }
 
   return (
     <Grid spacing={2} size={{ xs: 12, md: 6 }}>
       <Grid spacing={2} direction={"row"}>
+        {/* X axis: picks a column */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>X Axis</InputLabel>
-          <Select<ScatterKey>
+          <Select<Columns>
             value={scatterPlotDimensions.x}
             label="X Axis"
-            onChange={handleChange("x")}
+            onChange={handleAxisChange("x")}
           >
-            {KEYS.map((k) => (
-              <MenuItem key={k.key} value={k.key}>
-                {k.label}
+            {COLUMNS.map((col) => (
+              <MenuItem key={col.key} value={col.key}>
+                {col.label}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
 
+        {/* Y axis: picks a column */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Y Axis</InputLabel>
-          <Select<ScatterKey>
+          <Select<Columns>
             value={scatterPlotDimensions.y}
             label="Y Axis"
-            onChange={handleChange("y")}
+            onChange={handleAxisChange("y")}
           >
+            {COLUMNS.map((col) => (
+              <MenuItem key={col.key} value={col.key}>
+                {col.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {/* Metric: picks a key (pValue, effectSize, etc.) */}
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Metric</InputLabel>
+          <Select<ScatterKey> value={scatterPlotValue} label="Metric" onChange={handleKeyChange}>
             {KEYS.map((k) => (
               <MenuItem key={k.key} value={k.key}>
                 {k.label}
@@ -103,22 +146,17 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
               markerSize: 3,
               label: "Concept",
               color: palette[2],
-              valueFormatter: (v) => v && `${v.id} with  ${v.x} pVal and ${v.y} effect size `,
+              valueFormatter: (v) => v && `${v.id} — x: ${v.x}, y: ${v.y}`,
             },
-            //   {
-            //     id: "no-value",
-            //     datasetKeys: { x: "x2", y: "y2" },
-            //     markerSize: 3,
-            //     label: "No Value",
-            //     color: palette[3],
-            //   },
           ]}
           xAxis={[
             {
               height: 50,
               tickLabelPlacement: "middle",
               tickLabelStyle: { fontSize: 10, fontWeight: "bold" },
-              label: KEYS.filter((k) => k.key === scatterPlotDimensions.x)[0].label,
+              label:
+                COLUMNS.find((c) => c.key === scatterPlotDimensions.x)?.label ??
+                scatterPlotDimensions.x, // column name as axis label
               labelStyle: { fontSize: 10, fontWeight: "bold" },
             },
           ]}
@@ -127,14 +165,15 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
               width: 75,
               tickLabelPlacement: "middle",
               tickLabelStyle: { fontSize: 10, fontWeight: "bold" },
-              label: KEYS.filter((k) => k.key === scatterPlotDimensions.y)[0].label,
+              label:
+                COLUMNS.find((c) => c.key === scatterPlotDimensions.y)?.label ??
+                scatterPlotDimensions.y, // column name as axis label
               labelStyle: { fontSize: 10, fontWeight: "bold" },
             },
           ]}
           grid={{ vertical: true, horizontal: true }}
         >
           <RegressionLine seriesId="has-value" colorIndex={2} />
-          {/* <RegressionLine seriesId="no-value" colorIndex={3} /> */}
         </ScatterChart>
       </Paper>
     </Grid>

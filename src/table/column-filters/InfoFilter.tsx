@@ -85,12 +85,11 @@ export function InfoFilter({ table }: InfoFilterProps) {
       <TextField
         label="Concept ID"
         size="small"
-        type="number"
         value={conceptIdValue}
         onChange={(e) => conceptIdColumn?.setFilterValue(e.target.value)}
       />
       <TextField
-        label="Ancestors Concept ID"
+        label="Ancestors ID"
         size="small"
         // type="number"
         value={ancestorIdsValue}
