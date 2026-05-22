@@ -8,7 +8,7 @@ import {
   useTheme,
   type SelectChangeEvent,
 } from "@mui/material"
-import type { ConceptRow } from "../../utils/types"
+import type { Columns, ConceptRow } from "../../utils/types"
 import {
   ChartsClipPath,
   rainbowSurgePalette,
@@ -19,6 +19,7 @@ import {
 } from "@mui/x-charts"
 import { Fragment } from "react/jsx-runtime"
 import { useId, useState } from "react"
+import { COLUMNS } from "../../utils/constants"
 
 type ScatterKey = "pValue" | "effectSize" | "standarizeMeanDifference"
 
@@ -26,30 +27,6 @@ type KeyOption = {
   label: string
   key: ScatterKey
 }
-
-type Columns = Extract<
-  keyof ConceptRow,
-  | "t_Binary"
-  | "t_Counts"
-  | "t_AgeFirstEvent"
-  | "t_DaysToFirstEvent"
-  | "t_Continuous"
-  | "t_Categorical"
->
-
-type ColumnsOption = {
-  label: string
-  key: Columns
-}
-
-const COLUMNS: ColumnsOption[] = [
-  { key: "t_Binary", label: "Binary" },
-  { key: "t_Counts", label: "Counts" },
-  { key: "t_AgeFirstEvent", label: "Age at First Event" },
-  { key: "t_DaysToFirstEvent", label: "Days to First Event" },
-  { key: "t_Continuous", label: "Continuous" },
-  { key: "t_Categorical", label: "Categorical" },
-] satisfies ColumnsOption[]
 
 const KEYS: KeyOption[] = [
   { label: "P-Value", key: "pValue" },

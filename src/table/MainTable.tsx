@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -6,7 +6,7 @@ import {
   type MRT_ColumnFiltersState,
   type MRT_GroupingState,
 } from "material-react-table"
-import { Container } from "@mui/material"
+import { Box, Container } from "@mui/material"
 import type { ConceptRow, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
@@ -18,10 +18,12 @@ import {
   categoryColumn,
 } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
+import { Heatmap } from "../components/charts/Heatmap"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
 export default function MainTable({ data, setData }: ConceptTableProps) {
+  const tableContainerRef = useRef(null)
   const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
@@ -111,7 +113,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
     // ── misc ──
     enableStickyHeader: true,
 
-    muiTableContainerProps: { sx: { maxHeight: "70vh" } },
+    muiTableContainerProps: { sx: { maxHeight: "70vh" }, ref: tableContainerRef },
     renderTopToolbarCustomActions: ({ table }) => <TopToolbar table={table} setData={setData} />,
 
     // Apply to all header cells globally
@@ -133,7 +135,10 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
   return (
     <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <FilterWrapper table={table} />
-      <MaterialReactTable table={table} />
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <MaterialReactTable table={table} />
+        <Heatmap data={data} metricKey="pValue" tableContainerRef={tableContainerRef} />
+      </Box>
     </Container>
   )
 }

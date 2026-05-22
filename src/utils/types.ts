@@ -89,3 +89,18 @@ export type FilterPreset = {
   name: string
   filters: MRT_ColumnFiltersState // only the filters the user checked
 }
+
+export type Columns = Extract<
+  keyof ConceptRow,
+  | "t_Binary"
+  | "t_Counts"
+  | "t_AgeFirstEvent"
+  | "t_DaysToFirstEvent"
+  | "t_Continuous"
+  | "t_Categorical"
+>
+
+export type ColumnsOption = {
+  label: string
+  key: Columns
+}
