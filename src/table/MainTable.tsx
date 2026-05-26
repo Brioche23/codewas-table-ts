@@ -19,6 +19,7 @@ import {
 } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
+import { Scatter } from "../components/charts/Scatter"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
@@ -134,6 +135,7 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
 
   return (
     <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Scatter data={table} />
       <FilterWrapper table={table} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <MaterialReactTable table={table} />

@@ -90,15 +90,7 @@ export type FilterPreset = {
   filters: MRT_ColumnFiltersState // only the filters the user checked
 }
 
-export type Columns = Extract<
-  keyof ConceptRow,
-  | "t_Binary"
-  | "t_Counts"
-  | "t_AgeFirstEvent"
-  | "t_DaysToFirstEvent"
-  | "t_Continuous"
-  | "t_Categorical"
->
+export type Columns = "Binary" | "Count" | "Age" | "Days" | "Continuous" | "Categorical"
 
 export type ColumnsOption = {
   label: string

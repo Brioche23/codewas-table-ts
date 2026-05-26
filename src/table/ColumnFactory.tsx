@@ -219,7 +219,7 @@ export const infoColumn: MRT_ColumnDef<ConceptRow> = {
       accessorKey: "ancestorConceptIds",
       Cell: (row) => (
         <Box>
-          {row.cell.getValue<number[]>().map((id) => (
+          {row.cell.getValue<number[]>()?.map((id) => (
             <Typography variant="body2" key={id}>
               {id}
             </Typography>
@@ -250,7 +250,7 @@ const getBinaryDist = (row: ConceptRow) => row.d_Binary?.[0] ?? null
 const getBinaryTest = (row: ConceptRow) => row.t_Binary?.[0]?.[0] ?? null
 
 export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
-  id: "binary",
+  id: "Binary",
   header: "Binary",
   ...groupCellProps(COLUMNS_COLORS.color2),
   Header: ({ table }) => (
@@ -452,7 +452,7 @@ const getCategoricalDist = (row: ConceptRow) => row.d_Categorical?.[0] ?? null /
 const getCategoricalTest = (row: ConceptRow) => row.t_Categorical?.[0]?.[0] ?? null
 
 export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
-  id: "category",
+  id: "Category",
   header: "Category",
   ...groupCellProps(COLUMNS_COLORS.color1), // add color if missing
   columns: [

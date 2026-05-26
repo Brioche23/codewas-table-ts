@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material"
+import { Chip, Typography } from "@mui/material"
 import type { MRT_ColumnDef } from "material-react-table"
 import type { ConceptRow } from "../utils/types"
 
@@ -7,7 +7,12 @@ export const valueChip = (value: number | null, threshold: number) => {
 
   const color = value >= threshold ? "success" : "error"
 
-  return <Chip label={fmt(value)} size="small" color={color} />
+  // return <Chip label={fmt(value)} size="small" color={color} />
+  return (
+    <Typography variant="body2" color={color}>
+      {fmt(value)}
+    </Typography>
+  )
 }
 
 export function groupCellProps(color: string): Partial<MRT_ColumnDef<ConceptRow>> {

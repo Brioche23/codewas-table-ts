@@ -20,8 +20,9 @@ import {
 import { Fragment } from "react/jsx-runtime"
 import { useId, useState } from "react"
 import { COLUMNS } from "../../utils/constants"
+import type { MRT_TableInstance } from "material-react-table"
 
-type ScatterKey = "pValue" | "effectSize" | "standarizeMeanDifference"
+type ScatterKey = "pValue" | "effectSize" | "standardizedMeanDifference" | "-log10"
 
 type KeyOption = {
   label: string
@@ -29,40 +30,68 @@ type KeyOption = {
 }
 
 const KEYS: KeyOption[] = [
-  { label: "P-Value", key: "pValue" },
+  { label: "pValue", key: "-log10" },
   { label: "Effect Size", key: "effectSize" },
-  { label: "Standardized Mean Difference", key: "standarizeMeanDifference" },
 ]
 
 type ScatterDimensions = {
   x: Columns
   y: Columns
 }
-export function Scatter({ data }: { data: ConceptRow[] }) {
+
+type Metric = "-log10" | "effectSize" | "standardizedMeanDifference"
+
+const COLUMN_MAP: Record<Columns, Partial<Record<Metric, string>>> = {
+  Binary: { "-log10": "-log10Binary", effectSize: "oddsRatioBinary" },
+  Count: { "-log10": "-log10Count", effectSize: "effectSizeCount" },
+  Age: { "-log10": "-log10Age", effectSize: "effectSizeAge" },
+  Days: { "-log10": "-log10Days", effectSize: "effectSizeDays" },
+  Continuous: { "-log10": "-log10Continuous", effectSize: "effectSizeContinuous" },
+  Categorical: { "-log10": "-log10Category", effectSize: "effectSizeCategory" },
+}
+
+// resolve the actual MRT column id from domain + metric
+const getColumnId = (domain: Columns, metric: Metric) => COLUMN_MAP[domain][metric]
+
+export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
   const theme = useTheme()
   const palette = rainbowSurgePalette(theme.palette.mode)
 
   // Now a single key selector drives the metric, COLUMNS drive the axes
-  const [scatterPlotValue, setScatterPlotValue] = useState<ScatterKey>(KEYS[0].key)
   const [scatterPlotDimensions, setScatterPlotDimensions] = useState<ScatterDimensions>({
-    x: COLUMNS[0].key,
-    y: COLUMNS[1].key,
+    x: "Binary",
+    y: "Count",
   })
 
-  const scatterDataset = data.map((d) => ({
-    uniqID: `${d.conceptId}-${d.conceptName}-${d.domainId}`,
-    id: d.conceptId,
-    name: d.conceptName,
-    x1: d[scatterPlotDimensions.x]?.[0]?.[0]?.[scatterPlotValue] ?? 0,
-    y1: d[scatterPlotDimensions.y]?.[0]?.[0]?.[scatterPlotValue] ?? 0,
-  }))
+  const [scatterPlotValue, setScatterPlotValue] = useState<Metric>("-log10")
+
+  const rows = data.getSortedRowModel().rows
+  console.log(rows.length)
+
+  if (rows.length === 0) return <p>Ungroup to see the chart</p>
+
+  const scatterDataset = rows.map((row) => {
+    const xValue = row.getValue<number>(
+      getColumnId(scatterPlotDimensions.x, scatterPlotValue) ?? "",
+    )
+    const yValue = row.getValue<number>(
+      getColumnId(scatterPlotDimensions.y, scatterPlotValue) ?? "",
+    )
+    return {
+      uniqID: row.id,
+      id: row.getValue<number>("conceptId"),
+      name: row.getValue<string>("conceptName"),
+      x1: scatterPlotValue === "-log10" ? Math.pow(10, -xValue) : xValue,
+      y1: scatterPlotValue === "-log10" ? Math.pow(10, -yValue) : yValue,
+    }
+  })
 
   const handleAxisChange = (axis: keyof ScatterDimensions) => (e: SelectChangeEvent<Columns>) => {
     setScatterPlotDimensions((prev) => ({ ...prev, [axis]: e.target.value as Columns }))
   }
 
-  const handleKeyChange = (e: SelectChangeEvent<ScatterKey>) => {
-    setScatterPlotValue(e.target.value as ScatterKey)
+  const handleKeyChange = (e: SelectChangeEvent<Metric>) => {
+    setScatterPlotValue(e.target.value as Metric)
   }
 
   return (
@@ -103,7 +132,7 @@ export function Scatter({ data }: { data: ConceptRow[] }) {
         {/* Metric: picks a key (pValue, effectSize, etc.) */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Metric</InputLabel>
-          <Select<ScatterKey> value={scatterPlotValue} label="Metric" onChange={handleKeyChange}>
+          <Select<Metric> value={scatterPlotValue} label="Metric" onChange={handleKeyChange}>
             {KEYS.map((k) => (
               <MenuItem key={k.key} value={k.key}>
                 {k.label}

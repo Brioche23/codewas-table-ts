@@ -4,8 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline, Container, Box, Grid, Alert } 
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
-// import { CustomBarChart } from "./components/charts/CustomBarChart"
-import { Scatter } from "./components/charts/Scatter"
+
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"
 
@@ -34,8 +33,6 @@ const theme = createTheme({
 export default function App() {
   const { data, setData, loading, error, filePath } = useDataSource()
 
-  const hasCharts = true
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -53,12 +50,6 @@ export default function App() {
           <InputFileUpload setData={setData} />
         ) : (
           <Container>
-            {hasCharts && (
-              <Grid container id="overview-charts-wrapper" spacing={2} sx={{ py: 2 }}>
-                {/* <CustomBarChart data={data} /> */}
-                <Scatter data={data} />
-              </Grid>
-            )}
             <Box>
               <MainTable data={data} setData={setData} />
             </Box>

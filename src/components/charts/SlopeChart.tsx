@@ -26,6 +26,13 @@ type AllLinesProps = {
   x2: number
 }
 
+type RangePolygonsProps = {
+  data: SlopeChartData[]
+  yScale: ScaleLinear<number, number, never>
+  x1: number
+  x2: number
+}
+
 const CANVAS_SIZE = {
   width: 400,
   height: 250,
@@ -34,6 +41,24 @@ const CANVAS_SIZE = {
 const ZOOM = 50
 const worldWidth = CANVAS_SIZE.width / ZOOM
 const worldHeight = CANVAS_SIZE.height / ZOOM
+
+function makeQuadGeometry(
+  x1: number,
+  y1top: number,
+  y1bot: number,
+  x2: number,
+  y2top: number,
+  y2bot: number,
+): THREE.ShapeGeometry {
+  // Trace the four corners as a closed 2D shape (counter-clockwise)
+  const shape = new THREE.Shape()
+  shape.moveTo(x1, y1bot) // bottom-left
+  shape.lineTo(x1, y1top) // top-left
+  shape.lineTo(x2, y2top) // top-right
+  shape.lineTo(x2, y2bot) // bottom-right
+  shape.closePath()
+  return new THREE.ShapeGeometry(shape)
+}
 
 export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
   console.log(data)
@@ -88,8 +113,8 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
     <Box
       id="canvas-container"
       sx={{ width: CANVAS_SIZE.width, height: CANVAS_SIZE.height, position: "relative" }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setHoveredIndex(null)}
+      // onMouseMove={handleMouseMove}
+      // onMouseLeave={() => setHoveredIndex(null)}
     >
       <Canvas
         orthographic
@@ -101,13 +126,14 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
           gl.setPixelRatio(window.devicePixelRatio)
         }}
       >
-        <AllLines
+        <RangePolygons data={sortedData} yScale={yScale} x1={x1} x2={x2} />
+        {/* <AllLines
           data={sortedData}
           visibleDataIds={visibleDataIds}
           yScale={yScale}
           x1={x1}
           x2={x2}
-        />
+        /> */}
         <YAxis
           yScale={yScale}
           x={x1}
@@ -184,36 +210,51 @@ function AllLines({ data, visibleDataIds, yScale, x1, x2 }: AllLinesProps) {
   )
 }
 
-// function HoveredLine({ data, index, yScale, x1, x2 }: HoveredLineProps) {
-//   const { invalidate } = useThree()
+export function RangePolygons({ data, yScale, x1, x2 }: RangePolygonsProps) {
+  const { casesGeo, controlsGeo } = useMemo(() => {
+    if (data.length === 0) return { casesGeo: null, controlsGeo: null }
 
-//   useEffect(() => {
-//     invalidate()
-//   }, [index]) // tell R3F to re-render on index change
+    // Cases polygon: anchored by min/max of `start`, follow those items to their `end`
+    const maxStartItem = data.reduce((a, b) => (b.start > a.start ? b : a))
+    const minStartItem = data.reduce((a, b) => (b.start < a.start ? b : a))
 
-//   if (index === null || !data[index]) return null
+    // Controls polygon: anchored by min/max of `end`, follow those items back to their `start`
+    const maxEndItem = data.reduce((a, b) => (b.end > a.end ? b : a))
+    const minEndItem = data.reduce((a, b) => (b.end < a.end ? b : a))
 
-//   const y1 = yScale(data[index].start)
-//   const y2 = yScale(data[index].end)
+    return {
+      casesGeo: makeQuadGeometry(
+        x1,
+        yScale(maxStartItem.start),
+        yScale(minStartItem.start),
+        x2,
+        yScale(maxStartItem.end),
+        yScale(minStartItem.end),
+      ),
+      controlsGeo: makeQuadGeometry(
+        x1,
+        yScale(maxEndItem.start),
+        yScale(minEndItem.start),
+        x2,
+        yScale(maxEndItem.end),
+        yScale(minEndItem.end),
+      ),
+    }
+  }, [data, yScale, x1, x2])
 
-//   return (
-//     <group position={[0, 0, 1]}>
-//       <Line
-//         points={[
-//           [x1, y1, 0],
-//           [x2, y2, 0],
-//         ]}
-//         color="red"
-//         lineWidth={2}
-//       />
-//       <mesh position={[x1, y1, 0]}>
-//         <circleGeometry args={[0.05, 10]} />
-//         <meshBasicMaterial color="red" />
-//       </mesh>
-//       <mesh position={[x2, y2, 0]}>
-//         <circleGeometry args={[0.05, 10]} />
-//         <meshBasicMaterial color="red" />
-//       </mesh>
-//     </group>
-//   )
-// }
+  if (!casesGeo || !controlsGeo) return null
+
+  return (
+    <>
+      {/* Cases polygon — anchored on the left (cases axis) */}
+      <mesh geometry={casesGeo}>
+        <meshBasicMaterial color="red" opacity={0.3} transparent side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Controls polygon — anchored on the right (controls axis) */}
+      <mesh geometry={controlsGeo}>
+        <meshBasicMaterial color="blue" opacity={0.3} transparent side={THREE.DoubleSide} />
+      </mesh>
+    </>
+  )
+}
