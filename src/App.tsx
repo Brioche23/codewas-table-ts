@@ -41,19 +41,16 @@ export default function App() {
       <Container
         id="main"
         component={"main"}
-        maxWidth="xl"
-        sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1 }}
+        sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1, maxWidth: 2400 }}
       >
         {loading && <Alert severity="info">Loading data from URL...</Alert>}
         {error && <Alert severity="error">Error: {error}</Alert>}
         {!data ? (
           <InputFileUpload setData={setData} />
         ) : (
-          <Container>
-            <Box>
-              <MainTable data={data} setData={setData} />
-            </Box>
-          </Container>
+          <Box>
+            <MainTable data={data} setData={setData} />
+          </Box>
         )}
       </Container>
       <Footer text={filePath} />

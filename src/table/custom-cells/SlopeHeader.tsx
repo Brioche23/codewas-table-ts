@@ -28,9 +28,9 @@ export function SlopeHeader({ table, label, idKey, dataKey, getStart, getEnd }: 
   return (
     <div>
       <p>{label}</p>
-      {slopeChartData.length > 0 && (
+      {/* {slopeChartData.length > 0 && (
         <SlopeChart data={slopeChartData} visibleDataIds={allVisibleValues} />
-      )}
+      )} */}
     </div>
   )
 }

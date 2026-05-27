@@ -46,7 +46,7 @@ type CameraProps = {
   height: number
 }
 
-const PADDING = 1
+const PADDING = 0
 
 const columns = [
   "-log10Binary",

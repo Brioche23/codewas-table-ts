@@ -10,13 +10,7 @@ import { Box, Container } from "@mui/material"
 import type { ConceptRow, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
-import {
-  infoColumn,
-  binaryColumn,
-  STAT_GROUPS,
-  makeStatGroup,
-  categoryColumn,
-} from "./ColumnFactory"
+import { useColumns } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
 import { Scatter } from "../components/charts/Scatter"
@@ -30,20 +24,22 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
       id: "casesControl",
-      value: ["5", null],
+      value: ["5", ""],
     },
     {
       id: "-log10Binary",
-      value: ["5", null],
+      value: ["5", ""],
     },
   ])
 
+  const conceptsById = useMemo<Record<number, ConceptRow>>(
+    () => Object.fromEntries((data ?? []).map((row) => [row.conceptId, row])),
+    [data],
+  )
+
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
-  const columns = useMemo<MRT_ColumnDef<ConceptRow>[]>(
-    () => [infoColumn, binaryColumn, ...STAT_GROUPS.map(makeStatGroup), categoryColumn],
-    [],
-  )
+  const columns = useColumns(conceptsById)
 
   // Expanded rows: one row per ancestorConceptId
   const expandedRows = useMemo(() => {
@@ -135,11 +131,11 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
 
   return (
     <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <Scatter data={table} />
+      {/* <Scatter data={table} /> */}
       <FilterWrapper table={table} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <MaterialReactTable table={table} />
-        <Heatmap table={table} metricKey="pValue" tableContainerRef={tableContainerRef} />
+        {/* <Heatmap table={table} metricKey="pValue" tableContainerRef={tableContainerRef} /> */}
       </Box>
     </Container>
   )

@@ -13,6 +13,7 @@ import { COLUMNS_COLORS } from "../utils/constants"
 import { CasesControlCell } from "./custom-cells/CasesControlsCell"
 import { Info } from "@mui/icons-material"
 import { SlopeHeader } from "./custom-cells/SlopeHeader"
+import { useMemo } from "react"
 
 // ─── Factory config ───────────────────────────────────────────────────────────
 
@@ -84,21 +85,21 @@ export function makeStatGroup({
           )
         },
         filterVariant: "range",
-        filterFn: (row, columnId, filterValue) => {
-          const [min, max] = filterValue
+        // filterFn: (row, columnId, filterValue) => {
+        //   const [min, max] = filterValue
 
-          const nMin = min ?? 0
-          const nMax = max ?? 99999
+        //   const nMin = min ?? 0
+        //   const nMax = max ?? 99999
 
-          const n = row.getValue<SummaryStats>(columnId)
-          if (!n) return false
+        //   const n = row.getValue<SummaryStats>(columnId)
+        //   if (!n) return false
 
-          const val = n.meanValueCases
+        //   const val = n.meanValueCases
 
-          if (min !== "" && min !== undefined && val < nMin) return false
-          if (max !== "" && max !== undefined && val > nMax) return false
-          return true
-        },
+        //   if (min !== "" && min !== undefined && val < nMin) return false
+        //   if (max !== "" && max !== undefined && val > nMax) return false
+        //   return true
+        // },
       },
       {
         id: `distribution${id}`,
@@ -154,92 +155,113 @@ export function makeStatGroup({
 // ─── Stat group configs ───────────────────────────────────────────────────────
 // Lives outside the component — no deps on props/state, never triggers re-renders
 
-export const infoColumn: MRT_ColumnDef<ConceptRow> = {
-  id: "main_info",
-  header: "Info",
-  columns: [
-    {
-      id: "info",
-      header: "Name/ConceptID/Domain",
-      Header: ({ column }) => (
-        <Tooltip title={column.columnDef.header} placement="top">
-          <Info />
-        </Tooltip>
-      ),
-
-      size: 200,
-      minSize: 40,
-      maxSize: 300,
-      ...groupCellProps(COLUMNS_COLORS.color1),
-      accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
-      enableColumnFilter: false,
-      // Filter: ({ table }) => <InfoFilter table={table} />,
-
-      Cell: ({ row }) => (
-        <Box sx={{ width: 190 }}>
-          <Tooltip title={row.original.conceptName} placement="right">
-            <Typography variant="body2" noWrap>
-              {row.original.conceptName}
-            </Typography>
+export const makeInfoColumn = (
+  conceptsById: Record<number, ConceptRow>,
+): MRT_ColumnDef<ConceptRow> => {
+  return {
+    id: "main_info",
+    header: "Info",
+    columns: [
+      {
+        id: "info",
+        header: "Name/ConceptID/Domain",
+        Header: ({ column }) => (
+          <Tooltip title={column.columnDef.header} placement="top">
+            <Info />
           </Tooltip>
-          <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-            {row.original.conceptId}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-            {row.original.domainId}
-          </Typography>
-        </Box>
-      ),
-    },
-    // Hidden — filter only
-    {
-      id: "conceptName",
-      header: "Name",
-      accessorKey: "conceptName",
-      filterVariant: "text", // plain string filter, MRT handles it natively
-      filterFn: "contains",
-      visibleInShowHideMenu: false, // don't clutter the column visibility menu
-    },
-    {
-      id: "conceptId",
-      header: "Concept ID",
-      accessorKey: "conceptId",
-      filterVariant: "text",
-      filterFn: "includesString",
-      visibleInShowHideMenu: false,
-    },
-    {
-      id: "ancestorConceptIds",
-      header: "Ancestor Concept ID",
-      Header: ({ column }) => (
-        <Tooltip title={column.columnDef.header} placement="top">
-          <p>Ancestors</p>
-        </Tooltip>
-      ),
-      accessorKey: "ancestorConceptIds",
-      Cell: (row) => (
-        <Box>
-          {row.cell.getValue<number[]>()?.map((id) => (
-            <Typography variant="body2" key={id}>
-              {id}
-            </Typography>
-          ))}
-        </Box>
-      ),
+        ),
 
-      filterFn: ancestorFilterFn,
-      filterVariant: "text",
-      visibleInShowHideMenu: false,
-    },
-    {
-      id: "domainId",
-      header: "Domain",
-      accessorKey: "domainId",
-      filterVariant: "multi-select",
-      filterFn: "arrIncludesSome",
-      visibleInShowHideMenu: false,
-    },
-  ],
+        size: 200,
+        minSize: 40,
+        maxSize: 300,
+        ...groupCellProps(COLUMNS_COLORS.color1),
+        accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
+        enableColumnFilter: false,
+        // Filter: ({ table }) => <InfoFilter table={table} />,
+        aggregationFn: "unique",
+        AggregatedCell: ({ cell }) => {
+          const ancestorId = cell.row.groupingValue as number
+          const concept = conceptsById[ancestorId]
+          if (!concept) return <Box sx={{ fontWeight: "bold" }}>{ancestorId} – No Match</Box>
+          return (
+            <Box>
+              <Typography variant="body2" noWrap>
+                {concept.conceptName}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                {concept.conceptId}
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                {concept.domainId}
+              </Typography>
+            </Box>
+          )
+        },
+        Cell: ({ row }) => (
+          <Box sx={{ width: 190 }}>
+            <Tooltip title={row.original.conceptName} placement="right">
+              <Typography variant="body2" noWrap>
+                {row.original.conceptName}
+              </Typography>
+            </Tooltip>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              {row.original.conceptId}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              {row.original.domainId}
+            </Typography>
+          </Box>
+        ),
+      },
+      // Hidden — filter only
+      {
+        id: "conceptName",
+        header: "Name",
+        accessorKey: "conceptName",
+        filterVariant: "text", // plain string filter, MRT handles it natively
+        filterFn: "contains",
+        visibleInShowHideMenu: false, // don't clutter the column visibility menu
+      },
+      {
+        id: "conceptId",
+        header: "Concept ID",
+        accessorKey: "conceptId",
+        filterVariant: "text",
+        filterFn: "includesString",
+        visibleInShowHideMenu: false,
+      },
+      {
+        id: "ancestorConceptIds",
+        header: "Ancestor Concept ID",
+        Header: ({ column }) => (
+          <Tooltip title={column.columnDef.header} placement="top">
+            <p>Ancestors</p>
+          </Tooltip>
+        ),
+        accessorKey: "ancestorConceptIds",
+        Cell: (row) => (
+          <Box>
+            {row.cell.getValue<number[]>()?.map((id) => (
+              <Typography variant="body2" key={id}>
+                {id}
+              </Typography>
+            ))}
+          </Box>
+        ),
+        filterFn: ancestorFilterFn,
+        filterVariant: "text",
+        visibleInShowHideMenu: false,
+      },
+      {
+        id: "domainId",
+        header: "Domain",
+        accessorKey: "domainId",
+        filterVariant: "multi-select",
+        filterFn: "arrIncludesSome",
+        visibleInShowHideMenu: false,
+      },
+    ],
+  }
 }
 
 // ─── Safe accessors ───────────────────────────────────────────────────────────
@@ -295,6 +317,9 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       filterVariant: "range",
       filterFn: (row, columnId, filterValue) => {
         const [min, max] = filterValue
+
+        console.log(min)
+        console.log(max)
 
         const nMin = min ?? 0
         const nMax = max ?? 99999
@@ -537,4 +562,12 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       filterVariant: "range",
     },
   ],
+}
+
+export function useColumns(conceptsById: Record<number, ConceptRow>) {
+  return useMemo<MRT_ColumnDef<ConceptRow>[]>(() => {
+    const infoColumn = makeInfoColumn(conceptsById)
+    const cols = [infoColumn, binaryColumn, ...STAT_GROUPS.map(makeStatGroup), categoryColumn]
+    return cols
+  }, [conceptsById])
 }
