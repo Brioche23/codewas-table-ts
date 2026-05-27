@@ -17,7 +17,7 @@ import { Scatter } from "../components/charts/Scatter"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
-export default function MainTable({ data, setData }: ConceptTableProps) {
+export default function MainTable({ data, setData, pageView }: ConceptTableProps) {
   const tableContainerRef = useRef(null)
   const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
 
@@ -131,12 +131,23 @@ export default function MainTable({ data, setData }: ConceptTableProps) {
 
   return (
     <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {/* <Scatter data={table} /> */}
       <FilterWrapper table={table} />
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <MaterialReactTable table={table} />
-        {/* <Heatmap table={table} metricKey="pValue" tableContainerRef={tableContainerRef} /> */}
-      </Box>
+      {pageView === "charts" && (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Scatter data={table} />
+          <Heatmap
+            table={table}
+            metricKey="pValue"
+            tableContainerRef={tableContainerRef}
+            isGrouping={isGrouping}
+          />
+        </Box>
+      )}
+      {pageView === "table" && (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <MaterialReactTable table={table} />
+        </Box>
+      )}
     </Container>
   )
 }

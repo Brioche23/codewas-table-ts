@@ -7,6 +7,8 @@ import InputFileUpload from "./components/FileUpload"
 
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"
+import { useState } from "react"
+import type { PageViewOptions } from "./utils/types"
 
 const theme = createTheme({
   colorSchemes: {
@@ -32,6 +34,7 @@ const theme = createTheme({
 
 export default function App() {
   const { data, setData, loading, error, filePath } = useDataSource()
+  const [pageView, setPageView] = useState<PageViewOptions>("table")
 
   return (
     <ThemeProvider theme={theme}>
@@ -48,12 +51,10 @@ export default function App() {
         {!data ? (
           <InputFileUpload setData={setData} />
         ) : (
-          <Box>
-            <MainTable data={data} setData={setData} />
-          </Box>
+          <MainTable data={data} setData={setData} pageView={pageView} />
         )}
       </Container>
-      <Footer text={filePath} />
+      <Footer text={filePath} pageView={pageView} setPageView={setPageView} />
     </ThemeProvider>
   )
 }

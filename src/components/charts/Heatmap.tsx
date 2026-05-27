@@ -22,6 +22,7 @@ type HeatmapProps = {
   table: MRT_TableInstance<ConceptRow>
   metricKey: string
   tableContainerRef: RefObject<HTMLDivElement | null>
+  isGrouping: boolean
 }
 type HeatmapCellsProps = {
   table: MRT_TableInstance<ConceptRow>
@@ -84,8 +85,6 @@ function HeatmapCells({
 }: HeatmapCellsProps) {
   const allRows = table.getSortedRowModel().rows.filter((r) => !r.getIsGrouped())
   const pageRows = table.getPaginationRowModel().rows
-
-  // console.log(allRows)
 
   const getRowIds = (rows: MRT_Row<ConceptRow>[]): string[] =>
     rows.flatMap((r) => (r.subRows?.length ? getRowIds(r.subRows) : [r.id]))
@@ -179,12 +178,15 @@ function OrthoCamera({ width, height }: CameraProps) {
   return null
 }
 
-export function Heatmap({ table, metricKey = "pValue", tableContainerRef }: HeatmapProps) {
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+export function Heatmap({
+  table,
+  metricKey = "pValue",
+  tableContainerRef,
+  isGrouping,
+}: HeatmapProps) {
+  const [canvasSize, setCanvasSize] = useState({ width: 300, height: 500 })
   const [hoveredRow, setHoveredRow] = useState<MRT_Row<ConceptRow> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
-
-  const tableRows = table.getFilteredRowModel().rows
 
   // Replace pValueToColor with a d3 scale
   const colorScale = useMemo(
@@ -192,25 +194,27 @@ export function Heatmap({ table, metricKey = "pValue", tableContainerRef }: Heat
     [],
   ) // Red=low(significant) → Blue=high
 
-  // Match height to the MRT table container
-  useEffect(() => {
-    const tableEl = tableContainerRef?.current
-    const wrapperEl = wrapperRef?.current
-    if (!tableEl || !wrapperEl) return
-    const observer = new ResizeObserver(([entry]) => {
-      setCanvasSize({
-        width: wrapperEl.getBoundingClientRect().width,
-        height: entry.contentRect.height,
-      })
-    })
-    observer.observe(tableEl)
-    return () => observer.disconnect()
-  }, [])
+  // // Match height to the MRT table container
+  // useEffect(() => {
+  //   const tableEl = tableContainerRef?.current
+  //   const wrapperEl = wrapperRef?.current
+  //   if (!tableEl || !wrapperEl) return
+  //   const observer = new ResizeObserver(([entry]) => {
+  //     setCanvasSize({
+  //       width: wrapperEl.getBoundingClientRect().width,
+  //       height: entry.contentRect.height,
+  //     })
+  //   })
+  //   observer.observe(tableEl)
+  //   return () => observer.disconnect()
+  // }, [])
 
   // if (tableRows.length > 1000) return <p>Filter rows below 1000 to show heatmap</p>
 
+  if (isGrouping) return <p>Ungroup table first</p>
+
   return (
-    <div ref={wrapperRef} style={{ width: 150, height: canvasSize.height || 400 }}>
+    <div ref={wrapperRef} style={{ width: canvasSize.width, height: canvasSize.height || 400 }}>
       <Typography sx={{ minHeight: 50 }}>
         {hoveredRow?.getValue("conceptName") ?? "pValues"}
       </Typography>
