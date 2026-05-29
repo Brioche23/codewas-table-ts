@@ -85,21 +85,6 @@ export function makeStatGroup({
           )
         },
         filterVariant: "range",
-        // filterFn: (row, columnId, filterValue) => {
-        //   const [min, max] = filterValue
-
-        //   const nMin = min ?? 0
-        //   const nMax = max ?? 99999
-
-        //   const n = row.getValue<SummaryStats>(columnId)
-        //   if (!n) return false
-
-        //   const val = n.meanValueCases
-
-        //   if (min !== "" && min !== undefined && val < nMin) return false
-        //   if (max !== "" && max !== undefined && val > nMax) return false
-        //   return true
-        // },
       },
       {
         id: `distribution${id}`,
@@ -134,6 +119,18 @@ export function makeStatGroup({
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
         filterVariant: "range",
         sortUndefined: "last",
+        aggregationFn: "max",
+        AggregatedCell: ({ cell }) => (
+          <>
+            <p>Max: </p>
+            <Typography
+              variant="body2"
+              sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+            >
+              {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+            </Typography>
+          </>
+        ),
       },
       {
         id: `effectSize${id}`,
@@ -147,6 +144,18 @@ export function makeStatGroup({
         accessorFn: (row) => paths.t(row)?.effectSize ?? null,
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), effectSizeThreshold),
         filterVariant: "range",
+        aggregationFn: "mean",
+        AggregatedCell: ({ cell }) => (
+          <>
+            <p>Mean: </p>
+            <Typography
+              variant="body2"
+              sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+            >
+              {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+            </Typography>
+          </>
+        ),
       },
     ],
   }
@@ -309,6 +318,18 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           />
         )
       },
+      aggregationFn: "sumBinaryCount",
+
+      AggregatedCell: ({ cell }) => {
+        const val = cell.getValue<BinaryCount>()
+        return (
+          <CasesControlCell
+            cases={val?.nCasesWithCategory}
+            controls={val?.nControlsWithCategory}
+            nDecimals={0}
+          />
+        )
+      },
       sortingFn: (rowA, rowB, columnId) => {
         const a = rowA.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
         const b = rowB.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
@@ -374,14 +395,16 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           <p>-log10</p>
         </Tooltip>
       ),
-      aggregationFn: "max", //show the max age in the group (lots of pre-built aggregationFns to choose from)
-      //required to render an aggregated cell
+      aggregationFn: "max",
       AggregatedCell: ({ cell }) => (
         <>
-          <span>Highest</span>
-          <Box sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}>
-            {cell.getValue<number>()}
-          </Box>
+          <p>Max: </p>
+          <Typography
+            variant="body2"
+            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+          >
+            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+          </Typography>
         </>
       ),
       ...groupCellProps(COLUMNS_COLORS.color2),
@@ -405,10 +428,13 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       aggregationFn: "mean",
       AggregatedCell: ({ cell }) => (
         <>
-          <span>Mean</span>
-          <Box sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}>
-            {cell.getValue<number>()}
-          </Box>
+          <p>Mean: </p>
+          <Typography
+            variant="body2"
+            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+          >
+            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+          </Typography>
         </>
       ),
       ...groupCellProps(COLUMNS_COLORS.color2),
@@ -547,6 +573,18 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
       filterVariant: "range",
       sortUndefined: "last",
+      aggregationFn: "max",
+      AggregatedCell: ({ cell }) => (
+        <>
+          <p>Max: </p>
+          <Typography
+            variant="body2"
+            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+          >
+            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+          </Typography>
+        </>
+      ),
     },
     {
       id: "CramersVCategory",
@@ -560,6 +598,18 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
+      aggregationFn: "mean",
+      AggregatedCell: ({ cell }) => (
+        <>
+          <p>Mean: </p>
+          <Typography
+            variant="body2"
+            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+          >
+            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+          </Typography>
+        </>
+      ),
     },
   ],
 }

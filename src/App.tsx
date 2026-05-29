@@ -44,7 +44,8 @@ export default function App() {
       <Container
         id="main"
         component={"main"}
-        sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1, maxWidth: 2400 }}
+        maxWidth={false}
+        sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1 }}
       >
         {loading && <Alert severity="info">Loading data from URL...</Alert>}
         {error && <Alert severity="error">Error: {error}</Alert>}

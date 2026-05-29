@@ -14,6 +14,7 @@ import { useColumns } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
 import { Scatter } from "../components/charts/Scatter"
+import { sumBinaryCount } from "../utils/aggregations"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
@@ -56,9 +57,16 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
 
   const tableData = useMemo(() => (isGrouping ? expandedRows : data), [isGrouping])
 
+  const rootRows = useMemo(() => {
+    if (!data) return []
+    const allAncestorIds = new Set(data.flatMap((r) => r.ancestorConceptIds ?? []))
+    return data.filter((r) => allAncestorIds.has(r.conceptId))
+  }, [data])
   const table = useMaterialReactTable({
     columns,
     data: tableData,
+    // enableExpanding: true,
+    aggregationFns: { sumBinaryCount },
     state: {
       grouping,
       columnFilters,
@@ -69,7 +77,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         // ancestorConceptId: false,
       },
     },
-    onColumnFiltersChange: setColumnFilters,
+    // getSubRows: (row) => data.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
     layoutMode: "grid-no-grow",
 
     defaultColumn: {
@@ -82,7 +90,6 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
-      grouping: ["ancestorConceptIds"],
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load
@@ -130,7 +137,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
   })
 
   return (
-    <Container component="section" sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
       <FilterWrapper table={table} />
       {pageView === "charts" && (
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -148,6 +155,6 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
           <MaterialReactTable table={table} />
         </Box>
       )}
-    </Container>
+    </Box>
   )
 }
