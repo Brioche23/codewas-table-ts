@@ -20,7 +20,7 @@ import { sumBinaryCount } from "../utils/aggregations"
 
 export default function MainTable({ data, setData, pageView }: ConceptTableProps) {
   const tableContainerRef = useRef(null)
-  const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
+  const [grouping, setGrouping] = useState<MRT_GroupingState>([])
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
@@ -33,9 +33,18 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     },
   ])
 
-  const conceptsById = useMemo<Record<number, ConceptRow>>(
-    () => Object.fromEntries((data ?? []).map((row) => [row.conceptId, row])),
+  const formattedData = useMemo(
+    () =>
+      data.map((d) => ({
+        ...d,
+        isStandard: !d.domainId.includes("Source:"),
+      })),
     [data],
+  )
+
+  const conceptsById = useMemo<Record<number, ConceptRow>>(
+    () => Object.fromEntries((formattedData ?? []).map((row) => [row.conceptId, row])),
+    [formattedData],
   )
 
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
@@ -44,40 +53,54 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
 
   // Expanded rows: one row per ancestorConceptId
   const expandedRows = useMemo(() => {
-    if (!data) return []
-    return data.flatMap((row) =>
+    if (!formattedData) return []
+    return formattedData.flatMap((row) =>
       (row.ancestorConceptIds ?? []).map((ancestorId) => ({
         ...row,
         ancestorConceptIds: [ancestorId], // scalar, so MRT can group on it
       })),
     )
-  }, [data])
+  }, [formattedData])
 
   const isGrouping = grouping.includes("ancestorConceptIds")
 
-  const tableData = useMemo(() => (isGrouping ? expandedRows : data), [isGrouping])
-
+  const tableData = useMemo(() => (isGrouping ? expandedRows : formattedData), [isGrouping])
   const rootRows = useMemo(() => {
-    if (!data) return []
-    const allAncestorIds = new Set(data.flatMap((r) => r.ancestorConceptIds ?? []))
-    return data.filter((r) => allAncestorIds.has(r.conceptId))
-  }, [data])
+    if (!formattedData) return []
+
+    // IDs of concepts that exist in the dataset and appear as someone's ancestor
+    const allConceptIds = new Set(formattedData.map((r) => r.conceptId))
+
+    const ancestorIdsInDataset = new Set(
+      formattedData
+        .flatMap((r) => r.ancestorConceptIds ?? [])
+        .filter((id) => allConceptIds.has(id)), // O(1) lookup now
+    )
+
+    // A row is a root if none of its ancestors exist in the dataset
+    return formattedData.filter(
+      (r) => !r.ancestorConceptIds?.some((id) => ancestorIdsInDataset.has(id)),
+    )
+  }, [formattedData])
+  console.log("rootRows", rootRows)
+
   const table = useMaterialReactTable({
     columns,
-    data: tableData,
-    // enableExpanding: true,
+    data: rootRows,
+    enableExpanding: true,
+    enableExpandAll: false,
+    filterFromLeafRows: true,
     aggregationFns: { sumBinaryCount },
     state: {
-      grouping,
-      columnFilters,
+      // grouping,
       columnVisibility: {
         conceptName: false,
         conceptId: false,
         domainId: false,
-        // ancestorConceptId: false,
+        // ancestorConceptIds: false,
       },
     },
-    // getSubRows: (row) => data.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
+    getSubRows: (row) => expandedRows.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
     layoutMode: "grid-no-grow",
 
     defaultColumn: {
@@ -90,6 +113,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
+      columnFilters,
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load
@@ -97,7 +121,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         },
       ],
       pagination: { pageSize: 20, pageIndex: 0 },
-      columnPinning: { left: ["info"] },
+      columnPinning: { left: ["mrt-row-expand", "info"] },
       density: "compact",
     },
     onGroupingChange: (updater) => {

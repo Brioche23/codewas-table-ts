@@ -188,36 +188,48 @@ export const makeInfoColumn = (
         enableColumnFilter: false,
         // Filter: ({ table }) => <InfoFilter table={table} />,
         aggregationFn: "unique",
-        AggregatedCell: ({ cell }) => {
-          const ancestorId = cell.row.groupingValue as number
-          const concept = conceptsById[ancestorId]
-          if (!concept) return <Box sx={{ fontWeight: "bold" }}>{ancestorId} – No Match</Box>
-          return (
-            <Box>
-              <Typography variant="body2" noWrap>
-                {concept.conceptName}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                {concept.conceptId}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                {concept.domainId}
-              </Typography>
-            </Box>
-          )
-        },
+        // AggregatedCell: ({ cell }) => {
+        //   const ancestorId = cell.getValue()
+        //   console.log(ancestorId)
+        //   const concept = conceptsById[ancestorId]
+        //   if (!concept) return <Box sx={{ fontWeight: "bold" }}>{ancestorId}</Box>
+        //   return (
+        //     <Box>
+        //       <Typography variant="body2" noWrap>
+        //         {concept.conceptName}
+        //       </Typography>
+        //       <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //         {concept.conceptId}
+        //       </Typography>
+        //       <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //         {concept.domainId}
+        //       </Typography>
+        //       <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //         {concept.countMode}
+        //       </Typography>
+        //     </Box>
+        //   )
+        // },
         Cell: ({ row }) => (
-          <Box sx={{ width: 190 }}>
+          <Box
+            sx={{ width: 190, color: row.original.isStandard ? "primary.main" : "secondary.main" }}
+          >
             <Tooltip title={row.original.conceptName} placement="right">
               <Typography variant="body2" noWrap>
                 {row.original.conceptName}
               </Typography>
             </Tooltip>
             <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-              {row.original.conceptId}
+              ConceptID: {row.original.conceptId}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              Source: {row.original.sourceConceptCode}
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
               {row.original.domainId}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+              {row.original.countMode}
             </Typography>
           </Box>
         ),
@@ -320,16 +332,16 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       },
       aggregationFn: "sumBinaryCount",
 
-      AggregatedCell: ({ cell }) => {
-        const val = cell.getValue<BinaryCount>()
-        return (
-          <CasesControlCell
-            cases={val?.nCasesWithCategory}
-            controls={val?.nControlsWithCategory}
-            nDecimals={0}
-          />
-        )
-      },
+      // AggregatedCell: ({ cell }) => {
+      //   const val = cell.getValue<BinaryCount>()
+      //   return (
+      //     <CasesControlCell
+      //       cases={val?.nCasesWithCategory}
+      //       controls={val?.nControlsWithCategory}
+      //       nDecimals={0}
+      //     />
+      //   )
+      // },
       sortingFn: (rowA, rowB, columnId) => {
         const a = rowA.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
         const b = rowB.getValue<BinaryCount>(columnId)?.nCasesWithCategory ?? 0
@@ -396,17 +408,17 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
         </Tooltip>
       ),
       aggregationFn: "max",
-      AggregatedCell: ({ cell }) => (
-        <>
-          <p>Max: </p>
-          <Typography
-            variant="body2"
-            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-          >
-            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-          </Typography>
-        </>
-      ),
+      // AggregatedCell: ({ cell }) => (
+      //   <>
+      //     <p>Max: </p>
+      //     <Typography
+      //       variant="body2"
+      //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+      //     >
+      //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+      //     </Typography>
+      //   </>
+      // ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => {
         const t = getBinaryTest(row)
@@ -426,17 +438,17 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
         </Tooltip>
       ),
       aggregationFn: "mean",
-      AggregatedCell: ({ cell }) => (
-        <>
-          <p>Mean: </p>
-          <Typography
-            variant="body2"
-            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-          >
-            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-          </Typography>
-        </>
-      ),
+      // AggregatedCell: ({ cell }) => (
+      //   <>
+      //     <p>Mean: </p>
+      //     <Typography
+      //       variant="body2"
+      //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+      //     >
+      //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+      //     </Typography>
+      //   </>
+      // ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => getBinaryTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
@@ -574,17 +586,17 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       filterVariant: "range",
       sortUndefined: "last",
       aggregationFn: "max",
-      AggregatedCell: ({ cell }) => (
-        <>
-          <p>Max: </p>
-          <Typography
-            variant="body2"
-            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-          >
-            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-          </Typography>
-        </>
-      ),
+      // AggregatedCell: ({ cell }) => (
+      //   <>
+      //     <p>Max: </p>
+      //     <Typography
+      //       variant="body2"
+      //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+      //     >
+      //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+      //     </Typography>
+      //   </>
+      // ),
     },
     {
       id: "CramersVCategory",
@@ -599,17 +611,17 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
       aggregationFn: "mean",
-      AggregatedCell: ({ cell }) => (
-        <>
-          <p>Mean: </p>
-          <Typography
-            variant="body2"
-            sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-          >
-            {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-          </Typography>
-        </>
-      ),
+      // AggregatedCell: ({ cell }) => (
+      //   <>
+      //     <p>Mean: </p>
+      //     <Typography
+      //       variant="body2"
+      //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+      //     >
+      //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+      //     </Typography>
+      //   </>
+      // ),
     },
   ],
 }

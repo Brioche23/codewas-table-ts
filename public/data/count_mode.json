@@ -1,0 +1,4422 @@
+[
+  {
+    "conceptId": 28060,
+    "ancestorConceptIds": [437779, 4226263, 35708603, 36102934, 36110229, 36110265, 37203767, 37220048],
+    "conceptName": "Streptococcal sore throat",
+    "sourceConceptCode": "43878008",
+    "domainId": "Condition",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 68,
+        "nControlsWithCategory": 1677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 68,
+          "control": 1677
+        },
+        {
+          "value": "No",
+          "case": 33,
+          "control": 3666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 4.0368e-14,
+          "effectSize": 4.5046,
+          "standarizeMeanDifference": 0.7703,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.4118,
+        "meanValueControls": 1.5838,
+        "sdValueCases": 0.6744,
+        "sdValueControls": 0.8296
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 3,
+            "Controls": 4
+          },
+          {
+            "Measure": "max",
+            "Cases": 4,
+            "Controls": 6
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.0412,
+          "effectSize": 0.8914,
+          "standarizeMeanDifference": -1.9381,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 18.0882,
+        "meanValueControls": 17.3602,
+        "sdValueCases": 17.1549,
+        "sdValueControls": 17.1709
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p25",
+            "Cases": 6,
+            "Controls": 6
+          },
+          {
+            "Measure": "median",
+            "Cases": 12,
+            "Controls": 12
+          },
+          {
+            "Measure": "p75",
+            "Cases": 29,
+            "Controls": 26
+          },
+          {
+            "Measure": "p90",
+            "Cases": 47,
+            "Controls": 46
+          },
+          {
+            "Measure": "max",
+            "Cases": 64,
+            "Controls": 100
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.7325,
+          "effectSize": 0.7281,
+          "standarizeMeanDifference": 0.0424,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 4779.4118,
+        "meanValueControls": 6337.8384,
+        "sdValueCases": 6483.7468,
+        "sdValueControls": 6261.1666
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -7504,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": -771,
+            "Controls": 722
+          },
+          {
+            "Measure": "p25",
+            "Cases": 459,
+            "Controls": 1843
+          },
+          {
+            "Measure": "median",
+            "Cases": 2194,
+            "Controls": 3945
+          },
+          {
+            "Measure": "p75",
+            "Cases": 8882,
+            "Controls": 9312
+          },
+          {
+            "Measure": "p90",
+            "Cases": 15727,
+            "Controls": 16375
+          },
+          {
+            "Measure": "max",
+            "Cases": 21800,
+            "Controls": 36832
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0556,
+          "effectSize": -1558.4266,
+          "standarizeMeanDifference": -0.2445,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 28060,
+    "ancestorConceptIds": [437779, 4226263, 35708603, 36102934, 36110229, 36110265, 37203767, 37220048],
+    "conceptName": "Streptococcal sore throat",
+    "sourceConceptCode": "43878008",
+    "domainId": "Condition",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 68,
+        "nControlsWithCategory": 1677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 68,
+          "control": 1677
+        },
+        {
+          "value": "No",
+          "case": 33,
+          "control": 3666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 4.0368e-14,
+          "effectSize": 4.5046,
+          "standarizeMeanDifference": 0.7703,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.4118,
+        "meanValueControls": 1.5838,
+        "sdValueCases": 0.6744,
+        "sdValueControls": 0.8296
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 3,
+            "Controls": 4
+          },
+          {
+            "Measure": "max",
+            "Cases": 4,
+            "Controls": 6
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.0412,
+          "effectSize": 0.8914,
+          "standarizeMeanDifference": -1.9381,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 18.0882,
+        "meanValueControls": 17.3602,
+        "sdValueCases": 17.1549,
+        "sdValueControls": 17.1709
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p25",
+            "Cases": 6,
+            "Controls": 6
+          },
+          {
+            "Measure": "median",
+            "Cases": 12,
+            "Controls": 12
+          },
+          {
+            "Measure": "p75",
+            "Cases": 29,
+            "Controls": 26
+          },
+          {
+            "Measure": "p90",
+            "Cases": 47,
+            "Controls": 46
+          },
+          {
+            "Measure": "max",
+            "Cases": 64,
+            "Controls": 100
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.7325,
+          "effectSize": 0.7281,
+          "standarizeMeanDifference": 0.0424,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 4779.4118,
+        "meanValueControls": 6337.8384,
+        "sdValueCases": 6483.7468,
+        "sdValueControls": 6261.1666
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -7504,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": -771,
+            "Controls": 722
+          },
+          {
+            "Measure": "p25",
+            "Cases": 459,
+            "Controls": 1843
+          },
+          {
+            "Measure": "median",
+            "Cases": 2194,
+            "Controls": 3945
+          },
+          {
+            "Measure": "p75",
+            "Cases": 8882,
+            "Controls": 9312
+          },
+          {
+            "Measure": "p90",
+            "Cases": 15727,
+            "Controls": 16375
+          },
+          {
+            "Measure": "max",
+            "Cases": 21800,
+            "Controls": 36832
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0556,
+          "effectSize": -1558.4266,
+          "standarizeMeanDifference": -0.2445,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 30753,
+    "ancestorConceptIds": [31610, 4043371, 4181063, 35702754, 35707843],
+    "conceptName": "Esophagitis",
+    "sourceConceptCode": "16761005",
+    "domainId": "Condition",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 16,
+        "nControlsWithCategory": 409
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 16,
+          "control": 409
+        },
+        {
+          "value": "No",
+          "case": 85,
+          "control": 4934
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0044,
+          "effectSize": 2.2708,
+          "standarizeMeanDifference": 0.2563,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.125,
+        "meanValueControls": 37.6748,
+        "sdValueCases": 2.5265,
+        "sdValueControls": 3.2022
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 33,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 36,
+            "Controls": 34
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 36
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 39
+          },
+          {
+            "Measure": "p75",
+            "Cases": 41,
+            "Controls": 41
+          },
+          {
+            "Measure": "p90",
+            "Cases": 42,
+            "Controls": 43
+          },
+          {
+            "Measure": "max",
+            "Cases": 42,
+            "Controls": 44
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4987,
+          "effectSize": 0.4502,
+          "standarizeMeanDifference": 0.1561,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12483.9375,
+        "meanValueControls": 13774.2763,
+        "sdValueCases": 2080.6323,
+        "sdValueControls": 1158.6929
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5428,
+            "Controls": 11130
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11998,
+            "Controls": 12159
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12268,
+            "Controls": 12920
+          },
+          {
+            "Measure": "median",
+            "Cases": 12943,
+            "Controls": 13805
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13853,
+            "Controls": 14655
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14008,
+            "Controls": 15325
+          },
+          {
+            "Measure": "max",
+            "Cases": 14128,
+            "Controls": 16385
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0259,
+          "effectSize": -1290.3388,
+          "standarizeMeanDifference": -0.7662,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 30753,
+    "ancestorConceptIds": [31610, 4043371, 4181063, 35702754, 35707843],
+    "conceptName": "Esophagitis",
+    "sourceConceptCode": "16761005",
+    "domainId": "Condition",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 16,
+        "nControlsWithCategory": 409
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 16,
+          "control": 409
+        },
+        {
+          "value": "No",
+          "case": 85,
+          "control": 4934
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0044,
+          "effectSize": 2.2708,
+          "standarizeMeanDifference": 0.2563,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.125,
+        "meanValueControls": 37.6748,
+        "sdValueCases": 2.5265,
+        "sdValueControls": 3.2022
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 33,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 36,
+            "Controls": 34
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 36
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 39
+          },
+          {
+            "Measure": "p75",
+            "Cases": 41,
+            "Controls": 41
+          },
+          {
+            "Measure": "p90",
+            "Cases": 42,
+            "Controls": 43
+          },
+          {
+            "Measure": "max",
+            "Cases": 42,
+            "Controls": 44
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4987,
+          "effectSize": 0.4502,
+          "standarizeMeanDifference": 0.1561,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12483.9375,
+        "meanValueControls": 13774.2763,
+        "sdValueCases": 2080.6323,
+        "sdValueControls": 1158.6929
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5428,
+            "Controls": 11130
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11998,
+            "Controls": 12159
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12268,
+            "Controls": 12920
+          },
+          {
+            "Measure": "median",
+            "Cases": 12943,
+            "Controls": 13805
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13853,
+            "Controls": 14655
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14008,
+            "Controls": 15325
+          },
+          {
+            "Measure": "max",
+            "Cases": 14128,
+            "Controls": 16385
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0259,
+          "effectSize": -1290.3388,
+          "standarizeMeanDifference": -0.7662,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 78272,
+    "ancestorConceptIds": [444129, 4018956, 4090616, 4323193, 36211091],
+    "conceptName": "Sprain of wrist",
+    "sourceConceptCode": "70704007",
+    "domainId": "Condition",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 24,
+        "nControlsWithCategory": 677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 24,
+          "control": 677
+        },
+        {
+          "value": "No",
+          "case": 77,
+          "control": 4666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0016,
+          "effectSize": 2.1482,
+          "standarizeMeanDifference": 0.2904,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.0833,
+        "meanValueControls": 1.1374,
+        "sdValueCases": 0.2823,
+        "sdValueControls": 0.3773
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p90",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 3
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.3632,
+          "effectSize": 0.9525,
+          "standarizeMeanDifference": -0.8898,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 28.4583,
+        "meanValueControls": 24.8936,
+        "sdValueCases": 21.9743,
+        "sdValueControls": 19.698
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 9,
+            "Controls": 4
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12,
+            "Controls": 10
+          },
+          {
+            "Measure": "median",
+            "Cases": 20,
+            "Controls": 20
+          },
+          {
+            "Measure": "p75",
+            "Cases": 50,
+            "Controls": 39
+          },
+          {
+            "Measure": "p90",
+            "Cases": 60,
+            "Controls": 55
+          },
+          {
+            "Measure": "max",
+            "Cases": 73,
+            "Controls": 97
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4408,
+          "effectSize": 3.5647,
+          "standarizeMeanDifference": 0.1708,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 8910.5,
+        "meanValueControls": 9094.2718,
+        "sdValueCases": 8494.2922,
+        "sdValueControls": 7186.965
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -6887,
+            "Controls": 299
+          },
+          {
+            "Measure": "p10",
+            "Cases": 1744,
+            "Controls": 1333
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2973,
+            "Controls": 3420
+          },
+          {
+            "Measure": "median",
+            "Cases": 6468,
+            "Controls": 6840
+          },
+          {
+            "Measure": "p75",
+            "Cases": 17079,
+            "Controls": 13661
+          },
+          {
+            "Measure": "p90",
+            "Cases": 20379,
+            "Controls": 19856
+          },
+          {
+            "Measure": "max",
+            "Cases": 25601,
+            "Controls": 35421
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.9175,
+          "effectSize": -183.7718,
+          "standarizeMeanDifference": -0.0234,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 78272,
+    "ancestorConceptIds": [444129, 4018956, 4090616, 4323193, 36211091],
+    "conceptName": "Sprain of wrist",
+    "sourceConceptCode": "70704007",
+    "domainId": "Condition",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 24,
+        "nControlsWithCategory": 677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 24,
+          "control": 677
+        },
+        {
+          "value": "No",
+          "case": 77,
+          "control": 4666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0016,
+          "effectSize": 2.1482,
+          "standarizeMeanDifference": 0.2904,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.0833,
+        "meanValueControls": 1.1374,
+        "sdValueCases": 0.2823,
+        "sdValueControls": 0.3773
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p90",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 3
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.3632,
+          "effectSize": 0.9525,
+          "standarizeMeanDifference": -0.8898,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 28.4583,
+        "meanValueControls": 24.8936,
+        "sdValueCases": 21.9743,
+        "sdValueControls": 19.698
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 9,
+            "Controls": 4
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12,
+            "Controls": 10
+          },
+          {
+            "Measure": "median",
+            "Cases": 20,
+            "Controls": 20
+          },
+          {
+            "Measure": "p75",
+            "Cases": 50,
+            "Controls": 39
+          },
+          {
+            "Measure": "p90",
+            "Cases": 60,
+            "Controls": 55
+          },
+          {
+            "Measure": "max",
+            "Cases": 73,
+            "Controls": 97
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4408,
+          "effectSize": 3.5647,
+          "standarizeMeanDifference": 0.1708,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 8910.5,
+        "meanValueControls": 9094.2718,
+        "sdValueCases": 8494.2922,
+        "sdValueControls": 7186.965
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -6887,
+            "Controls": 299
+          },
+          {
+            "Measure": "p10",
+            "Cases": 1744,
+            "Controls": 1333
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2973,
+            "Controls": 3420
+          },
+          {
+            "Measure": "median",
+            "Cases": 6468,
+            "Controls": 6840
+          },
+          {
+            "Measure": "p75",
+            "Cases": 17079,
+            "Controls": 13661
+          },
+          {
+            "Measure": "p90",
+            "Cases": 20379,
+            "Controls": 19856
+          },
+          {
+            "Measure": "max",
+            "Cases": 25601,
+            "Controls": 35421
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.9175,
+          "effectSize": -183.7718,
+          "standarizeMeanDifference": -0.0234,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80180,
+    "ancestorConceptIds": [73553, 4178680, 36503269, 36516781],
+    "conceptName": "Osteoarthritis",
+    "sourceConceptCode": "396275006",
+    "domainId": "Condition",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 101,
+        "nControlsWithCategory": 2694
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 101,
+          "control": 2694
+        },
+        {
+          "value": "No",
+          "case": 0,
+          "control": 2649
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 3.3768e-30,
+          "effectSize": null,
+          "standarizeMeanDifference": 1.4024,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.2178,
+        "meanValueControls": 38.6214,
+        "sdValueCases": 3.2237,
+        "sdValueControls": 3.307
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 32,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 35,
+            "Controls": 35
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 37
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 40
+          },
+          {
+            "Measure": "p75",
+            "Cases": 42,
+            "Controls": 42
+          },
+          {
+            "Measure": "p90",
+            "Cases": 43,
+            "Controls": 44
+          },
+          {
+            "Measure": "max",
+            "Cases": 45,
+            "Controls": 47
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.2199,
+          "effectSize": -0.4036,
+          "standarizeMeanDifference": -0.1236,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12386.6436,
+        "meanValueControls": 14104.2357,
+        "sdValueCases": 2475.5256,
+        "sdValueControls": 1191.8916
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 378,
+            "Controls": 11340
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11023,
+            "Controls": 12549
+          },
+          {
+            "Measure": "p25",
+            "Cases": 11718,
+            "Controls": 13165
+          },
+          {
+            "Measure": "median",
+            "Cases": 12723,
+            "Controls": 14095
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13703,
+            "Controls": 15040
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14488,
+            "Controls": 15744
+          },
+          {
+            "Measure": "max",
+            "Cases": 15398,
+            "Controls": 17044
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 3.6887e-10,
+          "effectSize": -1717.5921,
+          "standarizeMeanDifference": -0.8841,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80180,
+    "ancestorConceptIds": [73553, 4178680, 36503269, 36516781],
+    "conceptName": "Osteoarthritis",
+    "sourceConceptCode": "396275006",
+    "domainId": "Condition",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 101,
+        "nControlsWithCategory": 2694
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 101,
+          "control": 2694
+        },
+        {
+          "value": "No",
+          "case": 0,
+          "control": 2649
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 3.3768e-30,
+          "effectSize": null,
+          "standarizeMeanDifference": 1.4024,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.2178,
+        "meanValueControls": 38.6214,
+        "sdValueCases": 3.2237,
+        "sdValueControls": 3.307
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 32,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 35,
+            "Controls": 35
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 37
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 40
+          },
+          {
+            "Measure": "p75",
+            "Cases": 42,
+            "Controls": 42
+          },
+          {
+            "Measure": "p90",
+            "Cases": 43,
+            "Controls": 44
+          },
+          {
+            "Measure": "max",
+            "Cases": 45,
+            "Controls": 47
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.2199,
+          "effectSize": -0.4036,
+          "standarizeMeanDifference": -0.1236,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12386.6436,
+        "meanValueControls": 14104.2357,
+        "sdValueCases": 2475.5256,
+        "sdValueControls": 1191.8916
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 378,
+            "Controls": 11340
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11023,
+            "Controls": 12549
+          },
+          {
+            "Measure": "p25",
+            "Cases": 11718,
+            "Controls": 13165
+          },
+          {
+            "Measure": "median",
+            "Cases": 12723,
+            "Controls": 14095
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13703,
+            "Controls": 15040
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14488,
+            "Controls": 15744
+          },
+          {
+            "Measure": "max",
+            "Cases": 15398,
+            "Controls": 17044
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 3.6887e-10,
+          "effectSize": -1717.5921,
+          "standarizeMeanDifference": -0.8841,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80502,
+    "ancestorConceptIds": [75909, 36403211, 36503252, 36516728],
+    "conceptName": "Osteoporosis",
+    "sourceConceptCode": "64859006",
+    "domainId": "Condition",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 6,
+        "nControlsWithCategory": 171
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 6,
+          "control": 171
+        },
+        {
+          "value": "No",
+          "case": 95,
+          "control": 5172
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.1442,
+          "effectSize": 1.91,
+          "standarizeMeanDifference": 0.1315,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 63.5,
+        "meanValueControls": 69.4737,
+        "sdValueCases": 8.0932,
+        "sdValueControls": 10.2276
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 60,
+            "Controls": 60
+          },
+          {
+            "Measure": "p10",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "p25",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "median",
+            "Cases": 61,
+            "Controls": 71
+          },
+          {
+            "Measure": "p75",
+            "Cases": 61,
+            "Controls": 81
+          },
+          {
+            "Measure": "p90",
+            "Cases": 80,
+            "Controls": 90
+          },
+          {
+            "Measure": "max",
+            "Cases": 80,
+            "Controls": 91
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 20137.5,
+        "meanValueControls": 25374.883,
+        "sdValueCases": 6136.1981,
+        "sdValueControls": 3732.0839
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 9120,
+            "Controls": 21899
+          },
+          {
+            "Measure": "p10",
+            "Cases": 20513,
+            "Controls": 21980
+          },
+          {
+            "Measure": "p25",
+            "Cases": 20555,
+            "Controls": 22007
+          },
+          {
+            "Measure": "median",
+            "Cases": 21236,
+            "Controls": 25641
+          },
+          {
+            "Measure": "p75",
+            "Cases": 21257,
+            "Controls": 29248
+          },
+          {
+            "Measure": "p90",
+            "Cases": 28144,
+            "Controls": 29533
+          },
+          {
+            "Measure": "max",
+            "Cases": 28144,
+            "Controls": 33180
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80502,
+    "ancestorConceptIds": [75909, 36403211, 36503252, 36516728],
+    "conceptName": "Osteoporosis",
+    "sourceConceptCode": "64859006",
+    "domainId": "Condition",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 6,
+        "nControlsWithCategory": 171
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 6,
+          "control": 171
+        },
+        {
+          "value": "No",
+          "case": 95,
+          "control": 5172
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.1442,
+          "effectSize": 1.91,
+          "standarizeMeanDifference": 0.1315,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.3333,
+        "meanValueControls": 1.4503,
+        "sdValueCases": 0.5164,
+        "sdValueControls": 0.7834
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 5
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.5936,
+          "effectSize": 0.9194,
+          "standarizeMeanDifference": -0.5145,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 63.5,
+        "meanValueControls": 69.4737,
+        "sdValueCases": 8.0932,
+        "sdValueControls": 10.2276
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 60,
+            "Controls": 60
+          },
+          {
+            "Measure": "p10",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "p25",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "median",
+            "Cases": 61,
+            "Controls": 71
+          },
+          {
+            "Measure": "p75",
+            "Cases": 61,
+            "Controls": 81
+          },
+          {
+            "Measure": "p90",
+            "Cases": 80,
+            "Controls": 90
+          },
+          {
+            "Measure": "max",
+            "Cases": 80,
+            "Controls": 91
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 20137.5,
+        "meanValueControls": 25374.883,
+        "sdValueCases": 6136.1981,
+        "sdValueControls": 3732.0839
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 9120,
+            "Controls": 21899
+          },
+          {
+            "Measure": "p10",
+            "Cases": 20513,
+            "Controls": 21980
+          },
+          {
+            "Measure": "p25",
+            "Cases": 20555,
+            "Controls": 22007
+          },
+          {
+            "Measure": "median",
+            "Cases": 21236,
+            "Controls": 25641
+          },
+          {
+            "Measure": "p75",
+            "Cases": 21257,
+            "Controls": 29248
+          },
+          {
+            "Measure": "p90",
+            "Cases": 28144,
+            "Controls": 29533
+          },
+          {
+            "Measure": "max",
+            "Cases": 28144,
+            "Controls": 33180
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 28060,
+    "ancestorConceptIds": [437779, 4226263, 35708603, 36102934, 36110229, 36110265, 37203767, 37220048],
+    "conceptName": "Streptococcal sore throat",
+    "sourceConceptCode": "43878008",
+    "domainId": "Source:SNOMED",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 68,
+        "nControlsWithCategory": 1677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 68,
+          "control": 1677
+        },
+        {
+          "value": "No",
+          "case": 33,
+          "control": 3666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 4.0368e-14,
+          "effectSize": 4.5046,
+          "standarizeMeanDifference": 0.7703,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.4118,
+        "meanValueControls": 1.5838,
+        "sdValueCases": 0.6744,
+        "sdValueControls": 0.8296
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 3,
+            "Controls": 4
+          },
+          {
+            "Measure": "max",
+            "Cases": 4,
+            "Controls": 6
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.0412,
+          "effectSize": 0.8914,
+          "standarizeMeanDifference": -1.9381,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 18.0882,
+        "meanValueControls": 17.3602,
+        "sdValueCases": 17.1549,
+        "sdValueControls": 17.1709
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p25",
+            "Cases": 6,
+            "Controls": 6
+          },
+          {
+            "Measure": "median",
+            "Cases": 12,
+            "Controls": 12
+          },
+          {
+            "Measure": "p75",
+            "Cases": 29,
+            "Controls": 26
+          },
+          {
+            "Measure": "p90",
+            "Cases": 47,
+            "Controls": 46
+          },
+          {
+            "Measure": "max",
+            "Cases": 64,
+            "Controls": 100
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.7325,
+          "effectSize": 0.7281,
+          "standarizeMeanDifference": 0.0424,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 4779.4118,
+        "meanValueControls": 6337.8384,
+        "sdValueCases": 6483.7468,
+        "sdValueControls": 6261.1666
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -7504,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": -771,
+            "Controls": 722
+          },
+          {
+            "Measure": "p25",
+            "Cases": 459,
+            "Controls": 1843
+          },
+          {
+            "Measure": "median",
+            "Cases": 2194,
+            "Controls": 3945
+          },
+          {
+            "Measure": "p75",
+            "Cases": 8882,
+            "Controls": 9312
+          },
+          {
+            "Measure": "p90",
+            "Cases": 15727,
+            "Controls": 16375
+          },
+          {
+            "Measure": "max",
+            "Cases": 21800,
+            "Controls": 36832
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0556,
+          "effectSize": -1558.4266,
+          "standarizeMeanDifference": -0.2445,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 28060,
+    "ancestorConceptIds": [437779, 4226263, 35708603, 36102934, 36110229, 36110265, 37203767, 37220048],
+    "conceptName": "Streptococcal sore throat",
+    "sourceConceptCode": "43878008",
+    "domainId": "Source:SNOMED",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 68,
+        "nControlsWithCategory": 1677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 68,
+          "control": 1677
+        },
+        {
+          "value": "No",
+          "case": 33,
+          "control": 3666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 4.0368e-14,
+          "effectSize": 4.5046,
+          "standarizeMeanDifference": 0.7703,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.4118,
+        "meanValueControls": 1.5838,
+        "sdValueCases": 0.6744,
+        "sdValueControls": 0.8296
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 3,
+            "Controls": 4
+          },
+          {
+            "Measure": "max",
+            "Cases": 4,
+            "Controls": 6
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.0412,
+          "effectSize": 0.8914,
+          "standarizeMeanDifference": -1.9381,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 18.0882,
+        "meanValueControls": 17.3602,
+        "sdValueCases": 17.1549,
+        "sdValueControls": 17.1709
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 3,
+            "Controls": 3
+          },
+          {
+            "Measure": "p25",
+            "Cases": 6,
+            "Controls": 6
+          },
+          {
+            "Measure": "median",
+            "Cases": 12,
+            "Controls": 12
+          },
+          {
+            "Measure": "p75",
+            "Cases": 29,
+            "Controls": 26
+          },
+          {
+            "Measure": "p90",
+            "Cases": 47,
+            "Controls": 46
+          },
+          {
+            "Measure": "max",
+            "Cases": 64,
+            "Controls": 100
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.7325,
+          "effectSize": 0.7281,
+          "standarizeMeanDifference": 0.0424,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 4779.4118,
+        "meanValueControls": 6337.8384,
+        "sdValueCases": 6483.7468,
+        "sdValueControls": 6261.1666
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -7504,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": -771,
+            "Controls": 722
+          },
+          {
+            "Measure": "p25",
+            "Cases": 459,
+            "Controls": 1843
+          },
+          {
+            "Measure": "median",
+            "Cases": 2194,
+            "Controls": 3945
+          },
+          {
+            "Measure": "p75",
+            "Cases": 8882,
+            "Controls": 9312
+          },
+          {
+            "Measure": "p90",
+            "Cases": 15727,
+            "Controls": 16375
+          },
+          {
+            "Measure": "max",
+            "Cases": 21800,
+            "Controls": 36832
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0556,
+          "effectSize": -1558.4266,
+          "standarizeMeanDifference": -0.2445,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 30753,
+    "ancestorConceptIds": [31610, 4043371, 4181063, 35702754, 35707843],
+    "conceptName": "Esophagitis",
+    "sourceConceptCode": "16761005",
+    "domainId": "Source:SNOMED",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 16,
+        "nControlsWithCategory": 409
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 16,
+          "control": 409
+        },
+        {
+          "value": "No",
+          "case": 85,
+          "control": 4934
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0044,
+          "effectSize": 2.2708,
+          "standarizeMeanDifference": 0.2563,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.125,
+        "meanValueControls": 37.6748,
+        "sdValueCases": 2.5265,
+        "sdValueControls": 3.2022
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 33,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 36,
+            "Controls": 34
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 36
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 39
+          },
+          {
+            "Measure": "p75",
+            "Cases": 41,
+            "Controls": 41
+          },
+          {
+            "Measure": "p90",
+            "Cases": 42,
+            "Controls": 43
+          },
+          {
+            "Measure": "max",
+            "Cases": 42,
+            "Controls": 44
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4987,
+          "effectSize": 0.4502,
+          "standarizeMeanDifference": 0.1561,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12483.9375,
+        "meanValueControls": 13774.2763,
+        "sdValueCases": 2080.6323,
+        "sdValueControls": 1158.6929
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5428,
+            "Controls": 11130
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11998,
+            "Controls": 12159
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12268,
+            "Controls": 12920
+          },
+          {
+            "Measure": "median",
+            "Cases": 12943,
+            "Controls": 13805
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13853,
+            "Controls": 14655
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14008,
+            "Controls": 15325
+          },
+          {
+            "Measure": "max",
+            "Cases": 14128,
+            "Controls": 16385
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0259,
+          "effectSize": -1290.3388,
+          "standarizeMeanDifference": -0.7662,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 30753,
+    "ancestorConceptIds": [31610, 4043371, 4181063, 35702754, 35707843],
+    "conceptName": "Esophagitis",
+    "sourceConceptCode": "16761005",
+    "domainId": "Source:SNOMED",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 16,
+        "nControlsWithCategory": 409
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 16,
+          "control": 409
+        },
+        {
+          "value": "No",
+          "case": 85,
+          "control": 4934
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0044,
+          "effectSize": 2.2708,
+          "standarizeMeanDifference": 0.2563,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.125,
+        "meanValueControls": 37.6748,
+        "sdValueCases": 2.5265,
+        "sdValueControls": 3.2022
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 33,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 36,
+            "Controls": 34
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 36
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 39
+          },
+          {
+            "Measure": "p75",
+            "Cases": 41,
+            "Controls": 41
+          },
+          {
+            "Measure": "p90",
+            "Cases": 42,
+            "Controls": 43
+          },
+          {
+            "Measure": "max",
+            "Cases": 42,
+            "Controls": 44
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4987,
+          "effectSize": 0.4502,
+          "standarizeMeanDifference": 0.1561,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12483.9375,
+        "meanValueControls": 13774.2763,
+        "sdValueCases": 2080.6323,
+        "sdValueControls": 1158.6929
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5428,
+            "Controls": 11130
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11998,
+            "Controls": 12159
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12268,
+            "Controls": 12920
+          },
+          {
+            "Measure": "median",
+            "Cases": 12943,
+            "Controls": 13805
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13853,
+            "Controls": 14655
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14008,
+            "Controls": 15325
+          },
+          {
+            "Measure": "max",
+            "Cases": 14128,
+            "Controls": 16385
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.0259,
+          "effectSize": -1290.3388,
+          "standarizeMeanDifference": -0.7662,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 78272,
+    "ancestorConceptIds": [444129, 4018956, 4090616, 4323193, 36211091],
+    "conceptName": "Sprain of wrist",
+    "sourceConceptCode": "70704007",
+    "domainId": "Source:SNOMED",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 24,
+        "nControlsWithCategory": 677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 24,
+          "control": 677
+        },
+        {
+          "value": "No",
+          "case": 77,
+          "control": 4666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0016,
+          "effectSize": 2.1482,
+          "standarizeMeanDifference": 0.2904,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.0833,
+        "meanValueControls": 1.1374,
+        "sdValueCases": 0.2823,
+        "sdValueControls": 0.3773
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p90",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 3
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.3632,
+          "effectSize": 0.9525,
+          "standarizeMeanDifference": -0.8898,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 28.4583,
+        "meanValueControls": 24.8936,
+        "sdValueCases": 21.9743,
+        "sdValueControls": 19.698
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 9,
+            "Controls": 4
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12,
+            "Controls": 10
+          },
+          {
+            "Measure": "median",
+            "Cases": 20,
+            "Controls": 20
+          },
+          {
+            "Measure": "p75",
+            "Cases": 50,
+            "Controls": 39
+          },
+          {
+            "Measure": "p90",
+            "Cases": 60,
+            "Controls": 55
+          },
+          {
+            "Measure": "max",
+            "Cases": 73,
+            "Controls": 97
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4408,
+          "effectSize": 3.5647,
+          "standarizeMeanDifference": 0.1708,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 8910.5,
+        "meanValueControls": 9094.2718,
+        "sdValueCases": 8494.2922,
+        "sdValueControls": 7186.965
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -6887,
+            "Controls": 299
+          },
+          {
+            "Measure": "p10",
+            "Cases": 1744,
+            "Controls": 1333
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2973,
+            "Controls": 3420
+          },
+          {
+            "Measure": "median",
+            "Cases": 6468,
+            "Controls": 6840
+          },
+          {
+            "Measure": "p75",
+            "Cases": 17079,
+            "Controls": 13661
+          },
+          {
+            "Measure": "p90",
+            "Cases": 20379,
+            "Controls": 19856
+          },
+          {
+            "Measure": "max",
+            "Cases": 25601,
+            "Controls": 35421
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.9175,
+          "effectSize": -183.7718,
+          "standarizeMeanDifference": -0.0234,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 78272,
+    "ancestorConceptIds": [444129, 4018956, 4090616, 4323193, 36211091],
+    "conceptName": "Sprain of wrist",
+    "sourceConceptCode": "70704007",
+    "domainId": "Source:SNOMED",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 24,
+        "nControlsWithCategory": 677
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 24,
+          "control": 677
+        },
+        {
+          "value": "No",
+          "case": 77,
+          "control": 4666
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.0016,
+          "effectSize": 2.1482,
+          "standarizeMeanDifference": 0.2904,
+          "testName": "Chi-square"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.0833,
+        "meanValueControls": 1.1374,
+        "sdValueCases": 0.2823,
+        "sdValueControls": 0.3773
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p90",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 3
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.3632,
+          "effectSize": 0.9525,
+          "standarizeMeanDifference": -0.8898,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 28.4583,
+        "meanValueControls": 24.8936,
+        "sdValueCases": 21.9743,
+        "sdValueControls": 19.698
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 5,
+            "Controls": 0
+          },
+          {
+            "Measure": "p10",
+            "Cases": 9,
+            "Controls": 4
+          },
+          {
+            "Measure": "p25",
+            "Cases": 12,
+            "Controls": 10
+          },
+          {
+            "Measure": "median",
+            "Cases": 20,
+            "Controls": 20
+          },
+          {
+            "Measure": "p75",
+            "Cases": 50,
+            "Controls": 39
+          },
+          {
+            "Measure": "p90",
+            "Cases": 60,
+            "Controls": 55
+          },
+          {
+            "Measure": "max",
+            "Cases": 73,
+            "Controls": 97
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.4408,
+          "effectSize": 3.5647,
+          "standarizeMeanDifference": 0.1708,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 8910.5,
+        "meanValueControls": 9094.2718,
+        "sdValueCases": 8494.2922,
+        "sdValueControls": 7186.965
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": -6887,
+            "Controls": 299
+          },
+          {
+            "Measure": "p10",
+            "Cases": 1744,
+            "Controls": 1333
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2973,
+            "Controls": 3420
+          },
+          {
+            "Measure": "median",
+            "Cases": 6468,
+            "Controls": 6840
+          },
+          {
+            "Measure": "p75",
+            "Cases": 17079,
+            "Controls": 13661
+          },
+          {
+            "Measure": "p90",
+            "Cases": 20379,
+            "Controls": 19856
+          },
+          {
+            "Measure": "max",
+            "Cases": 25601,
+            "Controls": 35421
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 0.9175,
+          "effectSize": -183.7718,
+          "standarizeMeanDifference": -0.0234,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80180,
+    "ancestorConceptIds": [73553, 4178680, 36503269, 36516781],
+    "conceptName": "Osteoarthritis",
+    "sourceConceptCode": "396275006",
+    "domainId": "Source:SNOMED",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 101,
+        "nControlsWithCategory": 2694
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 101,
+          "control": 2694
+        },
+        {
+          "value": "No",
+          "case": 0,
+          "control": 2649
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 3.3768e-30,
+          "effectSize": null,
+          "standarizeMeanDifference": 1.4024,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.2178,
+        "meanValueControls": 38.6214,
+        "sdValueCases": 3.2237,
+        "sdValueControls": 3.307
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 32,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 35,
+            "Controls": 35
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 37
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 40
+          },
+          {
+            "Measure": "p75",
+            "Cases": 42,
+            "Controls": 42
+          },
+          {
+            "Measure": "p90",
+            "Cases": 43,
+            "Controls": 44
+          },
+          {
+            "Measure": "max",
+            "Cases": 45,
+            "Controls": 47
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.2199,
+          "effectSize": -0.4036,
+          "standarizeMeanDifference": -0.1236,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12386.6436,
+        "meanValueControls": 14104.2357,
+        "sdValueCases": 2475.5256,
+        "sdValueControls": 1191.8916
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 378,
+            "Controls": 11340
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11023,
+            "Controls": 12549
+          },
+          {
+            "Measure": "p25",
+            "Cases": 11718,
+            "Controls": 13165
+          },
+          {
+            "Measure": "median",
+            "Cases": 12723,
+            "Controls": 14095
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13703,
+            "Controls": 15040
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14488,
+            "Controls": 15744
+          },
+          {
+            "Measure": "max",
+            "Cases": 15398,
+            "Controls": 17044
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 3.6887e-10,
+          "effectSize": -1717.5921,
+          "standarizeMeanDifference": -0.8841,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80180,
+    "ancestorConceptIds": [73553, 4178680, 36503269, 36516781],
+    "conceptName": "Osteoarthritis",
+    "sourceConceptCode": "396275006",
+    "domainId": "Source:SNOMED",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 101,
+        "nControlsWithCategory": 2694
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 101,
+          "control": 2694
+        },
+        {
+          "value": "No",
+          "case": 0,
+          "control": 2649
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 3.3768e-30,
+          "effectSize": null,
+          "standarizeMeanDifference": 1.4024,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 38.2178,
+        "meanValueControls": 38.6214,
+        "sdValueCases": 3.2237,
+        "sdValueControls": 3.307
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 32,
+            "Controls": 31
+          },
+          {
+            "Measure": "p10",
+            "Cases": 35,
+            "Controls": 35
+          },
+          {
+            "Measure": "p25",
+            "Cases": 37,
+            "Controls": 37
+          },
+          {
+            "Measure": "median",
+            "Cases": 39,
+            "Controls": 40
+          },
+          {
+            "Measure": "p75",
+            "Cases": 42,
+            "Controls": 42
+          },
+          {
+            "Measure": "p90",
+            "Cases": 43,
+            "Controls": 44
+          },
+          {
+            "Measure": "max",
+            "Cases": 45,
+            "Controls": 47
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": 0.2199,
+          "effectSize": -0.4036,
+          "standarizeMeanDifference": -0.1236,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 12386.6436,
+        "meanValueControls": 14104.2357,
+        "sdValueCases": 2475.5256,
+        "sdValueControls": 1191.8916
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 378,
+            "Controls": 11340
+          },
+          {
+            "Measure": "p10",
+            "Cases": 11023,
+            "Controls": 12549
+          },
+          {
+            "Measure": "p25",
+            "Cases": 11718,
+            "Controls": 13165
+          },
+          {
+            "Measure": "median",
+            "Cases": 12723,
+            "Controls": 14095
+          },
+          {
+            "Measure": "p75",
+            "Cases": 13703,
+            "Controls": 15040
+          },
+          {
+            "Measure": "p90",
+            "Cases": 14488,
+            "Controls": 15744
+          },
+          {
+            "Measure": "max",
+            "Cases": 15398,
+            "Controls": 17044
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": 3.6887e-10,
+          "effectSize": -1717.5921,
+          "standarizeMeanDifference": -0.8841,
+          "testName": "Welch Two Sample t-test"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80502,
+    "ancestorConceptIds": [75909, 36403211, 36503252, 36516728],
+    "conceptName": "Osteoporosis",
+    "sourceConceptCode": "64859006",
+    "domainId": "Source:SNOMED",
+    "countMode": "code",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 6,
+        "nControlsWithCategory": 171
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 6,
+          "control": 171
+        },
+        {
+          "value": "No",
+          "case": 95,
+          "control": 5172
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.1442,
+          "effectSize": 1.91,
+          "standarizeMeanDifference": 0.1315,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1,
+        "meanValueControls": 1,
+        "sdValueCases": 0,
+        "sdValueControls": 0
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p25",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "median",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p75",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 0
+          },
+          {
+            "Measure": "max",
+            "Cases": 1,
+            "Controls": 1
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": null,
+          "effectSize": 1,
+          "standarizeMeanDifference": null,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 63.5,
+        "meanValueControls": 69.4737,
+        "sdValueCases": 8.0932,
+        "sdValueControls": 10.2276
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 60,
+            "Controls": 60
+          },
+          {
+            "Measure": "p10",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "p25",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "median",
+            "Cases": 61,
+            "Controls": 71
+          },
+          {
+            "Measure": "p75",
+            "Cases": 61,
+            "Controls": 81
+          },
+          {
+            "Measure": "p90",
+            "Cases": 80,
+            "Controls": 90
+          },
+          {
+            "Measure": "max",
+            "Cases": 80,
+            "Controls": 91
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 20137.5,
+        "meanValueControls": 25374.883,
+        "sdValueCases": 6136.1981,
+        "sdValueControls": 3732.0839
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 9120,
+            "Controls": 21899
+          },
+          {
+            "Measure": "p10",
+            "Cases": 20513,
+            "Controls": 21980
+          },
+          {
+            "Measure": "p25",
+            "Cases": 20555,
+            "Controls": 22007
+          },
+          {
+            "Measure": "median",
+            "Cases": 21236,
+            "Controls": 25641
+          },
+          {
+            "Measure": "p75",
+            "Cases": 21257,
+            "Controls": 29248
+          },
+          {
+            "Measure": "p90",
+            "Cases": 28144,
+            "Controls": 29533
+          },
+          {
+            "Measure": "max",
+            "Cases": 28144,
+            "Controls": 33180
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  },
+  {
+    "conceptId": 80502,
+    "ancestorConceptIds": [75909, 36403211, 36503252, 36516728],
+    "conceptName": "Osteoporosis",
+    "sourceConceptCode": "64859006",
+    "domainId": "Source:SNOMED",
+    "countMode": "descendant",
+    "n_Binary": [
+      {
+        "nCasesWithCategory": 6,
+        "nControlsWithCategory": 171
+      }
+    ],
+    "d_Binary": [
+      [
+        {
+          "value": "Yes",
+          "case": 6,
+          "control": 171
+        },
+        {
+          "value": "No",
+          "case": 95,
+          "control": 5172
+        }
+      ]
+    ],
+    "t_Binary": [
+      [
+        {
+          "pValue": 0.1442,
+          "effectSize": 1.91,
+          "standarizeMeanDifference": 0.1315,
+          "testName": "Fisher"
+        }
+      ]
+    ],
+    "s_Counts": [
+      {
+        "meanValueCases": 1.3333,
+        "meanValueControls": 1.4503,
+        "sdValueCases": 0.5164,
+        "sdValueControls": 0.7834
+      }
+    ],
+    "d_Counts": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 1,
+            "Controls": 1
+          },
+          {
+            "Measure": "p10",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p25",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "median",
+            "Cases": 2,
+            "Controls": 2
+          },
+          {
+            "Measure": "p75",
+            "Cases": 2,
+            "Controls": 3
+          },
+          {
+            "Measure": "p90",
+            "Cases": 0,
+            "Controls": 3
+          },
+          {
+            "Measure": "max",
+            "Cases": 2,
+            "Controls": 5
+          }
+        ]
+      ]
+    ],
+    "t_Counts": [
+      [
+        {
+          "pValue": 0.5936,
+          "effectSize": 0.9194,
+          "standarizeMeanDifference": -0.5145,
+          "testName": "Negative Binomial"
+        }
+      ]
+    ],
+    "s_AgeFirstEvent": [
+      {
+        "meanValueCases": 63.5,
+        "meanValueControls": 69.4737,
+        "sdValueCases": 8.0932,
+        "sdValueControls": 10.2276
+      }
+    ],
+    "d_AgeFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 60,
+            "Controls": 60
+          },
+          {
+            "Measure": "p10",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "p25",
+            "Cases": 61,
+            "Controls": 61
+          },
+          {
+            "Measure": "median",
+            "Cases": 61,
+            "Controls": 71
+          },
+          {
+            "Measure": "p75",
+            "Cases": 61,
+            "Controls": 81
+          },
+          {
+            "Measure": "p90",
+            "Cases": 80,
+            "Controls": 90
+          },
+          {
+            "Measure": "max",
+            "Cases": 80,
+            "Controls": 91
+          }
+        ]
+      ]
+    ],
+    "t_AgeFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "s_DaysToFirstEvent": [
+      {
+        "meanValueCases": 20137.5,
+        "meanValueControls": 25374.883,
+        "sdValueCases": 6136.1981,
+        "sdValueControls": 3732.0839
+      }
+    ],
+    "d_DaysToFirstEvent": [
+      [
+        [
+          {
+            "Measure": "min",
+            "Cases": 9120,
+            "Controls": 21899
+          },
+          {
+            "Measure": "p10",
+            "Cases": 20513,
+            "Controls": 21980
+          },
+          {
+            "Measure": "p25",
+            "Cases": 20555,
+            "Controls": 22007
+          },
+          {
+            "Measure": "median",
+            "Cases": 21236,
+            "Controls": 25641
+          },
+          {
+            "Measure": "p75",
+            "Cases": 21257,
+            "Controls": 29248
+          },
+          {
+            "Measure": "p90",
+            "Cases": 28144,
+            "Controls": 29533
+          },
+          {
+            "Measure": "max",
+            "Cases": 28144,
+            "Controls": 33180
+          }
+        ]
+      ]
+    ],
+    "t_DaysToFirstEvent": [
+      [
+        {
+          "pValue": null,
+          "effectSize": null,
+          "standarizeMeanDifference": null,
+          "testName": "Welch Two Sample t-test (Error: Less than 10 samples)"
+        }
+      ]
+    ],
+    "n_Categorical": {},
+    "d_Categorical": {},
+    "t_Categorical": {},
+    "s_Continuous": {},
+    "d_Continuous": {},
+    "t_Continuous": {}
+  }
+]
