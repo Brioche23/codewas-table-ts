@@ -44,7 +44,9 @@ export interface ConceptRow {
   conceptId: number
   ancestorConceptIds: number[]
   conceptName: string
+  sourceConceptCode?: string
   domainId: string
+  countMode?: "code" | "descendant" | string
 
   // Binary
   n_Binary: BinaryCount[]

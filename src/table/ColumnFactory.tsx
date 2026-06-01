@@ -6,7 +6,7 @@ import {
   type Test,
   type BinaryCount,
 } from "../utils/types"
-import { Box, Tooltip, Typography } from "@mui/material"
+import { Box, Chip, Tooltip, Typography } from "@mui/material"
 import { CategoricalDistributionBar, CategoryBar, MeanComparisonChart } from "../components/Visuals"
 import { groupCellProps, valueChip } from "./tableUtils"
 import { COLUMNS_COLORS } from "../utils/constants"
@@ -37,6 +37,12 @@ const ancestorFilterFn: MRT_FilterFn<ConceptRow> = (row, columnId, filterValue: 
   const ids = row.getValue<number[]>(columnId)
   if (!filterValue) return true
   return ids.some((id) => String(id).includes(filterValue))
+}
+
+export const countModeLabel = (countMode?: string) => {
+  if (countMode === "code") return "Exact code"
+  if (countMode === "descendant") return "All descendants"
+  return countMode
 }
 // ─── Factory function ─────────────────────────────────────────────────────────
 
@@ -184,43 +190,85 @@ export const makeInfoColumn = (
         minSize: 40,
         maxSize: 300,
         ...groupCellProps(COLUMNS_COLORS.color1),
-        accessorFn: (row) => `${row.conceptId} ${row.conceptName} ${row.domainId}`,
+        accessorFn: (row) =>
+          [
+            row.conceptId,
+            row.conceptName,
+            row.sourceConceptCode,
+            row.domainId,
+            countModeLabel(row.countMode),
+          ]
+            .filter(Boolean)
+            .join(" "),
         enableColumnFilter: false,
         // Filter: ({ table }) => <InfoFilter table={table} />,
         aggregationFn: "unique",
         AggregatedCell: ({ cell }) => {
           const ancestorId = cell.row.groupingValue as number
           const concept = conceptsById[ancestorId]
-          if (!concept) return <Box sx={{ fontWeight: "bold" }}>{ancestorId} – No Match</Box>
+          if (!concept) {
+            return (
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
+                  Ancestor {ancestorId}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                  Name unavailable in result set
+                </Typography>
+              </Box>
+            )
+          }
           return (
             <Box>
               <Typography variant="body2" noWrap>
                 {concept.conceptName}
               </Typography>
+              {concept.sourceConceptCode && (
+                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                  Source code: {concept.sourceConceptCode}
+                </Typography>
+              )}
               <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                {concept.conceptId}
+                Concept ID: {concept.conceptId}
               </Typography>
               <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                {concept.domainId}
+                Domain: {concept.domainId}
               </Typography>
             </Box>
           )
         },
-        Cell: ({ row }) => (
-          <Box sx={{ width: 190 }}>
-            <Tooltip title={row.original.conceptName} placement="right">
-              <Typography variant="body2" noWrap>
-                {row.original.conceptName}
+        Cell: ({ row }) => {
+          const concept = row.original
+          return (
+            <Box sx={{ width: 190 }}>
+              <Tooltip title={concept.conceptName} placement="right">
+                <Typography variant="body2" noWrap>
+                  {concept.conceptName}
+                </Typography>
+              </Tooltip>
+              {concept.sourceConceptCode && (
+                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                  Source code: {concept.sourceConceptCode}
+                </Typography>
+              )}
+              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                Concept ID: {concept.conceptId}
               </Typography>
-            </Tooltip>
-            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-              {row.original.conceptId}
-            </Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-              {row.original.domainId}
-            </Typography>
-          </Box>
-        ),
+              {concept.domainId && (
+                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                  Domain: {concept.domainId}
+                </Typography>
+              )}
+              {concept.countMode && (
+                <Chip
+                  size="small"
+                  label={countModeLabel(concept.countMode)}
+                  sx={{ mt: 0.5, height: 20, fontSize: 10 }}
+                />
+              )}
+            </Box>
+          )
+        },
       },
       // Hidden — filter only
       {
@@ -454,7 +502,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_Counts?.[0] ?? null,
-      d: (row) => row.d_Counts?.[0][0] ?? null, // DistributionRow[][][0][0] = DistributionRow[]
+      d: (row) => row.d_Counts?.[0]?.[0] ?? null, // DistributionRow[][][0][0] = DistributionRow[]
       t: (row) => row.t_Counts?.[0]?.[0] ?? null,
     },
   },
@@ -466,7 +514,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_AgeFirstEvent?.[0] ?? null,
-      d: (row) => row.d_AgeFirstEvent?.[0][0] ?? null,
+      d: (row) => row.d_AgeFirstEvent?.[0]?.[0] ?? null,
       t: (row) => row.t_AgeFirstEvent?.[0]?.[0] ?? null,
     },
   },
@@ -478,7 +526,7 @@ export const STAT_GROUPS: StatGroupConfig[] = [
     effectSizeThreshold: 1.2,
     paths: {
       s: (row) => row.s_DaysToFirstEvent?.[0] ?? null,
-      d: (row) => row.d_DaysToFirstEvent?.[0][0] ?? null,
+      d: (row) => row.d_DaysToFirstEvent?.[0]?.[0] ?? null,
       t: (row) => row.t_DaysToFirstEvent?.[0]?.[0] ?? null,
     },
   },
