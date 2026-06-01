@@ -6,7 +6,7 @@ import {
   type MRT_GroupingState,
 } from "material-react-table"
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
-import type { ConceptRow, ConceptTableProps } from "../utils/types"
+import type { ConceptMetadata, ConceptRow, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
 import { countModeLabel, useColumns } from "./ColumnFactory"
@@ -44,10 +44,19 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     return data.filter((row) => row.countMode === countModeFilter)
   }, [countModeFilter, data])
 
-  const conceptsById = useMemo<Record<number, ConceptRow>>(
-    () => Object.fromEntries((data ?? []).map((row) => [row.conceptId, row])),
-    [data],
-  )
+  const conceptsById = useMemo<Record<number, ConceptMetadata>>(() => {
+    const concepts: Record<number, ConceptMetadata> = {}
+
+    ;(data ?? []).forEach((row) => {
+      concepts[row.conceptId] = row
+      ;(row.ancestorConcepts ?? []).forEach((ancestor) => {
+        if (!ancestor?.conceptId) return
+        concepts[ancestor.conceptId] = ancestor
+      })
+    })
+
+    return concepts
+  }, [data])
 
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.

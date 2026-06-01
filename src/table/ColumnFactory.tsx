@@ -1,6 +1,7 @@
 import type { MRT_ColumnDef, MRT_FilterFn } from "material-react-table"
 import {
   type ConceptRow,
+  type ConceptMetadata,
   type SummaryStats,
   type DistributionRow,
   type Test,
@@ -171,7 +172,7 @@ export function makeStatGroup({
 // Lives outside the component — no deps on props/state, never triggers re-renders
 
 export const makeInfoColumn = (
-  conceptsById: Record<number, ConceptRow>,
+  conceptsById: Record<number, ConceptMetadata>,
 ): MRT_ColumnDef<ConceptRow> => {
   return {
     id: "main_info",
@@ -206,33 +207,35 @@ export const makeInfoColumn = (
         AggregatedCell: ({ cell }) => {
           const ancestorId = cell.row.groupingValue as number
           const concept = conceptsById[ancestorId]
-          if (!concept) {
+          if (!concept?.conceptName) {
             return (
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
                   Ancestor {ancestorId}
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                  Name unavailable in result set
+                  Metadata unavailable in result set
                 </Typography>
               </Box>
             )
           }
           return (
             <Box>
-              <Typography variant="body2" noWrap>
+              <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
                 {concept.conceptName}
               </Typography>
-              {concept.sourceConceptCode && (
+              {concept.vocabularyId && concept.conceptCode && (
                 <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                  Source code: {concept.sourceConceptCode}
+                  {concept.vocabularyId}: {concept.conceptCode}
+                </Typography>
+              )}
+              {concept.conceptClassId && (
+                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+                  Class: {concept.conceptClassId}
                 </Typography>
               )}
               <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
                 Concept ID: {concept.conceptId}
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                Domain: {concept.domainId}
               </Typography>
             </Box>
           )
@@ -662,7 +665,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
   ],
 }
 
-export function useColumns(conceptsById: Record<number, ConceptRow>) {
+export function useColumns(conceptsById: Record<number, ConceptMetadata>) {
   return useMemo<MRT_ColumnDef<ConceptRow>[]>(() => {
     const infoColumn = makeInfoColumn(conceptsById)
     const cols = [infoColumn, binaryColumn, ...STAT_GROUPS.map(makeStatGroup), categoryColumn]
