@@ -123,7 +123,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         conceptName: false,
         conceptId: false,
         domainId: false,
-        // ancestorConceptIds: false,
+        ancestorConceptIds: false,
       },
     },
     getSubRows: (row) => expandedRows.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
@@ -150,10 +150,10 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
       columnPinning: { left: ["mrt-row-expand", "info"] },
       density: "compact",
     },
-    onGroupingChange: (updater) => {
-      const newGrouping = typeof updater === "function" ? updater(grouping) : updater
-      setGrouping(newGrouping)
-    },
+    // onGroupingChange: (updater) => {
+    //   const newGrouping = typeof updater === "function" ? updater(grouping) : updater
+    //   setGrouping(newGrouping)
+    // },
 
     // ── filtering ──
     enableColumnFilters: true,
@@ -189,6 +189,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
       {countModeOptions.length > 0 && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography>{data.length}</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
             Mode
           </Typography>

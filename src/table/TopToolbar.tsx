@@ -54,7 +54,7 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
         <Button
           disabled={table.getPrePaginationRowModel().rows.length === 0}
           //export all rows, including from the next page, (still respects filtering and sorting)
-          onClick={() => handleExportRows(table.getPrePaginationRowModel().rows)}
+          onClick={() => handleExportRows(table.getPrePaginationRowModel().flatRows)}
           startIcon={<FileDownload />}
         >
           Export Filtered Rows
@@ -63,7 +63,7 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
         <Button
           disabled={table.getPrePaginationRowModel().rows.length === 0}
           //export all rows, including from the next page, (still respects filtering and sorting)
-          onClick={() => handleExportRowsCSV(table.getPrePaginationRowModel().rows)}
+          onClick={() => handleExportRowsCSV(table.getPrePaginationRowModel().flatRows)}
           startIcon={<FileDownload />}
         >
           Export All Rows CSV

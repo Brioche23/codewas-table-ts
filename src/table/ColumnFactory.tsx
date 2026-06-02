@@ -318,6 +318,28 @@ export const makeInfoColumn = (
         visibleInShowHideMenu: false,
       },
       {
+        id: "ancestors",
+        header: "Ancestors",
+        Header: ({ column }) => (
+          <Tooltip title={column.columnDef.header} placement="top">
+            <p>Ancestors</p>
+          </Tooltip>
+        ),
+        accessorKey: "ancestorConcepts",
+        Cell: (row) => (
+          <Box>
+            {row.cell.getValue<ConceptMetadata[]>()?.map((c) => (
+              <Typography variant="body2" key={c.conceptId}>
+                {c.conceptId} – {c.conceptName ?? "N/A"}
+              </Typography>
+            ))}
+          </Box>
+        ),
+        filterFn: ancestorFilterFn,
+        filterVariant: "text",
+        visibleInShowHideMenu: false,
+      },
+      {
         id: "domainId",
         header: "Domain",
         accessorKey: "domainId",
