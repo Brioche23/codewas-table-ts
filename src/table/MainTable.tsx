@@ -2,15 +2,14 @@ import { useMemo, useRef, useState } from "react"
 import {
   MaterialReactTable,
   useMaterialReactTable,
-  type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
   type MRT_GroupingState,
 } from "material-react-table"
-import { Box, Container } from "@mui/material"
-import type { ConceptRow, ConceptTableProps } from "../utils/types"
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
+import type { ConceptMetadata, ConceptRow, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
-import { useColumns } from "./ColumnFactory"
+import { countModeLabel, useColumns } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
 import { Scatter } from "../components/charts/Scatter"
@@ -20,7 +19,8 @@ import { sumBinaryCount } from "../utils/aggregations"
 
 export default function MainTable({ data, setData, pageView }: ConceptTableProps) {
   const tableContainerRef = useRef(null)
-  const [grouping, setGrouping] = useState<MRT_GroupingState>([])
+  const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
+  const [countModeFilter, setCountModeFilter] = useState("all")
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
@@ -33,14 +33,30 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     },
   ])
 
-  const formattedData = useMemo(
-    () =>
-      data.map((d) => ({
-        ...d,
-        isStandard: !d.domainId.includes("Source:"),
-      })),
-    [data],
-  )
+  const countModeOptions = useMemo(() => {
+    const modes = new Set((data ?? []).map((row) => row.countMode).filter(Boolean) as string[])
+    return Array.from(modes).sort()
+  }, [data])
+
+  const filteredData = useMemo(() => {
+    if (!data) return []
+    if (countModeFilter === "all") return data
+    return data.filter((row) => row.countMode === countModeFilter)
+  }, [countModeFilter, data])
+
+  const conceptsById = useMemo<Record<number, ConceptMetadata>>(() => {
+    const concepts: Record<number, ConceptMetadata> = {}
+
+    ;(data ?? []).forEach((row) => {
+      concepts[row.conceptId] = row
+      ;(row.ancestorConcepts ?? []).forEach((ancestor) => {
+        if (!ancestor?.conceptId) return
+        concepts[ancestor.conceptId] = ancestor
+      })
+    })
+
+    return concepts
+  }, [data])
 
   const conceptsById = useMemo<Record<number, ConceptRow>>(
     () => Object.fromEntries((formattedData ?? []).map((row) => [row.conceptId, row])),
@@ -53,43 +69,24 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
 
   // Expanded rows: one row per ancestorConceptId
   const expandedRows = useMemo(() => {
-    if (!formattedData) return []
-    return formattedData.flatMap((row) =>
+    return filteredData.flatMap((row) =>
       (row.ancestorConceptIds ?? []).map((ancestorId) => ({
         ...row,
-        ancestorConceptIds: [ancestorId], // scalar, so MRT can group on it
+        ancestorConceptIds: [ancestorId],
       })),
     )
-  }, [formattedData])
+  }, [filteredData])
 
   const isGrouping = grouping.includes("ancestorConceptIds")
 
-  const tableData = useMemo(() => (isGrouping ? expandedRows : formattedData), [isGrouping])
-  const rootRows = useMemo(() => {
-    if (!formattedData) return []
-
-    // IDs of concepts that exist in the dataset and appear as someone's ancestor
-    const allConceptIds = new Set(formattedData.map((r) => r.conceptId))
-
-    const ancestorIdsInDataset = new Set(
-      formattedData
-        .flatMap((r) => r.ancestorConceptIds ?? [])
-        .filter((id) => allConceptIds.has(id)), // O(1) lookup now
-    )
-
-    // A row is a root if none of its ancestors exist in the dataset
-    return formattedData.filter(
-      (r) => !r.ancestorConceptIds?.some((id) => ancestorIdsInDataset.has(id)),
-    )
-  }, [formattedData])
-  console.log("rootRows", rootRows)
+  const tableData = useMemo(
+    () => (isGrouping ? expandedRows : filteredData),
+    [expandedRows, filteredData, isGrouping],
+  )
 
   const table = useMaterialReactTable({
     columns,
-    data: rootRows,
-    enableExpanding: true,
-    enableExpandAll: false,
-    filterFromLeafRows: true,
+    data: tableData,
     aggregationFns: { sumBinaryCount },
     state: {
       // grouping,
@@ -100,7 +97,6 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         // ancestorConceptIds: false,
       },
     },
-    getSubRows: (row) => expandedRows.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
     layoutMode: "grid-no-grow",
 
     defaultColumn: {
@@ -125,7 +121,6 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
       density: "compact",
     },
     onGroupingChange: (updater) => {
-      // updater can be a value or a function (MRT uses the same pattern as React setState)
       const newGrouping = typeof updater === "function" ? updater(grouping) : updater
       setGrouping(newGrouping)
     },
@@ -162,6 +157,28 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
+      {countModeOptions.length > 0 && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            Mode
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={countModeFilter}
+            onChange={(_event, value) => {
+              if (value) setCountModeFilter(value)
+            }}
+          >
+            <ToggleButton value="all">All</ToggleButton>
+            {countModeOptions.map((mode) => (
+              <ToggleButton key={mode} value={mode}>
+                {countModeLabel(mode)}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
+      )}
       <FilterWrapper table={table} />
       {pageView === "charts" && (
         <Box sx={{ display: "flex", gap: 1 }}>
