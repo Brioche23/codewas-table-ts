@@ -1,12 +1,7 @@
 import { useMemo, useRef, useState } from "react"
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnFiltersState,
-  type MRT_GroupingState,
-} from "material-react-table"
+import { MaterialReactTable, useMaterialReactTable } from "material-react-table"
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
-import type { ConceptMetadata, ConceptRow, ConceptTableProps } from "../utils/types"
+import type { ConceptMetadata, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
 import { countModeLabel, useColumns } from "./ColumnFactory"
@@ -19,10 +14,10 @@ import { sumBinaryCount } from "../utils/aggregations"
 
 export default function MainTable({ data, setData, pageView }: ConceptTableProps) {
   const tableContainerRef = useRef(null)
-  const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
   const [countModeFilter, setCountModeFilter] = useState<"code" | "descendant" | "all">("all")
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+  const grouping = ["ancestorConceptIds"]
+  const columnFilters = [
     {
       id: "casesControl",
       value: ["5", ""],
@@ -31,7 +26,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
       id: "-log10Binary",
       value: ["5", ""],
     },
-  ])
+  ]
 
   const countModeOptions = useMemo(() => {
     const modes = new Set((data ?? []).map((row) => row.countMode).filter(Boolean) as string[])
@@ -116,7 +111,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     columns,
     data: rootRows,
     enableExpanding: true,
-    aggregationFns: { sumBinaryCount },
+    // aggregationFns: { sumBinaryCount },
     state: {
       // grouping,
       columnVisibility: {

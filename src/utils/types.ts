@@ -88,6 +88,8 @@ export interface ConceptRow {
   n_Categorical: BinaryCount[]
   d_Categorical: BinaryDistribution[][]
   t_Categorical: Test[][]
+
+  // [k: string]: unknown
 }
 
 export interface ConceptTableProps {
