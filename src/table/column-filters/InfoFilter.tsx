@@ -32,7 +32,7 @@ export function InfoFilter({ table }: InfoFilterProps) {
 
   // Rows filtered by name+conceptId only, ignoring domain filter
   const domainAgnosticRows = useMemo(() => {
-    const allRows = table.getPreFilteredRowModel().rows
+    const allRows = table.getPreFilteredRowModel().flatRows
     const columnFilters = table.getState().columnFilters.filter((f) => f.id !== "domainId") // exclude domain
 
     console.log(columnFilters)
@@ -111,7 +111,7 @@ export function InfoFilter({ table }: InfoFilterProps) {
           )}
         >
           {domainOptions.map((opt) => (
-            <MenuItem key={opt} value={opt} sx={{ opacity: domainCounts[opt] ? 1 : 0.4 }}>
+            <MenuItem key={opt} disabled={!domainCounts[opt]} value={opt}>
               <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", gap: 2 }}>
                 <span>{opt}</span>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>

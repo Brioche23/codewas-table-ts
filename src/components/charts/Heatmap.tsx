@@ -83,8 +83,8 @@ function HeatmapCells({
   setHoveredRow,
   hoveredRow,
 }: HeatmapCellsProps) {
-  const allRows = table.getSortedRowModel().rows.filter((r) => !r.getIsGrouped())
-  const pageRows = table.getPaginationRowModel().rows
+  const allRows = table.getSortedRowModel().flatRows.filter((r) => !r.getIsGrouped())
+  const pageRows = table.getPaginationRowModel().flatRows
 
   const getRowIds = (rows: MRT_Row<ConceptRow>[]): string[] =>
     rows.flatMap((r) => (r.subRows?.length ? getRowIds(r.subRows) : [r.id]))

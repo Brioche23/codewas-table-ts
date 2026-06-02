@@ -5,6 +5,14 @@ import InputFileUpload from "../components/FileUpload"
 import type { ConceptRow } from "../utils/types"
 import { InfoFilter } from "./column-filters/InfoFilter"
 
+import { mkConfig, generateCsv, download } from "export-to-csv"
+
+const csvConfig = mkConfig({
+  fieldSeparator: ",",
+  decimalSeparator: ".",
+  useKeysAsHeaders: true,
+})
+
 interface TopToolbarProps {
   table: MRT_TableInstance<ConceptRow>
   setData: React.Dispatch<React.SetStateAction<ConceptRow[] | null>>
@@ -22,6 +30,12 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
     document.body.appendChild(downloadAnchorNode) // required for firefox
     downloadAnchorNode.click()
     downloadAnchorNode.remove()
+  }
+
+  const handleExportRowsCSV = (rows: MRT_Row<ConceptRow>[]) => {
+    const rowData = rows.map((row) => row.original)
+    const csv = generateCsv(csvConfig)(rowData)
+    download(csvConfig)(csv)
   }
 
   return (
@@ -44,6 +58,15 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
           startIcon={<FileDownload />}
         >
           Export Filtered Rows
+        </Button>
+
+        <Button
+          disabled={table.getPrePaginationRowModel().rows.length === 0}
+          //export all rows, including from the next page, (still respects filtering and sorting)
+          onClick={() => handleExportRowsCSV(table.getPrePaginationRowModel().rows)}
+          startIcon={<FileDownload />}
+        >
+          Export All Rows CSV
         </Button>
       </Box>
       <InfoFilter table={table} />

@@ -58,6 +58,11 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     return concepts
   }, [data])
 
+  const conceptsById = useMemo<Record<number, ConceptRow>>(
+    () => Object.fromEntries((formattedData ?? []).map((row) => [row.conceptId, row])),
+    [formattedData],
+  )
+
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
   const columns = useColumns(conceptsById)
@@ -84,13 +89,12 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     data: tableData,
     aggregationFns: { sumBinaryCount },
     state: {
-      grouping,
-      columnFilters,
+      // grouping,
       columnVisibility: {
         conceptName: false,
         conceptId: false,
         domainId: false,
-        // ancestorConceptId: false,
+        // ancestorConceptIds: false,
       },
     },
     layoutMode: "grid-no-grow",
@@ -105,6 +109,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     // ── pagination ──
     enableColumnPinning: true,
     initialState: {
+      columnFilters,
       sorting: [
         {
           id: "oddsRatioBinary", //sort by age by default on page load
@@ -112,7 +117,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         },
       ],
       pagination: { pageSize: 20, pageIndex: 0 },
-      columnPinning: { left: ["info"] },
+      columnPinning: { left: ["mrt-row-expand", "info"] },
       density: "compact",
     },
     onGroupingChange: (updater) => {
