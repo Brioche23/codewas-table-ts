@@ -194,25 +194,6 @@ export function Heatmap({
     [],
   ) // Red=low(significant) → Blue=high
 
-  // // Match height to the MRT table container
-  // useEffect(() => {
-  //   const tableEl = tableContainerRef?.current
-  //   const wrapperEl = wrapperRef?.current
-  //   if (!tableEl || !wrapperEl) return
-  //   const observer = new ResizeObserver(([entry]) => {
-  //     setCanvasSize({
-  //       width: wrapperEl.getBoundingClientRect().width,
-  //       height: entry.contentRect.height,
-  //     })
-  //   })
-  //   observer.observe(tableEl)
-  //   return () => observer.disconnect()
-  // }, [])
-
-  // if (tableRows.length > 1000) return <p>Filter rows below 1000 to show heatmap</p>
-
-  if (isGrouping) return <p>Ungroup table first</p>
-
   return (
     <div ref={wrapperRef} style={{ width: canvasSize.width, height: canvasSize.height || 400 }}>
       <Typography sx={{ minHeight: 50 }}>

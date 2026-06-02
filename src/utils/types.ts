@@ -41,13 +41,10 @@ export interface ContinuousCount {
 
 export interface ConceptMetadata {
   conceptId: number
-  conceptName?: string | null
   vocabularyId?: string | null
   conceptClassId?: string | null
+  conceptName?: string | null
   conceptCode?: string | null
-  sourceConceptCode?: string | null
-  domainId?: string | null
-  countMode?: "code" | "descendant" | string
 }
 
 // ─── Top-level Concept row ───
@@ -59,6 +56,7 @@ export interface ConceptRow {
   sourceConceptCode?: string
   domainId: string
   countMode?: "code" | "descendant" | string
+  isStandard: boolean
 
   // Binary
   n_Binary: BinaryCount[]

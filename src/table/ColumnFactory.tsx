@@ -126,18 +126,18 @@ export function makeStatGroup({
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), 8),
         filterVariant: "range",
         sortUndefined: "last",
-        aggregationFn: "max",
-        AggregatedCell: ({ cell }) => (
-          <>
-            <p>Max: </p>
-            <Typography
-              variant="body2"
-              sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-            >
-              {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-            </Typography>
-          </>
-        ),
+        // aggregationFn: "max",
+        // AggregatedCell: ({ cell }) => (
+        //   <>
+        //     <p>Max: </p>
+        //     <Typography
+        //       variant="body2"
+        //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+        //     >
+        //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+        //     </Typography>
+        //   </>
+        // ),
       },
       {
         id: `effectSize${id}`,
@@ -151,18 +151,18 @@ export function makeStatGroup({
         accessorFn: (row) => paths.t(row)?.effectSize ?? null,
         Cell: ({ cell }) => valueChip(cell.getValue<number>(), effectSizeThreshold),
         filterVariant: "range",
-        aggregationFn: "mean",
-        AggregatedCell: ({ cell }) => (
-          <>
-            <p>Mean: </p>
-            <Typography
-              variant="body2"
-              sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
-            >
-              {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
-            </Typography>
-          </>
-        ),
+        // aggregationFn: "mean",
+        // AggregatedCell: ({ cell }) => (
+        //   <>
+        //     <p>Mean: </p>
+        //     <Typography
+        //       variant="body2"
+        //       sx={{ color: "info.main", display: "inline", fontWeight: "bold" }}
+        //     >
+        //       {cell.getValue<number>()?.toFixed(2) ?? "n/a"}
+        //     </Typography>
+        //   </>
+        // ),
       },
     ],
   }
@@ -203,47 +203,52 @@ export const makeInfoColumn = (
             .join(" "),
         enableColumnFilter: false,
         // Filter: ({ table }) => <InfoFilter table={table} />,
-        aggregationFn: "unique",
-        AggregatedCell: ({ cell }) => {
-          const ancestorId = cell.row.groupingValue as number
-          const concept = conceptsById[ancestorId]
-          if (!concept?.conceptName) {
-            return (
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
-                  Ancestor {ancestorId}
-                </Typography>
-                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                  Metadata unavailable in result set
-                </Typography>
-              </Box>
-            )
-          }
-          return (
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
-                {concept.conceptName}
-              </Typography>
-              {concept.vocabularyId && concept.conceptCode && (
-                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                  {concept.vocabularyId}: {concept.conceptCode}
-                </Typography>
-              )}
-              {concept.conceptClassId && (
-                <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                  Class: {concept.conceptClassId}
-                </Typography>
-              )}
-              <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-                Concept ID: {concept.conceptId}
-              </Typography>
-            </Box>
-          )
-        },
+        // aggregationFn: "unique",
+        // AggregatedCell: ({ cell }) => {
+        //   const ancestorId = cell.row.groupingValue as number
+        //   const concept = conceptsById[ancestorId]
+        //   if (!concept?.conceptName) {
+        //     return (
+        //       <Box>
+        //         <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
+        //           Ancestor {ancestorId}
+        //         </Typography>
+        //         <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //           Metadata unavailable in result set
+        //         </Typography>
+        //       </Box>
+        //     )
+        //   }
+        //   return (
+        //     <Box>
+        //       <Typography variant="body2" sx={{ fontWeight: "bold" }} noWrap>
+        //         {concept.conceptName}
+        //       </Typography>
+        //       {concept.vocabularyId && concept.conceptCode && (
+        //         <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //           {concept.vocabularyId}: {concept.conceptCode}
+        //         </Typography>
+        //       )}
+        //       {concept.conceptClassId && (
+        //         <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //           Class: {concept.conceptClassId}
+        //         </Typography>
+        //       )}
+        //       <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
+        //         Concept ID: {concept.conceptId}
+        //       </Typography>
+        //     </Box>
+        //   )
+        // },
         Cell: ({ row }) => {
           const concept = row.original
           return (
-            <Box sx={{ width: 190 }}>
+            <Box
+              sx={{
+                width: 190,
+                color: row.original.isStandard ? "primary.main" : "secondary.main",
+              }}
+            >
               <Tooltip title={concept.conceptName} placement="right">
                 <Typography variant="body2" noWrap>
                   {concept.conceptName}
@@ -369,7 +374,7 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           />
         )
       },
-      aggregationFn: "sumBinaryCount",
+      // aggregationFn: "sumBinaryCount",
 
       // AggregatedCell: ({ cell }) => {
       //   const val = cell.getValue<BinaryCount>()
@@ -390,8 +395,8 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       filterFn: (row, columnId, filterValue) => {
         const [min, max] = filterValue
 
-        console.log(min)
-        console.log(max)
+        // console.log(min)
+        // console.log(max)
 
         const nMin = min ?? 0
         const nMax = max ?? 99999
@@ -446,7 +451,7 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           <p>-log10</p>
         </Tooltip>
       ),
-      aggregationFn: "max",
+      // aggregationFn: "max",
       // AggregatedCell: ({ cell }) => (
       //   <>
       //     <p>Max: </p>
@@ -476,7 +481,7 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
           <p>OR</p>
         </Tooltip>
       ),
-      aggregationFn: "mean",
+      // aggregationFn: "mean",
       // AggregatedCell: ({ cell }) => (
       //   <>
       //     <p>Mean: </p>
@@ -649,7 +654,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
       Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
       filterVariant: "range",
-      aggregationFn: "mean",
+      // aggregationFn: "mean",
       // AggregatedCell: ({ cell }) => (
       //   <>
       //     <p>Mean: </p>

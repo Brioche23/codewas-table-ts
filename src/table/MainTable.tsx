@@ -20,7 +20,7 @@ import { sumBinaryCount } from "../utils/aggregations"
 export default function MainTable({ data, setData, pageView }: ConceptTableProps) {
   const tableContainerRef = useRef(null)
   const [grouping, setGrouping] = useState<MRT_GroupingState>(["ancestorConceptIds"])
-  const [countModeFilter, setCountModeFilter] = useState("all")
+  const [countModeFilter, setCountModeFilter] = useState<"code" | "descendant" | "all">("all")
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
     {
@@ -44,10 +44,19 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     return data.filter((row) => row.countMode === countModeFilter)
   }, [countModeFilter, data])
 
+  const formattedData = useMemo(
+    () =>
+      filteredData.map((d) => ({
+        ...d,
+        isStandard: !d.domainId.includes("Source:"),
+      })),
+    [filteredData],
+  )
+
   const conceptsById = useMemo<Record<number, ConceptMetadata>>(() => {
     const concepts: Record<number, ConceptMetadata> = {}
 
-    ;(data ?? []).forEach((row) => {
+    ;(formattedData ?? []).forEach((row) => {
       concepts[row.conceptId] = row
       ;(row.ancestorConcepts ?? []).forEach((ancestor) => {
         if (!ancestor?.conceptId) return
@@ -56,12 +65,11 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     })
 
     return concepts
-  }, [data])
-
-  const conceptsById = useMemo<Record<number, ConceptRow>>(
-    () => Object.fromEntries((formattedData ?? []).map((row) => [row.conceptId, row])),
-    [formattedData],
-  )
+  }, [formattedData])
+  // const conceptsById = useMemo<Record<number, ConceptRow>>(
+  //   () => Object.fromEntries((formattedData ?? []).map((row) => [row.conceptId, row])),
+  //   [formattedData],
+  // )
 
   // MRT_ColumnDef<ConceptRow> types each column to your data shape.
   // `accessorFn` lets you derive a display value from nested fields.
@@ -77,16 +85,37 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     )
   }, [filteredData])
 
+  const rootRows = useMemo(() => {
+    if (!formattedData) return []
+
+    const allDesc =
+      countModeFilter === "code"
+        ? formattedData
+        : formattedData.filter((r) => r.countMode === "descendant")
+    console.log("AD", allDesc)
+
+    // IDs of concepts that exist in the dataset and appear as someone's ancestor
+    const allConceptIds = new Set(allDesc.map((r) => r.conceptId))
+
+    const ancestorIdsInDataset = new Set(
+      allDesc.flatMap((r) => r.ancestorConceptIds ?? []).filter((id) => allConceptIds.has(id)), // O(1) lookup now
+    )
+
+    // A row is a root if none of its ancestors exist in the dataset
+    return allDesc.filter((r) => !r.ancestorConceptIds?.some((id) => ancestorIdsInDataset.has(id)))
+  }, [formattedData, countModeFilter])
+  console.log("rootRows", rootRows)
   const isGrouping = grouping.includes("ancestorConceptIds")
 
-  const tableData = useMemo(
-    () => (isGrouping ? expandedRows : filteredData),
-    [expandedRows, filteredData, isGrouping],
-  )
+  // const tableData = useMemo(
+  //   () => (isGrouping ? expandedRows : filteredData),
+  //   [expandedRows, filteredData, isGrouping],
+  // )
 
   const table = useMaterialReactTable({
     columns,
-    data: tableData,
+    data: rootRows,
+    enableExpanding: true,
     aggregationFns: { sumBinaryCount },
     state: {
       // grouping,
@@ -97,6 +126,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         // ancestorConceptIds: false,
       },
     },
+    getSubRows: (row) => expandedRows.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
     layoutMode: "grid-no-grow",
 
     defaultColumn: {
