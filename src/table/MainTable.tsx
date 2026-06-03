@@ -8,7 +8,6 @@ import { countModeLabel, useColumns } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
 import { Scatter } from "../components/charts/Scatter"
-import { sumBinaryCount } from "../utils/aggregations"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
@@ -99,6 +98,24 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     // A row is a root if none of its ancestors exist in the dataset
     return allDesc.filter((r) => !r.ancestorConceptIds?.some((id) => ancestorIdsInDataset.has(id)))
   }, [formattedData, countModeFilter])
+
+  // TODO When data will have children
+  /*
+  const { rootRows, rowById } = useMemo(() => {
+  if (!formattedData) return { rootRows: [], rowById: {} }
+
+  const allDesc = countModeFilter === "code"
+    ? formattedData
+    : formattedData.filter((r) => r.countMode === "descendant")
+
+  const rowById = Object.fromEntries(allDesc.map((r) => [r.conceptId, r]))
+  const allChildIds = new Set(allDesc.flatMap((r) => r.childConceptIds ?? []))
+  const rootRows = allDesc.filter((r) => !allChildIds.has(r.conceptId))
+
+  return { rootRows, rowById }
+}, [formattedData, countModeFilter])
+*/
+
   console.log("rootRows", rootRows)
   const isGrouping = grouping.includes("ancestorConceptIds")
 
@@ -122,6 +139,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
       },
     },
     getSubRows: (row) => expandedRows.filter((r) => r.ancestorConceptIds.includes(row.conceptId)),
+    // getSubRows: (row) => (row.childConceptIds ?? []).map((id) => rowById[id]).filter(Boolean),
     layoutMode: "grid-no-grow",
 
     defaultColumn: {
@@ -178,13 +196,36 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
       variant: "outlined",
       size: "small",
     },
+
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        ...(row.getCanExpand() && {
+          borderLeft: "3px solid",
+          borderColor: "primary.light",
+          fontWeight: "bold",
+        }),
+        ...(!row.getCanExpand() && {
+          borderLeft: "3px solid",
+          borderColor: "transparent", // keeps alignment consistent
+        }),
+
+        ...(row.depth === 1 && {
+          borderLeft: "3px solid",
+          borderColor: "primary.main",
+        }),
+        ...(row.depth > 1 && {
+          borderLeft: "3px solid",
+          borderColor: "divider",
+        }),
+      },
+    }),
   })
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
+      {/* <Typography>{data.length} rows</Typography> */}
       {countModeOptions.length > 0 && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography>{data.length}</Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
             Mode
           </Typography>

@@ -57,16 +57,17 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
           onClick={() => handleExportRows(table.getPrePaginationRowModel().flatRows)}
           startIcon={<FileDownload />}
         >
-          Export Filtered Rows
+          JSON
         </Button>
 
         <Button
-          disabled={table.getPrePaginationRowModel().rows.length === 0}
+          // disabled={table.getPrePaginationRowModel().rows.length === 0}
+          disabled={true}
           //export all rows, including from the next page, (still respects filtering and sorting)
           onClick={() => handleExportRowsCSV(table.getPrePaginationRowModel().flatRows)}
           startIcon={<FileDownload />}
         >
-          Export All Rows CSV
+          CSV
         </Button>
       </Box>
       <InfoFilter table={table} />
