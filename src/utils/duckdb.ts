@@ -1,7 +1,22 @@
 import * as duckdb from "@duckdb/duckdb-wasm"
+import duckdbMvpWasm from "@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url"
+import duckdbEhWasm from "@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url"
+import duckdbMvpWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url"
+import duckdbEhWorker from "@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url"
 import type { DuckDbDataSource, DuckDbPreviewSection, DuckDbTableCount } from "./types"
 
 let runtimePromise: Promise<duckdb.AsyncDuckDB> | null = null
+
+const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
+  mvp: {
+    mainModule: duckdbMvpWasm,
+    mainWorker: duckdbMvpWorker,
+  },
+  eh: {
+    mainModule: duckdbEhWasm,
+    mainWorker: duckdbEhWorker,
+  },
+}
 
 function getSafeFileName(sourceLabel: string) {
   return sourceLabel.replace(/[^a-zA-Z0-9._-]/g, "_")
@@ -24,13 +39,8 @@ function rowsFromArrowTable(result: any): Record<string, unknown>[] {
 async function getRuntime() {
   if (!runtimePromise) {
     runtimePromise = (async () => {
-      const bundles = duckdb.getJsDelivrBundles()
-      const bundle = await duckdb.selectBundle(bundles)
-      const workerUrl = URL.createObjectURL(
-        new Blob([`importScripts("${bundle.mainWorker}");`], { type: "text/javascript" }),
-      )
-
-      const worker = new Worker(workerUrl)
+      const bundle = await duckdb.selectBundle(MANUAL_BUNDLES)
+      const worker = new Worker(bundle.mainWorker!)
       const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(), worker)
       await db.instantiate(bundle.mainModule, bundle.pthreadWorker)
       return db
