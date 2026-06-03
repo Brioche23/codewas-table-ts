@@ -98,6 +98,31 @@ export interface ConceptTableProps {
   pageView: PageViewOptions
 }
 
+export interface DuckDbTableCount {
+  tableName: string
+  rowCount: number
+}
+
+export interface DuckDbPreviewSection {
+  title: string
+  rows: Record<string, unknown>[]
+}
+
+export interface DuckDbDataSource {
+  kind: "duckdb"
+  sourceLabel: string
+  tableCounts: DuckDbTableCount[]
+  previewSections: DuckDbPreviewSection[]
+  runQuery: (sql: string) => Promise<Record<string, unknown>[]>
+}
+
+export interface JsonDataSource {
+  kind: "json"
+  rows: ConceptRow[]
+}
+
+export type LoadedDataSource = JsonDataSource | DuckDbDataSource
+
 // Shape of a saved preset stored in localStorage
 export type FilterPreset = {
   id: string // unique id, e.g. crypto timestamp

@@ -1,9 +1,10 @@
 // App.tsx — wire up the table with your JSON data
-import { ThemeProvider, createTheme, CssBaseline, Container, Box, Grid, Alert } from "@mui/material"
+import { ThemeProvider, createTheme, CssBaseline, Container, Alert } from "@mui/material"
 
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
+import DuckDbExplorer from "./components/DuckDbExplorer"
 
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"
@@ -33,7 +34,7 @@ const theme = createTheme({
 })
 
 export default function App() {
-  const { data, setData, loading, error, filePath } = useDataSource()
+  const { dataSource, setDataSource, loading, error, filePath } = useDataSource()
   const [pageView, setPageView] = useState<PageViewOptions>("table")
 
   return (
@@ -49,10 +50,25 @@ export default function App() {
       >
         {loading && <Alert severity="info">Loading data from URL...</Alert>}
         {error && <Alert severity="error">Error: {error}</Alert>}
-        {!data ? (
-          <InputFileUpload setData={setData} />
+        {!dataSource ? (
+          <InputFileUpload setDataSource={setDataSource} />
+        ) : dataSource.kind === "duckdb" ? (
+          <DuckDbExplorer dataSource={dataSource} pageView={pageView} setPageView={setPageView} />
         ) : (
-          <MainTable data={data} setData={setData} pageView={pageView} />
+          <MainTable
+            data={dataSource.rows}
+            setData={(updater) => {
+              setDataSource((current) => {
+                if (!current || current.kind !== "json") {
+                  return current
+                }
+
+                const nextRows = typeof updater === "function" ? updater(current.rows) : updater
+                return nextRows ? { kind: "json", rows: nextRows } : null
+              })
+            }}
+            pageView={pageView}
+          />
         )}
       </Container>
       <Footer text={filePath} pageView={pageView} setPageView={setPageView} />
