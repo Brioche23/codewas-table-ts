@@ -1501,6 +1501,21 @@ function getExpandedRowKeys(expanded: MRT_ExpandedState) {
     .map(([rowKey]) => rowKey)
 }
 
+function matchesHeatmapSearch(row: ConceptSummaryRow, searchText: string) {
+  const needle = searchText.trim().toLowerCase()
+  if (!needle) return true
+  return [
+    row.conceptName ?? "",
+    row.conceptCode ?? "",
+    String(row.conceptId),
+    row.domainId,
+    row.countMode,
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(needle)
+}
+
 const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (row, columnId, filterValue) => {
   const rawValue = row.getValue<number | null>(columnId)
   const value = typeof rawValue === "number" ? rawValue : null
@@ -1543,6 +1558,7 @@ function DuckDbCharts({
   const [heatmapScaleMode, setHeatmapScaleMode] = useState<HeatmapScaleMode>("perColumn")
   const [heatmapOrderBlock, setHeatmapOrderBlock] = useState<ChartBlockKey>("Binary")
   const [repeatThreshold, setRepeatThreshold] = useState(5)
+  const [heatmapSearchText, setHeatmapSearchText] = useState("")
   const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -1569,8 +1585,12 @@ function DuckDbCharts({
       ) as Record<ChartBlockKey, number>,
     [rows],
   )
+  const heatmapBaseRows = useMemo(
+    () => rows.filter((row) => matchesHeatmapSearch(row, heatmapSearchText)),
+    [heatmapSearchText, rows],
+  )
   const heatmapRows = useMemo(() => {
-    const sorted = [...rows]
+    const sorted = [...heatmapBaseRows]
     switch (heatmapOrderMode) {
       case "selectedBlock":
         return sorted.sort(
@@ -1590,7 +1610,7 @@ function DuckDbCharts({
       default:
         return sorted.sort((a, b) => getBestHeatmapScore(b) - getBestHeatmapScore(a))
     }
-  }, [heatmapOrderBlock, heatmapOrderMode, perColumnMax, repeatThreshold, rows])
+  }, [heatmapBaseRows, heatmapOrderBlock, heatmapOrderMode, perColumnMax, repeatThreshold])
   const maxHeatmapValue = useMemo(
     () => Math.max(1, ...heatmapRows.flatMap((row) => HEATMAP_BLOCKS.map((block) => getChartMetricValue(row, block, "-log10") ?? 0))),
     [heatmapRows],
@@ -1837,6 +1857,15 @@ function DuckDbCharts({
                 </Select>
               </FormControl>
             </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Heatmap search"
+                value={heatmapSearchText}
+                onChange={(event) => setHeatmapSearchText(event.target.value)}
+                placeholder="Filter heatmap by concept/code/id"
+              />
+            </Grid>
           </>
         )}
       </Grid>
@@ -1875,6 +1904,11 @@ function DuckDbCharts({
           <Typography variant="body2" color="text.secondary">
             Heatmap colors show -log10(p) evidence by analysis block. Repeat counts show how many blocks pass the selected threshold. Click a cell to jump that concept back into the table.
           </Typography>
+          {heatmapSearchText.trim() ? (
+            <Typography variant="body2" color="text.secondary">
+              Showing {heatmapRows.length} heatmap rows matching "{heatmapSearchText}".
+            </Typography>
+          ) : null}
           <Paper sx={{ p: 1.5 }}>
             <Box sx={{ overflow: "auto", maxHeight: 560, border: "1px solid", borderColor: "divider" }}>
               <canvas
