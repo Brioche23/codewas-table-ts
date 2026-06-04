@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type MouseEvent, type SetStateAction } from "react"
 import {
   Alert,
+  Button,
   Box,
   Chip,
   CircularProgress,
@@ -189,6 +190,80 @@ function formatNumber(value: number | null | undefined, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) return ""
   if (!Number.isFinite(value)) return String(value)
   return value.toFixed(digits)
+}
+
+function getSafeDownloadName(sourceLabel: string) {
+  const baseName = sourceLabel.split("/").at(-1)?.split("\\").at(-1) ?? "codewas_results"
+  return baseName.replace(/[^a-zA-Z0-9._-]/g, "_")
+}
+
+function triggerDownload(fileName: string, payload: BlobPart, mimeType: string) {
+  const blob = new Blob([payload], { type: mimeType })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function tsvEscape(value: unknown) {
+  if (value == null) return ""
+  const text = String(value)
+  if (!/[\t\r\n"]/.test(text)) return text
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
+  const exportRows = rows.map((row) => ({
+    conceptName: row.conceptName ?? "",
+    conceptCode: row.conceptCode ?? "",
+    conceptId: row.conceptId,
+    ancestorConceptIds: row.ancestorConceptIds ?? "",
+    domainId: row.domainId,
+    countMode: row.countMode,
+    binaryCases: row.binaryCaseYes ?? "",
+    binaryControls: row.binaryControlYes ?? "",
+    binaryLogP: row.binaryPValue && row.binaryPValue > 0 ? -Math.log10(row.binaryPValue) : "",
+    binaryEffect: row.binaryEffectSize ?? "",
+    countsCaseMean: row.countsCaseMean ?? "",
+    countsControlMean: row.countsControlMean ?? "",
+    countsLogP: row.countsPValue && row.countsPValue > 0 ? -Math.log10(row.countsPValue) : "",
+    countsEffect: row.countsEffectSize ?? "",
+    ageCaseMean: row.ageCaseMean ?? "",
+    ageControlMean: row.ageControlMean ?? "",
+    ageLogP: row.agePValue && row.agePValue > 0 ? -Math.log10(row.agePValue) : "",
+    ageEffect: row.ageEffectSize ?? "",
+    daysCaseMean: row.daysCaseMean ?? "",
+    daysControlMean: row.daysControlMean ?? "",
+    daysLogP: row.daysPValue && row.daysPValue > 0 ? -Math.log10(row.daysPValue) : "",
+    daysEffect: row.daysEffectSize ?? "",
+    continuousCaseMean: row.continuousCaseMean ?? "",
+    continuousControlMean: row.continuousControlMean ?? "",
+    continuousUnit: row.continuousUnit ?? "",
+    continuousLogP: row.continuousPValue && row.continuousPValue > 0 ? -Math.log10(row.continuousPValue) : "",
+    continuousEffect: row.continuousEffectSize ?? "",
+    categoricalCases: row.categoricalCaseYes ?? "",
+    categoricalControls: row.categoricalControlYes ?? "",
+    categoricalLogP: row.categoricalPValue && row.categoricalPValue > 0 ? -Math.log10(row.categoricalPValue) : "",
+    categoricalEffect: row.categoricalEffectSize ?? "",
+  }))
+
+  const headers = Object.keys(exportRows[0] ?? {
+    conceptName: "",
+    conceptCode: "",
+    conceptId: "",
+    ancestorConceptIds: "",
+    domainId: "",
+    countMode: "",
+  })
+  const lines = [headers.join("\t")]
+  exportRows.forEach((row) => {
+    lines.push(headers.map((header) => tsvEscape(row[header as keyof typeof row])).join("\t"))
+  })
+  return lines.join("\n")
 }
 
 function valueChip(value: number | null | undefined, threshold: number, digits = 2) {
@@ -1034,6 +1109,18 @@ function getHeatmapColor(value: number | null, maxValue: number) {
   return `hsl(5 78% ${lightness}%)`
 }
 
+function getHeatmapHeaderLines(block: ChartBlockKey) {
+  const label = COLUMNS.find((column) => column.key === block)?.label ?? block
+  switch (label) {
+    case "Age at First Event":
+      return ["Age at", "First Event"]
+    case "Days to First Event":
+      return ["Days to", "First Event"]
+    default:
+      return [label]
+  }
+}
+
 function renderTestSummary(label: string, pValue?: number | null, effectSize?: number | null, smd?: number | null, testName?: string | null) {
   if (pValue == null && effectSize == null && smd == null && !testName) return null
   return (
@@ -1327,9 +1414,9 @@ function DuckDbCharts({
     [heatmapRows],
   )
   const rowHeight = 10
-  const headerHeight = 24
-  const labelWidth = 240
-  const columnWidth = 90
+  const headerHeight = 36
+  const labelWidth = 250
+  const columnWidth = 108
   const canvasWidth = labelWidth + HEATMAP_BLOCKS.length * columnWidth
   const canvasHeight = headerHeight + heatmapRows.length * rowHeight
 
@@ -1359,7 +1446,11 @@ function DuckDbCharts({
       context.fillRect(x, 0, columnWidth, headerHeight)
       context.fillStyle = "#222"
       context.textAlign = "center"
-      context.fillText(COLUMNS.find((column) => column.key === block)?.label ?? block, x + columnWidth / 2, headerHeight / 2)
+      const headerLines = getHeatmapHeaderLines(block)
+      headerLines.forEach((line, lineIndex) => {
+        const y = headerLines.length === 1 ? headerHeight / 2 : 12 + lineIndex * 12
+        context.fillText(line, x + columnWidth / 2, y)
+      })
     })
 
     heatmapRows.forEach((row, rowIndex) => {
@@ -1578,6 +1669,7 @@ export default function DuckDbExplorer({
   const [focusedRowKey, setFocusedRowKey] = useState<string | null>(null)
   const [selectedDetailRow, setSelectedDetailRow] = useState<ConceptSummaryRow | null>(null)
   const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [exportLoading, setExportLoading] = useState(false)
   const [chartLoading, setChartLoading] = useState(false)
   const [chartScope, setChartScope] = useState<ChartScope>("filtered")
   const [tableLoading, setTableLoading] = useState(false)
@@ -1781,6 +1873,48 @@ export default function DuckDbExplorer({
     })
   }
 
+  async function downloadFilteredTsv() {
+    setExportLoading(true)
+    try {
+      const rowsRaw = await dataSource.runQuery(
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters, true),
+      )
+      const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
+      triggerDownload(
+        `${getSafeDownloadName(dataSource.sourceLabel).replace(/\.duckdb$/i, "")}_filtered.tsv`,
+        tsv,
+        "text/tab-separated-values;charset=utf-8",
+      )
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  async function downloadFullTsv() {
+    setExportLoading(true)
+    try {
+      const rowsRaw = await dataSource.runQuery(
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, [], false),
+      )
+      const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
+      triggerDownload(
+        `${getSafeDownloadName(dataSource.sourceLabel).replace(/\.duckdb$/i, "")}_full.tsv`,
+        tsv,
+        "text/tab-separated-values;charset=utf-8",
+      )
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  function downloadFullDuckDb() {
+    triggerDownload(
+      getSafeDownloadName(dataSource.sourceLabel),
+      dataSource.sourceBytes,
+      "application/octet-stream",
+    )
+  }
+
   return (
     <Stack spacing={3}>
       <Box>
@@ -1839,12 +1973,21 @@ export default function DuckDbExplorer({
             onChange={(event) => setSearchText(event.target.value)}
             sx={{ minWidth: 220 }}
           />
+          <Button variant="outlined" onClick={downloadFullDuckDb} disabled={exportLoading}>
+            Download full DuckDB
+          </Button>
+          <Button variant="outlined" onClick={() => void downloadFilteredTsv()} disabled={exportLoading}>
+            Download filtered TSV
+          </Button>
+          <Button variant="outlined" onClick={() => void downloadFullTsv()} disabled={exportLoading}>
+            Download full TSV
+          </Button>
         </Stack>
         <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: "wrap" }}>
           <Chip label="Startup default: Binary cases >= 5" size="small" variant="outlined" />
           <Chip label="Startup default: -log10(Binary p) >= 5" size="small" variant="outlined" />
         </Stack>
-        {(tableLoading || chartLoading || hierarchyLoading) && (
+        {(tableLoading || chartLoading || hierarchyLoading || exportLoading) && (
           <Box
             sx={{
               display: "flex",
@@ -1856,7 +1999,9 @@ export default function DuckDbExplorer({
           >
             <CircularProgress size={18} />
             <Typography variant="body2">
-              Loading {pageView === "charts" ? "chart" : tableMode === "hierarchy" ? "hierarchy" : "table"} results...
+              {exportLoading
+                ? "Preparing download..."
+                : `Loading ${pageView === "charts" ? "chart" : tableMode === "hierarchy" ? "hierarchy" : "table"} results...`}
             </Typography>
           </Box>
         )}

@@ -111,6 +111,7 @@ export interface DuckDbPreviewSection {
 export interface DuckDbDataSource {
   kind: "duckdb"
   sourceLabel: string
+  sourceBytes: Uint8Array
   tableCounts: DuckDbTableCount[]
   previewSections: DuckDbPreviewSection[]
   runQuery: (sql: string) => Promise<Record<string, unknown>[]>

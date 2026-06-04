@@ -139,6 +139,7 @@ export async function loadDuckDbDataSource(sourceLabel: string, bytes: Uint8Arra
   return {
     kind: "duckdb",
     sourceLabel,
+    sourceBytes: bytes,
     tableCounts,
     previewSections,
     runQuery: async (sql: string) => queryRows(connection, sql),
