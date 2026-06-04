@@ -542,8 +542,13 @@ function buildContinuousBlockQueryFromBase(analysisType: string, prefix: "counts
   `
 }
 
-function buildFilterConditions(columnFilters: MRT_ColumnFiltersState, includeStartupDefaults = true) {
-  const conditions = includeStartupDefaults ? ["coalesce(binaryCaseYes, 0) >= 5", "coalesce(binaryLogP, 0) >= 5"] : []
+const DEFAULT_COLUMN_FILTERS: MRT_ColumnFiltersState = [
+  { id: "binaryCasesControl", value: ">= 5" },
+  { id: "binaryLogP", value: ">= 5" },
+]
+
+function buildFilterConditions(columnFilters: MRT_ColumnFiltersState) {
+  const conditions: string[] = []
   const textLike = (sqlExpr: string, value: string) => {
     const safe = escapeSqlString(value.trim().toLowerCase())
     return `lower(coalesce(${sqlExpr}, '')) LIKE '%${safe}%'`
@@ -646,7 +651,7 @@ function buildPagedSummaryQuery(
   pagination: MRT_PaginationState,
 ) {
   const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
-  const conditions = buildFilterConditions(columnFilters, true)
+  const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   const orderBy = buildSortExpression(sorting)
   const offset = pagination.pageIndex * pagination.pageSize
@@ -667,7 +672,7 @@ function buildSummaryCountQuery(
   columnFilters: MRT_ColumnFiltersState,
 ) {
   const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
-  const conditions = buildFilterConditions(columnFilters, true)
+  const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
     ${ctes}
@@ -682,10 +687,9 @@ function buildFullSummaryQuery(
   domainId: string,
   searchText: string,
   columnFilters: MRT_ColumnFiltersState,
-  includeStartupDefaults: boolean,
 ) {
   const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
-  const conditions = buildFilterConditions(columnFilters, includeStartupDefaults)
+  const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
     ${ctes}
@@ -1840,7 +1844,7 @@ export default function DuckDbExplorer({
   const [tableLoading, setTableLoading] = useState(false)
   const [hierarchyLoading, setHierarchyLoading] = useState(false)
   const [tableMode, setTableMode] = useState<TableMode>("flat")
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([])
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(DEFAULT_COLUMN_FILTERS)
   const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>({
     ancestorConceptIds: false,
   })
@@ -1879,7 +1883,6 @@ export default function DuckDbExplorer({
             selectedDomain,
             searchText,
             chartScope === "filtered" ? columnFilters : [],
-            chartScope === "filtered",
           ),
         )
         if (!active) return
@@ -1933,7 +1936,7 @@ export default function DuckDbExplorer({
       setHierarchyLoading(true)
       try {
         const rowsRaw = await dataSource.runQuery(
-          buildFullSummaryQuery("all", selectedDomain, searchText, [], true),
+          buildFullSummaryQuery("all", selectedDomain, searchText, []),
         )
         if (!active) return
         setHierarchyRows(buildHierarchyTree((rowsRaw as BlockMetricRow[]).map(mapSummaryRow)))
@@ -2044,7 +2047,7 @@ export default function DuckDbExplorer({
     setExportLoading(true)
     try {
       const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters, true),
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters),
       )
       const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
       triggerDownload(
@@ -2061,7 +2064,7 @@ export default function DuckDbExplorer({
     setExportLoading(true)
     try {
       const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, [], false),
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, []),
       )
       const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
       triggerDownload(
@@ -2149,10 +2152,6 @@ export default function DuckDbExplorer({
           <Button variant="outlined" onClick={() => void downloadFullTsv()} disabled={exportLoading}>
             Download full TSV
           </Button>
-        </Stack>
-        <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: "wrap" }}>
-          <Chip label="Startup default: Binary cases >= 5" size="small" variant="outlined" />
-          <Chip label="Startup default: -log10(Binary p) >= 5" size="small" variant="outlined" />
         </Stack>
         {(tableLoading || chartLoading || hierarchyLoading || exportLoading) && (
           <Box
