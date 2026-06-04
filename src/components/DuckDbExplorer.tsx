@@ -157,6 +157,8 @@ type ChartMetricKey = "-log10" | "effectSize"
 type ChartMode = "heatmap" | "scatter"
 type ChartScope = "filtered" | "all"
 type TableMode = "flat" | "hierarchy"
+type HeatmapOrderMode = "strongest" | "selectedBlock" | "repeatEvidence" | "clustered"
+type HeatmapScaleMode = "global" | "perColumn"
 type HeatmapCell = {
   row: ConceptSummaryRow
   block: ChartBlockKey | "Concept"
@@ -1101,12 +1103,60 @@ function getBestHeatmapScore(row: ConceptSummaryRow) {
   )
 }
 
+function getRepeatEvidenceCount(row: ConceptSummaryRow, threshold: number) {
+  return HEATMAP_BLOCKS.reduce((count, block) => {
+    const value = getChartMetricValue(row, block, "-log10")
+    return count + ((value ?? 0) >= threshold ? 1 : 0)
+  }, 0)
+}
+
 function getHeatmapColor(value: number | null, maxValue: number) {
   if (value == null) return "#dadada"
   if (!Number.isFinite(value)) return "#8b0000"
   const intensity = Math.min(value / Math.max(maxValue, 1), 1)
   const lightness = 94 - intensity * 46
   return `hsl(5 78% ${lightness}%)`
+}
+
+function buildClusteredHeatmapRows(
+  rows: ConceptSummaryRow[],
+  perColumnMax: Record<ChartBlockKey, number>,
+) {
+  if (rows.length <= 2) return rows
+
+  const remaining = [...rows]
+  const ordered: ConceptSummaryRow[] = []
+
+  const vectorFor = (row: ConceptSummaryRow) =>
+    HEATMAP_BLOCKS.map((block) => {
+      const raw = getChartMetricValue(row, block, "-log10") ?? 0
+      return raw / Math.max(perColumnMax[block] ?? 1, 1)
+    })
+
+  const distance = (left: number[], right: number[]) =>
+    Math.sqrt(left.reduce((sum, value, index) => sum + (value - right[index]) ** 2, 0))
+
+  remaining.sort((left, right) => getBestHeatmapScore(right) - getBestHeatmapScore(left))
+  ordered.push(remaining.shift() as ConceptSummaryRow)
+
+  while (remaining.length > 0) {
+    const last = ordered[ordered.length - 1]
+    const lastVector = vectorFor(last)
+    let bestIndex = 0
+    let bestDistance = Number.POSITIVE_INFINITY
+
+    remaining.forEach((candidate, index) => {
+      const candidateDistance = distance(lastVector, vectorFor(candidate))
+      if (candidateDistance < bestDistance) {
+        bestDistance = candidateDistance
+        bestIndex = index
+      }
+    })
+
+    ordered.push(remaining.splice(bestIndex, 1)[0])
+  }
+
+  return ordered
 }
 
 function getHeatmapHeaderLines(block: ChartBlockKey) {
@@ -1392,6 +1442,10 @@ function DuckDbCharts({
   const [xBlock, setXBlock] = useState<ChartBlockKey>("Binary")
   const [yBlock, setYBlock] = useState<ChartBlockKey>("Count")
   const [metric, setMetric] = useState<ChartMetricKey>("-log10")
+  const [heatmapOrderMode, setHeatmapOrderMode] = useState<HeatmapOrderMode>("repeatEvidence")
+  const [heatmapScaleMode, setHeatmapScaleMode] = useState<HeatmapScaleMode>("perColumn")
+  const [heatmapOrderBlock, setHeatmapOrderBlock] = useState<ChartBlockKey>("Binary")
+  const [repeatThreshold, setRepeatThreshold] = useState(5)
   const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -1408,7 +1462,38 @@ function DuckDbCharts({
     [metric, rows, xBlock, yBlock],
   )
 
-  const heatmapRows = useMemo(() => [...rows].sort((a, b) => getBestHeatmapScore(b) - getBestHeatmapScore(a)), [rows])
+  const perColumnMax = useMemo(
+    () =>
+      Object.fromEntries(
+        HEATMAP_BLOCKS.map((block) => [
+          block,
+          Math.max(1, ...rows.map((row) => getChartMetricValue(row, block, "-log10") ?? 0)),
+        ]),
+      ) as Record<ChartBlockKey, number>,
+    [rows],
+  )
+  const heatmapRows = useMemo(() => {
+    const sorted = [...rows]
+    switch (heatmapOrderMode) {
+      case "selectedBlock":
+        return sorted.sort(
+          (a, b) =>
+            (getChartMetricValue(b, heatmapOrderBlock, "-log10") ?? 0) -
+            (getChartMetricValue(a, heatmapOrderBlock, "-log10") ?? 0),
+        )
+      case "repeatEvidence":
+        return sorted.sort((a, b) => {
+          const repeatDiff = getRepeatEvidenceCount(b, repeatThreshold) - getRepeatEvidenceCount(a, repeatThreshold)
+          if (repeatDiff !== 0) return repeatDiff
+          return getBestHeatmapScore(b) - getBestHeatmapScore(a)
+        })
+      case "clustered":
+        return buildClusteredHeatmapRows(sorted, perColumnMax)
+      case "strongest":
+      default:
+        return sorted.sort((a, b) => getBestHeatmapScore(b) - getBestHeatmapScore(a))
+    }
+  }, [heatmapOrderBlock, heatmapOrderMode, perColumnMax, repeatThreshold, rows])
   const maxHeatmapValue = useMemo(
     () => Math.max(1, ...heatmapRows.flatMap((row) => HEATMAP_BLOCKS.map((block) => getChartMetricValue(row, block, "-log10") ?? 0))),
     [heatmapRows],
@@ -1416,8 +1501,9 @@ function DuckDbCharts({
   const rowHeight = 10
   const headerHeight = 36
   const labelWidth = 250
+  const repeatWidth = 42
   const columnWidth = 108
-  const canvasWidth = labelWidth + HEATMAP_BLOCKS.length * columnWidth
+  const canvasWidth = labelWidth + repeatWidth + HEATMAP_BLOCKS.length * columnWidth
   const canvasHeight = headerHeight + heatmapRows.length * rowHeight
 
   useEffect(() => {
@@ -1440,8 +1526,14 @@ function DuckDbCharts({
     context.textAlign = "left"
     context.fillText("Concept", 8, headerHeight / 2)
 
+    context.fillStyle = "#f3f3f3"
+    context.fillRect(labelWidth, 0, repeatWidth, headerHeight)
+    context.fillStyle = "#222"
+    context.textAlign = "center"
+    context.fillText("Rep", labelWidth + repeatWidth / 2, headerHeight / 2)
+
     HEATMAP_BLOCKS.forEach((block, blockIndex) => {
-      const x = labelWidth + blockIndex * columnWidth
+      const x = labelWidth + repeatWidth + blockIndex * columnWidth
       context.fillStyle = "#f3f3f3"
       context.fillRect(x, 0, columnWidth, headerHeight)
       context.fillStyle = "#222"
@@ -1461,13 +1553,19 @@ function DuckDbCharts({
       context.fillStyle = "#222"
       context.textAlign = "left"
       context.fillText(label.slice(0, 34), 8, y + rowHeight / 2)
+      context.fillStyle = "#ffffff"
+      context.fillRect(labelWidth, y, repeatWidth - 1, rowHeight - 1)
+      context.fillStyle = getRepeatEvidenceCount(row, repeatThreshold) > 1 ? "#0d47a1" : "#666666"
+      context.textAlign = "center"
+      context.fillText(String(getRepeatEvidenceCount(row, repeatThreshold)), labelWidth + repeatWidth / 2, y + rowHeight / 2)
       HEATMAP_BLOCKS.forEach((block, blockIndex) => {
         const value = getChartMetricValue(row, block, "-log10")
-        context.fillStyle = getHeatmapColor(value, maxHeatmapValue)
-        context.fillRect(labelWidth + blockIndex * columnWidth, y, columnWidth - 1, rowHeight - 1)
+        const scaleMax = heatmapScaleMode === "perColumn" ? perColumnMax[block] : maxHeatmapValue
+        context.fillStyle = getHeatmapColor(value, scaleMax)
+        context.fillRect(labelWidth + repeatWidth + blockIndex * columnWidth, y, columnWidth - 1, rowHeight - 1)
       })
     })
-  }, [canvasHeight, canvasWidth, heatmapRows, hoveredCell, labelWidth, maxHeatmapValue])
+  }, [canvasHeight, canvasWidth, heatmapRows, heatmapScaleMode, hoveredCell, labelWidth, maxHeatmapValue, perColumnMax, repeatThreshold])
 
   function resolveHeatmapCell(event: MouseEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current
@@ -1479,14 +1577,14 @@ function DuckDbCharts({
     const rowIndex = Math.floor((y - headerHeight) / rowHeight)
     const row = heatmapRows[rowIndex]
     if (!row) return null
-    if (x < labelWidth) {
+    if (x < labelWidth + repeatWidth) {
       return {
         row,
         block: "Concept",
         value: getBestHeatmapScore(row),
       } satisfies HeatmapCell
     }
-    const blockIndex = Math.floor((x - labelWidth) / columnWidth)
+    const blockIndex = Math.floor((x - labelWidth - repeatWidth) / columnWidth)
     const block = HEATMAP_BLOCKS[blockIndex]
     if (!block) return null
     return {
@@ -1578,7 +1676,72 @@ function DuckDbCharts({
               </FormControl>
             </Grid>
           </>
-        ) : null}
+        ) : (
+          <>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel id="duckdb-heatmap-order-label">Row Order</InputLabel>
+                <Select
+                  labelId="duckdb-heatmap-order-label"
+                  value={heatmapOrderMode}
+                  label="Row Order"
+                  onChange={(event) => setHeatmapOrderMode(event.target.value as HeatmapOrderMode)}
+                >
+                  <MenuItem value="repeatEvidence">Repeat evidence</MenuItem>
+                  <MenuItem value="strongest">Strongest overall</MenuItem>
+                  <MenuItem value="selectedBlock">Selected block</MenuItem>
+                  <MenuItem value="clustered">Clustered rows</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel id="duckdb-heatmap-scale-label">Color Scale</InputLabel>
+                <Select
+                  labelId="duckdb-heatmap-scale-label"
+                  value={heatmapScaleMode}
+                  label="Color Scale"
+                  onChange={(event) => setHeatmapScaleMode(event.target.value as HeatmapScaleMode)}
+                >
+                  <MenuItem value="perColumn">Per column</MenuItem>
+                  <MenuItem value="global">Global</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth disabled={heatmapOrderMode !== "selectedBlock"}>
+                <InputLabel id="duckdb-heatmap-block-label">Order Block</InputLabel>
+                <Select
+                  labelId="duckdb-heatmap-block-label"
+                  value={heatmapOrderBlock}
+                  label="Order Block"
+                  onChange={(event) => setHeatmapOrderBlock(event.target.value as ChartBlockKey)}
+                >
+                  {COLUMNS.map((column) => (
+                    <MenuItem key={column.key} value={column.key}>
+                      {column.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel id="duckdb-repeat-threshold-label">Repeat Threshold</InputLabel>
+                <Select
+                  labelId="duckdb-repeat-threshold-label"
+                  value={String(repeatThreshold)}
+                  label="Repeat Threshold"
+                  onChange={(event) => setRepeatThreshold(Number(event.target.value))}
+                >
+                  <MenuItem value="3">-log10(p) >= 3</MenuItem>
+                  <MenuItem value="5">-log10(p) >= 5</MenuItem>
+                  <MenuItem value="8">-log10(p) >= 8</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </>
+        )}
       </Grid>
 
       {chartMode === "scatter" ? (
@@ -1613,7 +1776,7 @@ function DuckDbCharts({
         <Stack spacing={1.5}>
           {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
           <Typography variant="body2" color="text.secondary">
-            Heatmap rows are ordered by strongest cross-analysis significance. Click a cell to jump that concept back into the table.
+            Heatmap colors show -log10(p) evidence by analysis block. Repeat counts show how many blocks pass the selected threshold. Click a cell to jump that concept back into the table.
           </Typography>
           <Paper sx={{ p: 1.5 }}>
             <Box sx={{ overflow: "auto", maxHeight: 560, border: "1px solid", borderColor: "divider" }}>
@@ -1637,8 +1800,9 @@ function DuckDbCharts({
             <Alert severity="info">
               <strong>{hoveredCell.row.conceptName ?? hoveredCell.row.conceptId}</strong>
               {` | ${hoveredCell.block} | `}
-              {hoveredCell.block === "Concept" ? "best cross-analysis -log10(p) " : "-log10(p) "}
-              {hoveredCell.value == null ? "N/A" : formatNumber(hoveredCell.value, 2)}
+              {hoveredCell.block === "Concept"
+                ? `best cross-analysis -log10(p) ${hoveredCell.value == null ? "N/A" : formatNumber(hoveredCell.value, 2)} | repeat evidence ${getRepeatEvidenceCount(hoveredCell.row, repeatThreshold)}`
+                : `-log10(p) ${hoveredCell.value == null ? "N/A" : formatNumber(hoveredCell.value, 2)} | repeat evidence ${getRepeatEvidenceCount(hoveredCell.row, repeatThreshold)}`}
             </Alert>
           ) : (
             <Alert severity="info">Hover a heatmap cell to inspect the concept and score.</Alert>
@@ -2022,3 +2186,4 @@ export default function DuckDbExplorer({
     </Stack>
   )
 }
+
