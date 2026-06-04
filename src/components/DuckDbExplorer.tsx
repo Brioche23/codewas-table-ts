@@ -27,6 +27,7 @@ import {
   type MRT_PaginationState,
   type MRT_Row,
   type MRT_SortingState,
+  type MRT_VisibilityState,
   useMaterialReactTable,
 } from "material-react-table"
 import { ScatterChart } from "@mui/x-charts"
@@ -1840,6 +1841,9 @@ export default function DuckDbExplorer({
   const [hierarchyLoading, setHierarchyLoading] = useState(false)
   const [tableMode, setTableMode] = useState<TableMode>("flat")
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>({
+    ancestorConceptIds: false,
+  })
   const [sorting, setSorting] = useState<MRT_SortingState>([{ id: "binaryEffect", desc: true }])
   const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 20 })
 
@@ -1965,6 +1969,7 @@ export default function DuckDbExplorer({
     manualPagination: tableMode === "flat",
     manualSorting: tableMode === "flat",
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     initialState: {
@@ -1978,11 +1983,9 @@ export default function DuckDbExplorer({
     state: {
       isLoading: tableMode === "hierarchy" ? hierarchyLoading : tableLoading,
       columnFilters,
+      columnVisibility,
       pagination,
       sorting,
-      columnVisibility: {
-        ancestorConceptIds: false,
-      },
     },
     getSubRows: (row) => row.subRows,
     getRowId: (row) => row.rowKey,
