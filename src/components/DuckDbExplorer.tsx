@@ -1735,9 +1735,9 @@ function DuckDbCharts({
                   label="Repeat Threshold"
                   onChange={(event) => setRepeatThreshold(Number(event.target.value))}
                 >
-                  <MenuItem value="3">-log10(p) >= 3</MenuItem>
-                  <MenuItem value="5">-log10(p) >= 5</MenuItem>
-                  <MenuItem value="8">-log10(p) >= 8</MenuItem>
+                  <MenuItem value="3">-log10(p) {"\u003e="} 3</MenuItem>
+                  <MenuItem value="5">-log10(p) {"\u003e="} 5</MenuItem>
+                  <MenuItem value="8">-log10(p) {"\u003e="} 8</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
