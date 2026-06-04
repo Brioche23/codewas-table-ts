@@ -1935,8 +1935,9 @@ export default function DuckDbExplorer({
     async function loadHierarchyRows() {
       setHierarchyLoading(true)
       try {
+        const hierarchyCountMode = countMode === "code" ? "all" : countMode
         const rowsRaw = await dataSource.runQuery(
-          buildFullSummaryQuery("all", selectedDomain, searchText, []),
+          buildFullSummaryQuery(hierarchyCountMode, selectedDomain, searchText, columnFilters),
         )
         if (!active) return
         setHierarchyRows(buildHierarchyTree((rowsRaw as BlockMetricRow[]).map(mapSummaryRow)))
@@ -1953,7 +1954,7 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [dataSource, searchText, selectedDomain, tableMode])
+  }, [columnFilters, countMode, dataSource, searchText, selectedDomain, tableMode])
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }))
