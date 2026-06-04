@@ -23,6 +23,7 @@ import {
   MaterialReactTable,
   type MRT_ColumnFiltersState,
   type MRT_ColumnDef,
+  type MRT_ExpandedState,
   type MRT_FilterFn,
   type MRT_PaginationState,
   type MRT_Row,
@@ -164,6 +165,14 @@ type HeatmapCell = {
   row: ConceptSummaryRow
   block: ChartBlockKey | "Concept"
   value: number | null
+}
+type HierarchyMetaRow = Pick<
+  ConceptSummaryRow,
+  "rowKey" | "conceptId" | "conceptName" | "conceptCode" | "ancestorConceptIds" | "domainId" | "countMode"
+>
+type HierarchyIndex = {
+  rootRowKeys: string[]
+  childRowKeysByParentRowKey: Map<string, string[]>
 }
 
 const DISPLAY_ANALYSIS_TYPES: AnalysisBlock[] = [
@@ -699,6 +708,48 @@ function buildFullSummaryQuery(
   `
 }
 
+function buildHierarchyMetaQuery(
+  countMode: string,
+  domainId: string,
+  searchText: string,
+  columnFilters: MRT_ColumnFiltersState,
+) {
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const conditions = buildFilterConditions(columnFilters)
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
+  return `
+    ${ctes}
+    SELECT
+      rowKey,
+      conceptId,
+      conceptName,
+      conceptCode,
+      ancestorConceptIds,
+      domainId,
+      countMode,
+      bestPValue
+    FROM final_rows
+    ${whereClause}
+    ORDER BY bestPValue ASC NULLS LAST, conceptName ASC
+  `
+}
+
+function buildSummaryRowsByRowKeysQuery(
+  countMode: string,
+  domainId: string,
+  searchText: string,
+  rowKeys: string[],
+) {
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const safeRowKeys = rowKeys.map((rowKey) => `'${escapeSqlString(rowKey)}'`).join(", ")
+  return `
+    ${ctes}
+    SELECT *
+    FROM final_rows
+    WHERE rowKey IN (${safeRowKeys})
+  `
+}
+
 function mapSummaryRow(row: BlockMetricRow): ConceptSummaryRow {
   return {
     rowKey: String(row.rowKey),
@@ -805,6 +856,18 @@ function mapSummaryRow(row: BlockMetricRow): ConceptSummaryRow {
     continuousSmd: (row.continuousSmd as number | null) ?? null,
     continuousTestName: (row.continuousTestName as string | null) ?? null,
     continuousUnit: (row.continuousUnit as string | null) ?? null,
+  }
+}
+
+function mapHierarchyMetaRow(row: BlockMetricRow): HierarchyMetaRow {
+  return {
+    rowKey: String(row.rowKey),
+    conceptId: Number(row.conceptId),
+    conceptName: (row.conceptName as string | null) ?? null,
+    conceptCode: (row.conceptCode as string | null) ?? null,
+    ancestorConceptIds: (row.ancestorConceptIds as string | null) ?? null,
+    domainId: String(row.domainId),
+    countMode: String(row.countMode),
   }
 }
 
@@ -1347,66 +1410,95 @@ function parseAncestorIds(value: string | null | undefined) {
     .filter((item) => Number.isFinite(item))
 }
 
-function buildHierarchyTree(rows: ConceptSummaryRow[]) {
+function buildHierarchyIndex(rows: HierarchyMetaRow[]): HierarchyIndex {
   const descendantRows = rows.filter((row) => row.countMode === "descendant")
   const codeRows = rows.filter((row) => row.countMode === "code")
-  const descendantConceptIds = new Set(descendantRows.map((row) => row.conceptId))
 
-  const conceptDepth = new Map<number, number>()
+  const descendantRowsByConceptId = new Map<number, HierarchyMetaRow[]>()
+  const conceptDepthByRowKey = new Map<string, number>()
   descendantRows.forEach((row) => {
-    const depth = parseAncestorIds(row.ancestorConceptIds).length
-    conceptDepth.set(row.conceptId, Math.max(conceptDepth.get(row.conceptId) ?? 0, depth))
+    const rowsForConcept = descendantRowsByConceptId.get(row.conceptId) ?? []
+    rowsForConcept.push(row)
+    descendantRowsByConceptId.set(row.conceptId, rowsForConcept)
+    conceptDepthByRowKey.set(row.rowKey, parseAncestorIds(row.ancestorConceptIds).length)
   })
 
-  const directParentByConceptId = new Map<number, number | null>()
-  descendantConceptIds.forEach((conceptId) => {
-    const sampleRow = descendantRows.find((row) => row.conceptId === conceptId)
-    const ancestorIds = parseAncestorIds(sampleRow?.ancestorConceptIds)
-    const candidateParents = ancestorIds.filter((ancestorId) => descendantConceptIds.has(ancestorId))
+  const directParentRowKeyByRowKey = new Map<string, string | null>()
+  descendantRows.forEach((row) => {
+    const ancestorIds = parseAncestorIds(row.ancestorConceptIds)
+    const candidateParents = ancestorIds.flatMap((ancestorId) => descendantRowsByConceptId.get(ancestorId) ?? [])
     if (candidateParents.length === 0) {
-      directParentByConceptId.set(conceptId, null)
+      directParentRowKeyByRowKey.set(row.rowKey, null)
       return
     }
-    candidateParents.sort((left, right) => (conceptDepth.get(right) ?? 0) - (conceptDepth.get(left) ?? 0))
-    directParentByConceptId.set(conceptId, candidateParents[0] ?? null)
+    const sameDomainParents = candidateParents.filter((candidate) => candidate.domainId === row.domainId)
+    const rankedParents = (sameDomainParents.length > 0 ? sameDomainParents : candidateParents).sort(
+      (left, right) => (conceptDepthByRowKey.get(right.rowKey) ?? 0) - (conceptDepthByRowKey.get(left.rowKey) ?? 0),
+    )
+    directParentRowKeyByRowKey.set(row.rowKey, rankedParents[0]?.rowKey ?? null)
   })
 
-  const nodeByRowKey = new Map<string, ConceptSummaryRow>()
+  const childRowKeysByParentRowKey = new Map<string, string[]>()
   descendantRows.forEach((row) => {
-    nodeByRowKey.set(row.rowKey, { ...row, subRows: [] })
+    const parentRowKey = directParentRowKeyByRowKey.get(row.rowKey)
+    if (!parentRowKey) return
+    const rowKeys = childRowKeysByParentRowKey.get(parentRowKey) ?? []
+    rowKeys.push(row.rowKey)
+    childRowKeysByParentRowKey.set(parentRowKey, rowKeys)
   })
 
-  const codeRowsByConceptAndDomain = new Map<string, ConceptSummaryRow[]>()
+  const codeRowsByConceptAndDomain = new Map<string, string[]>()
   codeRows.forEach((row) => {
     const key = `${row.conceptId}|${row.domainId}`
-    const rowsForKey = codeRowsByConceptAndDomain.get(key) ?? []
-    rowsForKey.push({ ...row, subRows: [] })
-    codeRowsByConceptAndDomain.set(key, rowsForKey)
+    const rowKeys = codeRowsByConceptAndDomain.get(key) ?? []
+    rowKeys.push(row.rowKey)
+    codeRowsByConceptAndDomain.set(key, rowKeys)
   })
 
-  const descendantRowsByParentConceptId = new Map<number, ConceptSummaryRow[]>()
   descendantRows.forEach((row) => {
-    const parentConceptId = directParentByConceptId.get(row.conceptId)
-    if (parentConceptId == null) return
-    const rowsForParent = descendantRowsByParentConceptId.get(parentConceptId) ?? []
-    const node = nodeByRowKey.get(row.rowKey)
-    if (node) rowsForParent.push(node)
-    descendantRowsByParentConceptId.set(parentConceptId, rowsForParent)
+    const selfCodeKey = `${row.conceptId}|${row.domainId}`
+    const selfCodeRowKeys = (codeRowsByConceptAndDomain.get(selfCodeKey) ?? []).filter((rowKey) => rowKey !== row.rowKey)
+    if (selfCodeRowKeys.length === 0) return
+    const rowKeys = childRowKeysByParentRowKey.get(row.rowKey) ?? []
+    childRowKeysByParentRowKey.set(row.rowKey, [...selfCodeRowKeys, ...rowKeys])
   })
 
-  function attachChildren(node: ConceptSummaryRow) {
-    const selfCodeKey = `${node.conceptId}|${node.domainId}`
-    const selfCodeRows = (codeRowsByConceptAndDomain.get(selfCodeKey) ?? []).filter((row) => row.rowKey !== node.rowKey)
-    const childNodes = (descendantRowsByParentConceptId.get(node.conceptId) ?? []).map((child) => attachChildren(child))
-    node.subRows = [...selfCodeRows, ...childNodes]
-    return node
+  return {
+    rootRowKeys: descendantRows.filter((row) => directParentRowKeyByRowKey.get(row.rowKey) == null).map((row) => row.rowKey),
+    childRowKeysByParentRowKey,
   }
+}
 
-  return descendantRows
-    .filter((row) => directParentByConceptId.get(row.conceptId) == null)
-    .map((row) => nodeByRowKey.get(row.rowKey))
-    .filter((row): row is ConceptSummaryRow => Boolean(row))
-    .map((row) => attachChildren(row))
+function orderRowsByRowKeys(rows: ConceptSummaryRow[], rowKeys: string[]) {
+  const rowByKey = new Map(rows.map((row) => [row.rowKey, row] as const))
+  return rowKeys.map((rowKey) => rowByKey.get(rowKey)).filter((row): row is ConceptSummaryRow => Boolean(row))
+}
+
+function withEmptySubRows(rows: ConceptSummaryRow[]) {
+  return rows.map((row) => ({ ...row, subRows: row.subRows ?? [] }))
+}
+
+function attachChildrenToHierarchy(
+  rows: ConceptSummaryRow[],
+  parentRowKey: string,
+  children: ConceptSummaryRow[],
+): ConceptSummaryRow[] {
+  return rows.map((row) => {
+    if (row.rowKey === parentRowKey) {
+      return { ...row, subRows: children }
+    }
+    if (row.subRows && row.subRows.length > 0) {
+      return { ...row, subRows: attachChildrenToHierarchy(row.subRows, parentRowKey, children) }
+    }
+    return row
+  })
+}
+
+function getExpandedRowKeys(expanded: MRT_ExpandedState) {
+  if (expanded === true) return []
+  return Object.entries(expanded)
+    .filter(([, isExpanded]) => Boolean(isExpanded))
+    .map(([rowKey]) => rowKey)
 }
 
 const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (row, columnId, filterValue) => {
@@ -1835,6 +1927,9 @@ export default function DuckDbExplorer({
   const [tableRows, setTableRows] = useState<ConceptSummaryRow[]>([])
   const [tableRowCount, setTableRowCount] = useState(0)
   const [hierarchyRows, setHierarchyRows] = useState<ConceptSummaryRow[]>([])
+  const [hierarchyExpanded, setHierarchyExpanded] = useState<MRT_ExpandedState>({})
+  const [hierarchyIndex, setHierarchyIndex] = useState<HierarchyIndex | null>(null)
+  const [hierarchyLoadedParentRowKeys, setHierarchyLoadedParentRowKeys] = useState<string[]>([])
   const [focusedRowKey, setFocusedRowKey] = useState<string | null>(null)
   const [selectedDetailRow, setSelectedDetailRow] = useState<ConceptSummaryRow | null>(null)
   const [summaryError, setSummaryError] = useState<string | null>(null)
@@ -1850,6 +1945,7 @@ export default function DuckDbExplorer({
   })
   const [sorting, setSorting] = useState<MRT_SortingState>([{ id: "binaryEffect", desc: true }])
   const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 20 })
+  const hierarchyLoadingParentRowKeysRef = useRef(new Set<string>())
 
   useEffect(() => {
     let active = true
@@ -1936,11 +2032,24 @@ export default function DuckDbExplorer({
       setHierarchyLoading(true)
       try {
         const hierarchyCountMode = countMode === "code" ? "all" : countMode
-        const rowsRaw = await dataSource.runQuery(
-          buildFullSummaryQuery(hierarchyCountMode, selectedDomain, searchText, columnFilters),
+        const metadataRowsRaw = await dataSource.runQuery(
+          buildHierarchyMetaQuery(hierarchyCountMode, selectedDomain, searchText, columnFilters),
         )
+        const hierarchyMetaRows = (metadataRowsRaw as BlockMetricRow[]).map(mapHierarchyMetaRow)
+        const nextHierarchyIndex = buildHierarchyIndex(hierarchyMetaRows)
+        const rootRowKeys = nextHierarchyIndex.rootRowKeys
+        const rootRowsRaw =
+          rootRowKeys.length > 0
+            ? await dataSource.runQuery(
+                buildSummaryRowsByRowKeysQuery(hierarchyCountMode, selectedDomain, searchText, rootRowKeys),
+              )
+            : []
         if (!active) return
-        setHierarchyRows(buildHierarchyTree((rowsRaw as BlockMetricRow[]).map(mapSummaryRow)))
+        setHierarchyIndex(nextHierarchyIndex)
+        setHierarchyExpanded({})
+        setHierarchyLoadedParentRowKeys([])
+        hierarchyLoadingParentRowKeysRef.current.clear()
+        setHierarchyRows(withEmptySubRows(orderRowsByRowKeys((rootRowsRaw as BlockMetricRow[]).map(mapSummaryRow), rootRowKeys)))
       } catch (error) {
         if (!active) return
         setSummaryError(error instanceof Error ? error.message : String(error))
@@ -1955,6 +2064,74 @@ export default function DuckDbExplorer({
       active = false
     }
   }, [columnFilters, countMode, dataSource, searchText, selectedDomain, tableMode])
+
+  useEffect(() => {
+    if (tableMode !== "hierarchy" || !hierarchyIndex) return
+    const hierarchyCountMode = countMode === "code" ? "all" : countMode
+    const activeHierarchyIndex = hierarchyIndex
+    const expandedRowKeys = getExpandedRowKeys(hierarchyExpanded)
+    const nextParentRowKeys = expandedRowKeys.filter((rowKey) => {
+      const hasChildren = (activeHierarchyIndex.childRowKeysByParentRowKey.get(rowKey) ?? []).length > 0
+      return (
+        hasChildren &&
+        !hierarchyLoadedParentRowKeys.includes(rowKey) &&
+        !hierarchyLoadingParentRowKeysRef.current.has(rowKey)
+      )
+    })
+    if (nextParentRowKeys.length === 0) return
+
+    let active = true
+    async function loadExpandedChildren() {
+      nextParentRowKeys.forEach((rowKey) => hierarchyLoadingParentRowKeysRef.current.add(rowKey))
+      try {
+        const childRowKeys = Array.from(
+          new Set(
+            nextParentRowKeys.flatMap((rowKey) => activeHierarchyIndex.childRowKeysByParentRowKey.get(rowKey) ?? []),
+          ),
+        )
+        if (childRowKeys.length === 0 || !active) return
+        const rowsRaw = await dataSource.runQuery(
+          buildSummaryRowsByRowKeysQuery(hierarchyCountMode, selectedDomain, searchText, childRowKeys),
+        )
+        if (!active) return
+        const orderedChildrenByParent = new Map<string, ConceptSummaryRow[]>()
+        const fetchedRows = withEmptySubRows((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
+        nextParentRowKeys.forEach((parentRowKey) => {
+          const orderedRowKeys = activeHierarchyIndex.childRowKeysByParentRowKey.get(parentRowKey) ?? []
+          orderedChildrenByParent.set(parentRowKey, orderRowsByRowKeys(fetchedRows, orderedRowKeys))
+        })
+        setHierarchyRows((currentRows) => {
+          let nextRows = currentRows
+          orderedChildrenByParent.forEach((children, parentRowKey) => {
+            nextRows = attachChildrenToHierarchy(nextRows, parentRowKey, children)
+          })
+          return nextRows
+        })
+        setHierarchyLoadedParentRowKeys((current) => [...current, ...nextParentRowKeys.filter((rowKey) => !current.includes(rowKey))])
+      } catch (error) {
+        if (!active) return
+        setSummaryError(error instanceof Error ? error.message : String(error))
+      } finally {
+        nextParentRowKeys.forEach((rowKey) => hierarchyLoadingParentRowKeysRef.current.delete(rowKey))
+      }
+    }
+    void loadExpandedChildren()
+    return () => {
+      active = false
+      nextParentRowKeys.forEach((rowKey) => {
+        hierarchyLoadingParentRowKeysRef.current.delete(rowKey)
+      })
+    }
+  }, [
+    countMode,
+    dataSource,
+    hierarchyExpanded,
+    hierarchyIndex,
+    hierarchyLoadedParentRowKeys,
+    searchText,
+    selectedDomain,
+    tableMode,
+  ])
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }))
@@ -1974,6 +2151,7 @@ export default function DuckDbExplorer({
     manualSorting: tableMode === "flat",
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onExpandedChange: setHierarchyExpanded,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     initialState: {
@@ -1988,9 +2166,11 @@ export default function DuckDbExplorer({
       isLoading: tableMode === "hierarchy" ? hierarchyLoading : tableLoading,
       columnFilters,
       columnVisibility,
+      expanded: hierarchyExpanded,
       pagination,
       sorting,
     },
+    getRowCanExpand: (row) => tableMode === "hierarchy" && Boolean(hierarchyIndex?.childRowKeysByParentRowKey.get(row.original.rowKey)?.length),
     getSubRows: (row) => row.subRows,
     getRowId: (row) => row.rowKey,
     muiTableBodyRowProps: ({ row }) => ({
