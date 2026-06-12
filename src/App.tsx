@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline, Container, Alert } from "@mui/
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
-import DuckDbExplorer from "./components/DuckDbExplorer"
+import DuckDbExplorer from "./components/duckdb-explorer"
 
 import MainTable from "./table/MainTable"
 import { useDataSource } from "./hooks/useDataSource"

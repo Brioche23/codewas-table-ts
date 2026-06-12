@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 import { MaterialReactTable, useMaterialReactTable } from "material-react-table"
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
+import { Box, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material"
 import type { ConceptMetadata, ConceptTableProps } from "../utils/types"
 import { FilterWrapper } from "../components/filters/FiltersWarpper"
 
@@ -8,6 +8,7 @@ import { countModeLabel, useColumns } from "./ColumnFactory"
 import { TopToolbar } from "./TopToolbar"
 import { Heatmap } from "../components/charts/Heatmap"
 import { Scatter } from "../components/charts/Scatter"
+import { Remove, Add } from "@mui/icons-material"
 
 // ─── main table ───────────────────────────────────────────────────────────
 
@@ -219,6 +220,61 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
         }),
       },
     }),
+    displayColumnDefOptions: {
+      "mrt-row-expand": {
+        Cell: ({ row, table }) => {
+          const isLastChild = () => {
+            const parent = row.getParentRow()
+            if (!parent) return false
+            const siblings = parent.subRows ?? []
+            return siblings[siblings.length - 1].id === row.id
+          }
+
+          return (
+            <Box sx={{ display: "flex", alignItems: "center", position: "relative" }}>
+              {/* vertical + horizontal connector lines */}
+              {row.depth > 0 && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: `${(row.depth - 1) * 16 + 8}px`,
+                    top: isLastChild() ? "50%" : 0,
+                    bottom: isLastChild() ? "auto" : 0,
+                    width: "1px",
+                    backgroundColor: "divider",
+                    height: isLastChild() ? "50%" : "100%",
+                  }}
+                />
+              )}
+              {row.depth > 0 && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: `${(row.depth - 1) * 16 + 8}px`,
+                    top: "50%",
+                    width: "8px",
+                    height: "1px",
+                    backgroundColor: "divider",
+                  }}
+                />
+              )}
+
+              <Box sx={{ paddingLeft: `${row.depth * 16}px` }}>
+                {row.getCanExpand() ? (
+                  <IconButton size="small" onClick={row.getToggleExpandedHandler()}>
+                    {row.getIsExpanded() ? <Remove fontSize="small" /> : <Add fontSize="small" />}
+                  </IconButton>
+                ) : (
+                  <Box sx={{ width: 28 }} />
+                )}
+              </Box>
+            </Box>
+          )
+        },
+        size: 50,
+        header: "",
+      },
+    },
   })
 
   return (
