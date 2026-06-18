@@ -2,45 +2,66 @@ import type { MRT_TableInstance } from "material-react-table"
 import type { ConceptRow, FilterPreset } from "../../utils/types"
 import { useState } from "react"
 import { Box, Divider } from "@mui/material"
-import { FilterChips } from "./FilterChips"
+import { FilterChips, type ActiveFilter } from "./FilterChips"
 import { FilterPresets } from "./FilterPresets"
 import { FilterStats } from "./FilterStats"
+import { loadPresets, savePresets } from "./presetStorage"
 
 const STORAGE_KEY = "mrt-filter-presets"
 
-function loadPresets(): FilterPreset[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")
-  } catch {
-    return []
-  }
+function isFilterActive(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false
+  if (Array.isArray(value)) return value.some((v) => v !== undefined && v !== "")
+  return true
 }
 
-function savePresets(presets: FilterPreset[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+function formatValue(value: unknown): string {
+  if (Array.isArray(value)) return `${value[0]} – ${value[1]}`
+  return String(value)
 }
 
 // FilterWrapper.tsx
 export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> }) {
-  const [presets, setPresets] = useState<FilterPreset[]>(loadPresets)
+  const [presets, setPresets] = useState<FilterPreset[]>(() => loadPresets(STORAGE_KEY))
   const [selectedPresetId, setSelectedPresetId] = useState<string>("")
 
-  const handleSave = (preset: FilterPreset) => {
-    const updated = [...presets, preset]
+  const activeFilters: ActiveFilter[] = table
+    .getState()
+    .columnFilters.filter((f) => isFilterActive(f.value))
+    .map((f) => {
+      const column = table.getColumn(f.id)
+      return {
+        id: f.id,
+        label: String(column?.columnDef.header ?? f.id),
+        value: formatValue(f.value),
+        onClear: () => column?.setFilterValue(undefined),
+      }
+    })
+
+  const handleSave = (name: string, includedIds: string[]) => {
+    const columnFilters = table.getState().columnFilters.filter((f) => isFilterActive(f.value))
+    const updated = [
+      ...presets,
+      {
+        id: String(Date.now()),
+        name,
+        filters: columnFilters.filter((f) => includedIds.includes(f.id)),
+      },
+    ]
     setPresets(updated)
-    savePresets(updated)
+    savePresets(STORAGE_KEY, updated)
   }
 
   const handleDelete = (id: string) => {
     const updated = presets.filter((p) => p.id !== id)
     setPresets(updated)
-    savePresets(updated)
+    savePresets(STORAGE_KEY, updated)
   }
 
   const handleEdit = (updated: FilterPreset) => {
     const next = presets.map((p) => (p.id === updated.id ? updated : p))
     setPresets(next)
-    savePresets(next)
+    savePresets(STORAGE_KEY, next)
   }
 
   const handleApply = (preset: FilterPreset) => {
@@ -66,7 +87,11 @@ export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> 
           alignItems: "center",
         }}
       >
-        <FilterChips table={table} onSave={handleSave} />
+        <FilterChips
+          filters={activeFilters}
+          onClearAll={() => table.resetColumnFilters()}
+          onSave={handleSave}
+        />
         <Divider orientation="vertical" flexItem />
         <FilterPresets
           presets={presets}

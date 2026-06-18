@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type Dispatch, type MouseEvent, type SetStateAction } from "react"
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type MouseEvent,
+  type SetStateAction,
+} from "react"
 import {
   Alert,
   Box,
@@ -73,10 +81,7 @@ export function DuckDbCharts({
         .filter((row) => row.x != null && row.y != null),
     [metric, rows, xBlock, yBlock],
   )
-  const dataset = useMemo(
-    () => allScatterPoints.slice(0, SCATTER_POINT_CAP),
-    [allScatterPoints],
-  )
+  const dataset = useMemo(() => allScatterPoints.slice(0, SCATTER_POINT_CAP), [allScatterPoints])
 
   const perColumnMax = useMemo(
     () =>
@@ -115,10 +120,7 @@ export function DuckDbCharts({
         return sorted.sort((a, b) => getBestHeatmapScore(b) - getBestHeatmapScore(a))
     }
   }, [heatmapBaseRows, heatmapOrderBlock, heatmapOrderMode, perColumnMax, repeatThreshold])
-  const heatmapRows = useMemo(
-    () => heatmapRowsAll.slice(0, HEATMAP_ROW_CAP),
-    [heatmapRowsAll],
-  )
+  const heatmapRows = useMemo(() => heatmapRowsAll.slice(0, HEATMAP_ROW_CAP), [heatmapRowsAll])
   const maxHeatmapValue = useMemo(
     () =>
       Math.max(
@@ -250,7 +252,7 @@ export function DuckDbCharts({
     <Stack spacing={3}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 3 }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-chart-scope-label">Chart Scope</InputLabel>
             <Select
               labelId="duckdb-chart-scope-label"
@@ -264,7 +266,7 @@ export function DuckDbCharts({
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 3 }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-chart-mode-label">Chart Mode</InputLabel>
             <Select
               labelId="duckdb-chart-mode-label"
@@ -280,7 +282,7 @@ export function DuckDbCharts({
         {chartMode === "scatter" ? (
           <>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-chart-x-label">X Axis</InputLabel>
                 <Select
                   labelId="duckdb-chart-x-label"
@@ -297,7 +299,7 @@ export function DuckDbCharts({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-chart-y-label">Y Axis</InputLabel>
                 <Select
                   labelId="duckdb-chart-y-label"
@@ -314,7 +316,7 @@ export function DuckDbCharts({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-chart-metric-label">Metric</InputLabel>
                 <Select
                   labelId="duckdb-chart-metric-label"
@@ -331,7 +333,7 @@ export function DuckDbCharts({
         ) : (
           <>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-heatmap-order-label">Row Order</InputLabel>
                 <Select
                   labelId="duckdb-heatmap-order-label"
@@ -347,7 +349,7 @@ export function DuckDbCharts({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-heatmap-scale-label">Color Scale</InputLabel>
                 <Select
                   labelId="duckdb-heatmap-scale-label"
@@ -361,7 +363,7 @@ export function DuckDbCharts({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth disabled={heatmapOrderMode !== "selectedBlock"}>
+              <FormControl fullWidth size={"small"} disabled={heatmapOrderMode !== "selectedBlock"}>
                 <InputLabel id="duckdb-heatmap-block-label">Order Block</InputLabel>
                 <Select
                   labelId="duckdb-heatmap-block-label"
@@ -378,7 +380,7 @@ export function DuckDbCharts({
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth size={"small"}>
                 <InputLabel id="duckdb-repeat-threshold-label">Repeat Threshold</InputLabel>
                 <Select
                   labelId="duckdb-repeat-threshold-label"
@@ -395,6 +397,7 @@ export function DuckDbCharts({
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
+                size={"small"}
                 label="Heatmap search"
                 value={heatmapSearchText}
                 onChange={(event) => setHeatmapSearchText(event.target.value)}
@@ -410,8 +413,8 @@ export function DuckDbCharts({
           {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
           {allScatterPoints.length > SCATTER_POINT_CAP && (
             <Alert severity="warning">
-              Showing top {SCATTER_POINT_CAP} of {allScatterPoints.length} plotable concepts.
-              Apply filters to reduce the dataset.
+              Showing top {SCATTER_POINT_CAP} of {allScatterPoints.length} plotable concepts. Apply
+              filters to reduce the dataset.
             </Alert>
           )}
           <Paper sx={{ width: "100%", height: 500, p: 1 }}>
@@ -446,8 +449,8 @@ export function DuckDbCharts({
           {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
           {heatmapRowsAll.length > HEATMAP_ROW_CAP && (
             <Alert severity="warning">
-              Showing top {HEATMAP_ROW_CAP} of {heatmapRowsAll.length} concepts.
-              Apply filters to reduce the dataset.
+              Showing top {HEATMAP_ROW_CAP} of {heatmapRowsAll.length} concepts. Apply filters to
+              reduce the dataset.
             </Alert>
           )}
           <Typography variant="body2" color="text.secondary">

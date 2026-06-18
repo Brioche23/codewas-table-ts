@@ -27,6 +27,7 @@ import type { DuckDbDataSource, PageViewOptions } from "../../utils/types"
 import { CHART_ROWS_LIMIT, DEFAULT_COLUMN_FILTERS, DISPLAY_ANALYSIS_TYPES } from "./constants"
 import { ConceptDetailDialog } from "./ConceptDetailDialog"
 import { DuckDbCharts } from "./DuckDbCharts"
+import { DuckDbFilterBar } from "./DuckDbFilterBar"
 import {
   attachChildrenToHierarchy,
   buildHierarchyIndex,
@@ -527,6 +528,18 @@ export default function DuckDbExplorer({
             Download full TSV
           </Button>
         </Stack>
+        <DuckDbFilterBar
+          table={table}
+          columnFilters={columnFilters}
+          setColumnFilters={setColumnFilters}
+          countMode={countMode}
+          setCountMode={setCountMode}
+          selectedDomain={selectedDomain}
+          setSelectedDomain={setSelectedDomain}
+          searchText={searchText}
+          setSearchText={setSearchText}
+          rowCount={tableRowCount}
+        />
         {(tableLoading || chartLoading || hierarchyLoading || exportLoading) && (
           <Box
             sx={{

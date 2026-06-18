@@ -129,6 +129,9 @@ export type FilterPreset = {
   id: string // unique id, e.g. crypto timestamp
   name: string
   filters: MRT_ColumnFiltersState // only the filters the user checked
+  countMode?: string // DuckDB full-snapshot extras (absent for JSON presets)
+  selectedDomain?: string
+  searchText?: string
 }
 
 export type Columns = "Binary" | "Count" | "Age" | "Days" | "Continuous" | "Categorical"

@@ -1,0 +1,161 @@
+import { useState, type Dispatch, type SetStateAction } from "react"
+import { Box, Divider, Typography } from "@mui/material"
+import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
+import type { FilterPreset } from "../../utils/types"
+import { FilterChips, type ActiveFilter } from "../filters/FilterChips"
+import { FilterPresets } from "../filters/FilterPresets"
+import { loadPresets, savePresets } from "../filters/presetStorage"
+import type { ConceptSummaryRow } from "./types"
+
+const STORAGE_KEY = "duckdb-filter-presets"
+const DEFAULT_COUNT_MODE = "descendant"
+const DEFAULT_DOMAIN = "all"
+
+// Synthetic ids for the non-column filter dimensions, so they can be toggled
+// individually in the save modal alongside the MRT column filters.
+const COUNT_MODE_ID = "__countMode"
+const DOMAIN_ID = "__selectedDomain"
+const SEARCH_ID = "__searchText"
+
+type DuckDbFilterBarProps = {
+  table: MRT_TableInstance<ConceptSummaryRow>
+  columnFilters: MRT_ColumnFiltersState
+  setColumnFilters: Dispatch<SetStateAction<MRT_ColumnFiltersState>>
+  countMode: string
+  setCountMode: Dispatch<SetStateAction<string>>
+  selectedDomain: string
+  setSelectedDomain: Dispatch<SetStateAction<string>>
+  searchText: string
+  setSearchText: Dispatch<SetStateAction<string>>
+  rowCount: number
+}
+
+function isFilterActive(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false
+  if (Array.isArray(value)) return value.some((v) => v !== undefined && v !== "")
+  return true
+}
+
+export function DuckDbFilterBar({
+  table,
+  columnFilters,
+  setColumnFilters,
+  countMode,
+  setCountMode,
+  selectedDomain,
+  setSelectedDomain,
+  searchText,
+  setSearchText,
+  rowCount,
+}: DuckDbFilterBarProps) {
+  const [presets, setPresets] = useState<FilterPreset[]>(() => loadPresets(STORAGE_KEY))
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("")
+
+  const columnFilterEntries: ActiveFilter[] = columnFilters
+    .filter((f) => isFilterActive(f.value))
+    .map((f) => ({
+      id: f.id,
+      label: String(table.getColumn(f.id)?.columnDef.header ?? f.id),
+      value: Array.isArray(f.value) ? `${f.value[0]} – ${f.value[1]}` : String(f.value),
+      onClear: () => setColumnFilters((prev) => prev.filter((c) => c.id !== f.id)),
+    }))
+
+  const extraEntries: ActiveFilter[] = []
+  if (countMode !== DEFAULT_COUNT_MODE) {
+    extraEntries.push({
+      id: COUNT_MODE_ID,
+      label: "Count Mode",
+      value: countMode,
+      onClear: () => setCountMode(DEFAULT_COUNT_MODE),
+    })
+  }
+  if (selectedDomain !== DEFAULT_DOMAIN) {
+    extraEntries.push({
+      id: DOMAIN_ID,
+      label: "Domain",
+      value: selectedDomain,
+      onClear: () => setSelectedDomain(DEFAULT_DOMAIN),
+    })
+  }
+  if (searchText.trim() !== "") {
+    extraEntries.push({
+      id: SEARCH_ID,
+      label: "Search",
+      value: searchText,
+      onClear: () => setSearchText(""),
+    })
+  }
+
+  const activeFilters = [...columnFilterEntries, ...extraEntries]
+
+  const handleClearAll = () => {
+    setColumnFilters([])
+    setCountMode(DEFAULT_COUNT_MODE)
+    setSelectedDomain(DEFAULT_DOMAIN)
+    setSearchText("")
+  }
+
+  const handleSave = (name: string, includedIds: string[]) => {
+    const preset: FilterPreset = {
+      id: String(Date.now()),
+      name,
+      filters: columnFilters
+        .filter((f) => isFilterActive(f.value))
+        .filter((f) => includedIds.includes(f.id)),
+    }
+    if (includedIds.includes(COUNT_MODE_ID)) preset.countMode = countMode
+    if (includedIds.includes(DOMAIN_ID)) preset.selectedDomain = selectedDomain
+    if (includedIds.includes(SEARCH_ID)) preset.searchText = searchText
+    const updated = [...presets, preset]
+    setPresets(updated)
+    savePresets(STORAGE_KEY, updated)
+  }
+
+  const handleDelete = (id: string) => {
+    const updated = presets.filter((p) => p.id !== id)
+    setPresets(updated)
+    savePresets(STORAGE_KEY, updated)
+  }
+
+  const handleEdit = (edited: FilterPreset) => {
+    // FilterPresets only edits name + column filters; preserve the snapshot extras.
+    const next = presets.map((p) =>
+      p.id === edited.id ? { ...p, name: edited.name, filters: edited.filters } : p,
+    )
+    setPresets(next)
+    savePresets(STORAGE_KEY, next)
+  }
+
+  const handleApply = (preset: FilterPreset) => {
+    setSelectedPresetId(preset.id)
+    setColumnFilters(preset.filters)
+    setCountMode(preset.countMode ?? DEFAULT_COUNT_MODE)
+    setSelectedDomain(preset.selectedDomain ?? DEFAULT_DOMAIN)
+    setSearchText(preset.searchText ?? "")
+  }
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        gap: 2,
+        alignItems: "center",
+        flexWrap: "wrap",
+        mb: 2,
+      }}
+    >
+      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+        {rowCount} rows
+      </Typography>
+      <FilterChips filters={activeFilters} onClearAll={handleClearAll} onSave={handleSave} />
+      {presets.length > 0 && <Divider orientation="vertical" flexItem />}
+      <FilterPresets
+        presets={presets}
+        selectedPresetId={selectedPresetId}
+        onApply={handleApply}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
+      />
+    </Box>
+  )
+}
