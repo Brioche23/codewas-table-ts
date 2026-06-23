@@ -79,7 +79,7 @@ export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> 
         minHeight: 100,
       }}
     >
-      <FilterStats table={table} />
+      {/* <FilterStats table={table} /> */}
       <Box
         sx={{
           display: "flex",

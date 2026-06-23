@@ -50,18 +50,26 @@
 
 #root {
   /* width: 1126px; */
-  max-width: 1440px;
+  /* max-width: 1440px; */
+  height: 100svh;
   margin: 0 auto;
   text-align: center;
   /* border-inline: 1px solid var(--border); */
-  min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  /* The shell owns the viewport; inner regions (the table) scroll, not the page. */
+  overflow: hidden;
 }
 
 body {
   margin: 0;
+}
+
+main {
+  flex: 1;
+  /* Allow the main region to shrink below its content so the table can scroll inside it. */
+  min-height: 0;
 }
 
 h1,

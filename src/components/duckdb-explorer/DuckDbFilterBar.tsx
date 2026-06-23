@@ -144,9 +144,9 @@ export function DuckDbFilterBar({
         mb: 2,
       }}
     >
-      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+      {/* <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
         {rowCount} rows
-      </Typography>
+      </Typography> */}
       <FilterChips filters={activeFilters} onClearAll={handleClearAll} onSave={handleSave} />
       {presets.length > 0 && <Divider orientation="vertical" flexItem />}
       <FilterPresets

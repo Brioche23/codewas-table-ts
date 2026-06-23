@@ -55,6 +55,11 @@ async function queryRows(connection: any, sql: string) {
   return rowsFromArrowTable(result)
 }
 
+async function queryScalarNumber(connection: any, sql: string) {
+  const rows = await queryRows(connection, sql)
+  return Number((rows[0] as Record<string, unknown> | undefined)?.value ?? 0)
+}
+
 async function buildTableCounts(connection: any): Promise<DuckDbTableCount[]> {
   const tableRows = await queryRows(
     connection,
@@ -126,6 +131,10 @@ async function buildPreviewSections(connection: any): Promise<DuckDbPreviewSecti
 }
 
 export async function loadDuckDbDataSource(sourceLabel: string, bytes: Uint8Array): Promise<DuckDbDataSource> {
+  const startedAt = performance.now()
+  // registerFileBuffer transfers the buffer to the worker, which detaches this view (byteLength
+  // becomes 0). Read the size before handing it off.
+  const fileSize = bytes.byteLength
   const db = await getRuntime()
   const fileName = getSafeFileName(sourceLabel)
 
@@ -135,11 +144,18 @@ export async function loadDuckDbDataSource(sourceLabel: string, bytes: Uint8Arra
   const connection = await db.connect()
   const tableCounts = await buildTableCounts(connection)
   const previewSections = await buildPreviewSections(connection)
+  const columnCount = await queryScalarNumber(
+    connection,
+    `SELECT COUNT(DISTINCT analysisType) AS value FROM analysisRef`,
+  )
 
   return {
     kind: "duckdb",
     sourceLabel,
     sourceBytes: bytes,
+    fileSize,
+    loadMs: performance.now() - startedAt,
+    columnCount,
     tableCounts,
     previewSections,
     runQuery: async (sql: string) => queryRows(connection, sql),

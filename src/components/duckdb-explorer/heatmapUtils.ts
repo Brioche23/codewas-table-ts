@@ -39,45 +39,108 @@ export function getHeatmapColor(value: number | null, maxValue: number) {
   return `hsl(5 78% ${lightness}%)`
 }
 
-export function buildClusteredHeatmapRows(
+// Per-row metrics derived once from the heatmap rows so sorting, clustering, and drawing don't
+// recompute them. `logp` is the per-block -log10(p) (indexed by HEATMAP_BLOCKS, null when absent),
+// `bestScore` the strongest block, `vector` the per-column-normalized profile used for clustering.
+export type HeatmapDerived = {
+  logp: (number | null)[]
+  bestScore: number
+  vector: number[]
+}
+
+// Single pass over all rows computing per-row derived metrics plus the per-column and global
+// maxima — using plain loops (never `Math.max(...arr)`, which overflows the call stack at tens of
+// thousands of args). Maxima seed at 1 so an empty/all-null input never yields -Infinity or 0.
+export function computeHeatmapDerived(rows: ConceptSummaryRow[]): {
+  perColumnMax: Record<ChartBlockKey, number>
+  globalMax: number
+  derivedByKey: Map<string, HeatmapDerived>
+} {
+  const blockCount = HEATMAP_BLOCKS.length
+  const perColumnMaxArr = new Array<number>(blockCount).fill(1)
+  let globalMax = 1
+  const derivedByKey = new Map<string, HeatmapDerived>()
+
+  for (const row of rows) {
+    const logp = new Array<number | null>(blockCount)
+    let bestScore = 0
+    for (let b = 0; b < blockCount; b++) {
+      const value = getChartMetricValue(row, HEATMAP_BLOCKS[b], "-log10")
+      logp[b] = value
+      if (value != null) {
+        if (value > perColumnMaxArr[b]) perColumnMaxArr[b] = value
+        if (value > globalMax) globalMax = value
+        if (value > bestScore) bestScore = value
+      }
+    }
+    derivedByKey.set(row.rowKey, { logp, bestScore, vector: new Array<number>(blockCount).fill(0) })
+  }
+
+  // Second pass: normalize each block by its column max (now finalized) into the cluster vector.
+  for (const derived of derivedByKey.values()) {
+    for (let b = 0; b < blockCount; b++) {
+      derived.vector[b] = (derived.logp[b] ?? 0) / perColumnMaxArr[b]
+    }
+  }
+
+  const perColumnMax = Object.fromEntries(
+    HEATMAP_BLOCKS.map((block, b) => [block, perColumnMaxArr[b]]),
+  ) as Record<ChartBlockKey, number>
+
+  return { perColumnMax, globalMax, derivedByKey }
+}
+
+export function getRepeatEvidenceCountFromLogp(logp: (number | null)[], threshold: number) {
+  let count = 0
+  for (const value of logp) {
+    if ((value ?? 0) >= threshold) count++
+  }
+  return count
+}
+
+function vectorDistance(left: number[], right: number[]) {
+  let sum = 0
+  for (let i = 0; i < left.length; i++) {
+    const diff = left[i] - right[i]
+    sum += diff * diff
+  }
+  return Math.sqrt(sum)
+}
+
+// Greedy nearest-neighbor ordering, but bounded: only the top `maxClusterRows` by evidence are
+// clustered (the O(n²) part); the remainder is appended in descending strength. Reuses precomputed
+// vectors so each distance is a cheap array read, not a metric recompute.
+export function clusterHeatmapRows(
   rows: ConceptSummaryRow[],
-  perColumnMax: Record<ChartBlockKey, number>,
-) {
+  derivedByKey: Map<string, HeatmapDerived>,
+  maxClusterRows: number,
+): ConceptSummaryRow[] {
   if (rows.length <= 2) return rows
 
-  const remaining = [...rows]
-  const ordered: ConceptSummaryRow[] = []
+  const bestScore = (row: ConceptSummaryRow) => derivedByKey.get(row.rowKey)?.bestScore ?? 0
+  const vector = (row: ConceptSummaryRow) => derivedByKey.get(row.rowKey)?.vector ?? []
 
-  const vectorFor = (row: ConceptSummaryRow) =>
-    HEATMAP_BLOCKS.map((block) => {
-      const raw = getChartMetricValue(row, block, "-log10") ?? 0
-      return raw / Math.max(perColumnMax[block] ?? 1, 1)
-    })
+  const sorted = [...rows].sort((left, right) => bestScore(right) - bestScore(left))
+  const clusterCount = Math.min(sorted.length, Math.max(2, maxClusterRows))
+  const remaining = sorted.slice(0, clusterCount)
+  const tail = sorted.slice(clusterCount) // already in descending bestScore order
 
-  const distance = (left: number[], right: number[]) =>
-    Math.sqrt(left.reduce((sum, value, index) => sum + (value - right[index]) ** 2, 0))
-
-  remaining.sort((left, right) => getBestHeatmapScore(right) - getBestHeatmapScore(left))
-  ordered.push(remaining.shift() as ConceptSummaryRow)
-
+  const ordered: ConceptSummaryRow[] = [remaining.shift() as ConceptSummaryRow]
   while (remaining.length > 0) {
-    const last = ordered[ordered.length - 1]
-    const lastVector = vectorFor(last)
+    const lastVector = vector(ordered[ordered.length - 1])
     let bestIndex = 0
     let bestDistance = Number.POSITIVE_INFINITY
-
-    remaining.forEach((candidate, index) => {
-      const candidateDistance = distance(lastVector, vectorFor(candidate))
+    for (let i = 0; i < remaining.length; i++) {
+      const candidateDistance = vectorDistance(lastVector, vector(remaining[i]))
       if (candidateDistance < bestDistance) {
         bestDistance = candidateDistance
-        bestIndex = index
+        bestIndex = i
       }
-    })
-
+    }
     ordered.push(remaining.splice(bestIndex, 1)[0])
   }
 
-  return ordered
+  return ordered.concat(tail)
 }
 
 export function getHeatmapHeaderLines(block: ChartBlockKey) {

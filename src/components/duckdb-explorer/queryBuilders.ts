@@ -373,6 +373,49 @@ export function buildFullSummaryQuery(
   `
 }
 
+// Lean projection for the heatmap/scatter views: only the identity columns plus the
+// per-block p-value and effect size each cell needs. ~15 columns instead of ConceptSummaryRow's
+// ~80, so tens of thousands of rows stay cheap to transfer, map, and hold in memory. Field names
+// match ConceptSummaryRow so getChartMetricValue and the scatter chart work unchanged.
+export function buildHeatmapQuery(
+  countMode: string,
+  domainId: string,
+  searchText: string,
+  columnFilters: MRT_ColumnFiltersState,
+  limit?: number | null,
+) {
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const conditions = buildFilterConditions(columnFilters)
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
+  return `
+    ${ctes}
+    SELECT
+      rowKey,
+      conceptId,
+      conceptName,
+      conceptCode,
+      domainId,
+      countMode,
+      bestPValue,
+      binaryPValue,
+      binaryEffectSize,
+      countsPValue,
+      countsEffectSize,
+      agePValue,
+      ageEffectSize,
+      daysPValue,
+      daysEffectSize,
+      continuousPValue,
+      continuousEffectSize,
+      categoricalPValue,
+      categoricalEffectSize
+    FROM final_rows
+    ${whereClause}
+    ORDER BY bestPValue ASC NULLS LAST, conceptName ASC
+    ${limit != null ? `LIMIT ${limit}` : ""}
+  `
+}
+
 export function buildHierarchyMetaQuery(
   countMode: string,
   domainId: string,

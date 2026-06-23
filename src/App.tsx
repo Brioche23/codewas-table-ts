@@ -36,24 +36,38 @@ const theme = createTheme({
 export default function App() {
   const { dataSource, setDataSource, loading, error, filePath } = useDataSource()
   const [pageView, setPageView] = useState<PageViewOptions>("table")
+  const [conceptStats, setConceptStats] = useState<{ filtered: number; total: number } | null>(null)
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header />
+      {/* <Header /> */}
 
       <Container
         id="main"
         component={"main"}
         maxWidth={false}
-        sx={{ display: "flex", flexDirection: "column", gap: 4, flexGrow: 1 }}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          flexGrow: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          pt: 2,
+        }}
       >
         {loading && <Alert severity="info">Loading data from URL...</Alert>}
         {error && <Alert severity="error">Error: {error}</Alert>}
         {!dataSource ? (
           <InputFileUpload setDataSource={setDataSource} />
         ) : dataSource.kind === "duckdb" ? (
-          <DuckDbExplorer dataSource={dataSource} pageView={pageView} setPageView={setPageView} />
+          <DuckDbExplorer
+            dataSource={dataSource}
+            pageView={pageView}
+            setPageView={setPageView}
+            onConceptStats={setConceptStats}
+          />
         ) : (
           <MainTable
             data={dataSource.rows}
@@ -71,7 +85,13 @@ export default function App() {
           />
         )}
       </Container>
-      <Footer text={filePath} pageView={pageView} setPageView={setPageView} />
+      <Footer
+        text={filePath}
+        dataSource={dataSource}
+        conceptStats={conceptStats}
+        pageView={pageView}
+        setPageView={setPageView}
+      />
     </ThemeProvider>
   )
 }

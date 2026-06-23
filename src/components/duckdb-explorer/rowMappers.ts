@@ -109,6 +109,35 @@ export function mapSummaryRow(row: BlockMetricRow): ConceptSummaryRow {
   }
 }
 
+// Lean counterpart to mapSummaryRow for buildHeatmapQuery results. Only the columns the heatmap
+// and scatter read; every other ConceptSummaryRow field stays undefined (all optional). The
+// detail dialog (ConceptDetailDialog) is null-tolerant and focusRow upgrades the row from the
+// table model, so the missing fields are safe.
+export function mapHeatmapRow(row: BlockMetricRow): ConceptSummaryRow {
+  return {
+    rowKey: String(row.rowKey),
+    conceptId: Number(row.conceptId),
+    conceptName: (row.conceptName as string | null) ?? null,
+    conceptCode: (row.conceptCode as string | null) ?? null,
+    ancestorConceptIds: null,
+    domainId: String(row.domainId),
+    countMode: String(row.countMode),
+    bestPValue: (row.bestPValue as number | null) ?? null,
+    binaryPValue: (row.binaryPValue as number | null) ?? null,
+    binaryEffectSize: (row.binaryEffectSize as number | null) ?? null,
+    countsPValue: (row.countsPValue as number | null) ?? null,
+    countsEffectSize: (row.countsEffectSize as number | null) ?? null,
+    agePValue: (row.agePValue as number | null) ?? null,
+    ageEffectSize: (row.ageEffectSize as number | null) ?? null,
+    daysPValue: (row.daysPValue as number | null) ?? null,
+    daysEffectSize: (row.daysEffectSize as number | null) ?? null,
+    continuousPValue: (row.continuousPValue as number | null) ?? null,
+    continuousEffectSize: (row.continuousEffectSize as number | null) ?? null,
+    categoricalPValue: (row.categoricalPValue as number | null) ?? null,
+    categoricalEffectSize: (row.categoricalEffectSize as number | null) ?? null,
+  }
+}
+
 export function mapHierarchyMetaRow(row: BlockMetricRow): HierarchyMetaRow {
   return {
     rowKey: String(row.rowKey),

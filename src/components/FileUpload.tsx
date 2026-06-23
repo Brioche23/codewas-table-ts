@@ -52,6 +52,7 @@ export default function InputFileUpload({
 
     if (!file.name.endsWith(".json")) return
 
+    const startedAt = performance.now()
     const parsed = JSON.parse(await file.text())
     const rows = normalizeJsonPayload(parsed) as any
 
@@ -67,6 +68,8 @@ export default function InputFileUpload({
     setDataSource({
       kind: "json",
       rows,
+      fileSize: file.size,
+      loadMs: performance.now() - startedAt,
     })
   }
 

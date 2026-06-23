@@ -37,24 +37,34 @@ import {
 } from "./hierarchyUtils"
 import {
   buildFullSummaryQuery,
+  buildHeatmapQuery,
   buildHierarchyMetaQuery,
   buildPagedSummaryQuery,
   buildSummaryCountQuery,
   buildSummaryRowsByRowKeysQuery,
 } from "./queryBuilders"
-import { mapHierarchyMetaRow, mapSummaryRow } from "./rowMappers"
+import { mapHeatmapRow, mapHierarchyMetaRow, mapSummaryRow } from "./rowMappers"
 import { buildColumns } from "./tableColumns"
-import type { BlockMetricRow, ChartScope, ConceptSummaryRow, HierarchyIndex, TableMode } from "./types"
+import type {
+  BlockMetricRow,
+  ChartScope,
+  ConceptSummaryRow,
+  HierarchyIndex,
+  TableMode,
+} from "./types"
 import { getSafeDownloadName, summaryRowsToTsv, triggerDownload } from "./utils"
+import DownloadMenu from "./DownloadMenu"
 
 export default function DuckDbExplorer({
   dataSource,
   pageView,
   setPageView,
+  onConceptStats,
 }: {
   dataSource: DuckDbDataSource
   pageView: PageViewOptions
   setPageView: Dispatch<SetStateAction<PageViewOptions>>
+  onConceptStats?: (stats: { filtered: number; total: number }) => void
 }) {
   const [countMode, setCountMode] = useState("descendant")
   const [selectedDomain, setSelectedDomain] = useState("all")
@@ -63,6 +73,7 @@ export default function DuckDbExplorer({
   const [chartRows, setChartRows] = useState<ConceptSummaryRow[]>([])
   const [tableRows, setTableRows] = useState<ConceptSummaryRow[]>([])
   const [tableRowCount, setTableRowCount] = useState(0)
+  const [totalRowCount, setTotalRowCount] = useState(0)
   const [hierarchyRows, setHierarchyRows] = useState<ConceptSummaryRow[]>([])
   const [hierarchyExpanded, setHierarchyExpanded] = useState<MRT_ExpandedState>({})
   const [hierarchyIndex, setHierarchyIndex] = useState<HierarchyIndex | null>(null)
@@ -111,7 +122,7 @@ export default function DuckDbExplorer({
       setSummaryError(null)
       try {
         const rowsRaw = await dataSource.runQuery(
-          buildFullSummaryQuery(
+          buildHeatmapQuery(
             countMode,
             selectedDomain,
             searchText,
@@ -120,7 +131,7 @@ export default function DuckDbExplorer({
           ),
         )
         if (!active) return
-        setChartRows((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
+        setChartRows((rowsRaw as BlockMetricRow[]).map(mapHeatmapRow))
       } catch (error) {
         if (!active) return
         setSummaryError(error instanceof Error ? error.message : String(error))
@@ -175,6 +186,31 @@ export default function DuckDbExplorer({
       active = false
     }
   }, [columnFilters, countMode, dataSource, pagination, searchText, selectedDomain, sorting])
+
+  // Unfiltered concept total for the current view (countMode/domain/search), so the footer can show
+  // "filtered of total". Depends on the view selectors but NOT on columnFilters.
+  useEffect(() => {
+    let active = true
+    dataSource
+      .runQuery(buildSummaryCountQuery(countMode, selectedDomain, searchText, []))
+      .then((countRaw) => {
+        if (!active) return
+        setTotalRowCount(
+          Number((countRaw[0] as Record<string, unknown> | undefined)?.rowCount ?? 0),
+        )
+      })
+      .catch(() => {
+        // Total is non-critical; leave the previous value on failure.
+      })
+    return () => {
+      active = false
+    }
+  }, [countMode, dataSource, searchText, selectedDomain])
+
+  // Lift the table's row counts so the footer reflects exactly what the table shows.
+  useEffect(() => {
+    onConceptStats?.({ filtered: tableRowCount, total: totalRowCount })
+  }, [onConceptStats, tableRowCount, totalRowCount])
 
   useEffect(() => {
     if (tableMode !== "hierarchy") return
@@ -319,6 +355,15 @@ export default function DuckDbExplorer({
     enableSorting: true,
     enableColumnFilters: true,
     enablePagination: true,
+    enableStickyHeader: true,
+    enableStickyFooter: true,
+    // Fill the flex parent and keep the header/toolbars fixed while the rows scroll inside.
+    muiTablePaperProps: {
+      sx: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 },
+    },
+    muiTableContainerProps: {
+      sx: { flex: 1, minHeight: 0, overflow: "auto" },
+    },
     enableExpanding: tableMode === "hierarchy",
     manualFiltering: tableMode === "flat",
     manualPagination: tableMode === "flat",
@@ -402,131 +447,79 @@ export default function DuckDbExplorer({
     })
   }
 
-  async function downloadFilteredTsv() {
-    setExportLoading(true)
-    try {
-      const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters),
-      )
-      const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
-      triggerDownload(
-        `${getSafeDownloadName(dataSource.sourceLabel).replace(/\.duckdb$/i, "")}_filtered.tsv`,
-        tsv,
-        "text/tab-separated-values;charset=utf-8",
-      )
-    } finally {
-      setExportLoading(false)
-    }
-  }
-
-  async function downloadFullTsv() {
-    setExportLoading(true)
-    try {
-      const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, []),
-      )
-      const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
-      triggerDownload(
-        `${getSafeDownloadName(dataSource.sourceLabel).replace(/\.duckdb$/i, "")}_full.tsv`,
-        tsv,
-        "text/tab-separated-values;charset=utf-8",
-      )
-    } finally {
-      setExportLoading(false)
-    }
-  }
-
-  function downloadFullDuckDb() {
-    triggerDownload(
-      getSafeDownloadName(dataSource.sourceLabel),
-      dataSource.sourceBytes as Uint8Array<ArrayBuffer>,
-      "application/octet-stream",
-    )
+  const downloadMenuProps = {
+    dataSource,
+    countMode,
+    selectedDomain,
+    searchText,
+    columnFilters,
+    exportLoading,
+    setExportLoading,
   }
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: "wrap" }}>
-          <FormControl sx={{ minWidth: 150 }} size="small">
-            <InputLabel id="table-mode-label">Table View</InputLabel>
-            <Select
-              labelId="table-mode-label"
-              value={tableMode}
-              label="Table View"
-              onChange={(event) => {
-                const nextMode = event.target.value as TableMode
-                setTableMode(nextMode)
-                if (nextMode === "hierarchy" && countMode === "code") {
-                  setCountMode("all")
-                }
-              }}
-            >
-              <MenuItem value="flat">Flat</MenuItem>
-              <MenuItem value="hierarchy">Hierarchy</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 160 }} size="small">
-            <InputLabel id="count-mode-label">Count Mode</InputLabel>
-            <Select
-              labelId="count-mode-label"
-              value={countMode}
-              label="Count Mode"
-              onChange={(event) => setCountMode(event.target.value)}
-              disabled={tableMode === "hierarchy"}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="code">Exact code</MenuItem>
-              <MenuItem value="descendant">All descendants</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 160 }} size="small">
-            <InputLabel id="domain-label">Domain</InputLabel>
-            <Select
-              labelId="domain-label"
-              value={selectedDomain}
-              label="Domain"
-              onChange={(event) => setSelectedDomain(event.target.value)}
-            >
-              <MenuItem value="all">All domains</MenuItem>
-              {domains.map((domain) => (
-                <MenuItem key={domain} value={domain}>
-                  {domain}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            label="Search concept/code/id"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            sx={{ minWidth: 220 }}
-            size="small"
-          />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={downloadFullDuckDb}
-            disabled={exportLoading}
-          >
-            Download full DuckDB
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => void downloadFilteredTsv()}
-            disabled={exportLoading}
-          >
-            Download filtered TSV
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => void downloadFullTsv()}
-            disabled={exportLoading}
-          >
-            Download full TSV
-          </Button>
+    <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+      <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <Stack direction="row" sx={{ mb: 2, flexWrap: "wrap", placeContent: "space-between" }}>
+          <Stack direction="row" spacing={2}>
+            <FormControl sx={{ minWidth: 150 }} size="small">
+              <InputLabel id="table-mode-label">Table View</InputLabel>
+              <Select
+                labelId="table-mode-label"
+                value={tableMode}
+                label="Table View"
+                onChange={(event) => {
+                  const nextMode = event.target.value as TableMode
+                  setTableMode(nextMode)
+                  if (nextMode === "hierarchy" && countMode === "code") {
+                    setCountMode("all")
+                  }
+                }}
+              >
+                <MenuItem value="flat">Flat</MenuItem>
+                <MenuItem value="hierarchy">Hierarchy</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 160 }} size="small">
+              <InputLabel id="count-mode-label">Count Mode</InputLabel>
+              <Select
+                labelId="count-mode-label"
+                value={countMode}
+                label="Count Mode"
+                onChange={(event) => setCountMode(event.target.value)}
+                disabled={tableMode === "hierarchy"}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="code">Exact code</MenuItem>
+                <MenuItem value="descendant">All descendants</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 160 }} size="small">
+              <InputLabel id="domain-label">Domain</InputLabel>
+              <Select
+                labelId="domain-label"
+                value={selectedDomain}
+                label="Domain"
+                onChange={(event) => setSelectedDomain(event.target.value)}
+              >
+                <MenuItem value="all">All domains</MenuItem>
+                {domains.map((domain) => (
+                  <MenuItem key={domain} value={domain}>
+                    {domain}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Search concept/code/id"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              sx={{ minWidth: 220 }}
+              size="small"
+            />
+          </Stack>
+
+          <DownloadMenu {...downloadMenuProps} />
         </Stack>
         <DuckDbFilterBar
           table={table}
@@ -559,17 +552,22 @@ export default function DuckDbExplorer({
           </Box>
         )}
         {summaryError && <Alert severity="error">{summaryError}</Alert>}
-        {pageView === "charts" ? (
-          <DuckDbCharts
-            rows={chartRows}
-            chartLoading={chartLoading}
-            chartScope={chartScope}
-            setChartScope={setChartScope}
-            onSelectConcept={focusRow}
-          />
-        ) : (
-          <MaterialReactTable table={table} />
-        )}
+        {/* Fills the remaining height; the table scrolls inside it, charts scroll the box. */}
+        <Box
+          sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "auto" }}
+        >
+          {pageView === "charts" ? (
+            <DuckDbCharts
+              rows={chartRows}
+              chartLoading={chartLoading}
+              chartScope={chartScope}
+              setChartScope={setChartScope}
+              onSelectConcept={focusRow}
+            />
+          ) : (
+            <MaterialReactTable table={table} />
+          )}
+        </Box>
       </Box>
       <ConceptDetailDialog row={selectedDetailRow} onClose={() => setSelectedDetailRow(null)} />
     </Stack>

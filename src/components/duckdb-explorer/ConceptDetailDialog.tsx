@@ -76,7 +76,7 @@ export function ConceptDetailDialog({
     <Dialog open={Boolean(row)} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ color: "primary.main" }}>{row.conceptName ?? row.conceptId}</DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={2.5}>
+        <Stack spacing={2}>
           <Stack spacing={0.5}>
             <Typography variant="body2">Source code: {row.conceptCode ?? "N/A"}</Typography>
             <Typography variant="body2">Concept ID: {row.conceptId}</Typography>
@@ -88,7 +88,7 @@ export function ConceptDetailDialog({
             </Typography>
           </Stack>
 
-          <Grid container spacing={2}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Stack spacing={1}>
@@ -107,7 +107,7 @@ export function ConceptDetailDialog({
               </Paper>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Paper variant="outlined" sx={{ p: 2 }}>
+              <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
                 <Stack spacing={1}>
                   <Typography variant="h6">Categorical</Typography>
                   {categoricalDistribution.length > 0 ? (
@@ -150,7 +150,7 @@ export function ConceptDetailDialog({
               )
               return (
                 <Grid key={section.prefix} size={{ xs: 12, md: 6 }}>
-                  <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
                     <Stack spacing={1}>
                       <Typography variant="h6">{section.title}</Typography>
                       {stats && distributions ? (

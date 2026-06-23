@@ -29,6 +29,7 @@ export function useDataSource() {
     if (!path) return
 
     setLoading(true)
+    const startedAt = performance.now()
     fetch(path)
       .then(async (response) => {
         if (!response.ok) {
@@ -39,10 +40,13 @@ export function useDataSource() {
           return loadDuckDbDataSource(path, new Uint8Array(await response.arrayBuffer()))
         }
 
-        const payload = await response.json()
+        const buffer = await response.arrayBuffer()
+        const payload = JSON.parse(new TextDecoder().decode(buffer))
         return {
           kind: "json" as const,
           rows: normalizeJsonPayload(payload) as any,
+          fileSize: buffer.byteLength,
+          loadMs: performance.now() - startedAt,
         }
       })
       .then((source) => setDataSource(source))
