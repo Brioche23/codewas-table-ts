@@ -92,6 +92,7 @@ export function FilterPresets({
       {presets.map((preset) => (
         <Chip
           variant={selectedPresetId === preset.id ? "filled" : "outlined"}
+          size="small"
           key={preset.id}
           label={preset.name}
           onClick={() => onApply(preset)}

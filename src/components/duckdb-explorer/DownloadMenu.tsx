@@ -117,7 +117,7 @@ export default function DownloadMenu({
   }
 
   return (
-    <Stack direction="row" spacing={2} sx={{ zIndex: 10 }}>
+    <Stack direction="row" spacing={2} sx={{ zIndex: 999 }}>
       <div>
         <Button
           ref={anchorRef}
@@ -127,7 +127,7 @@ export default function DownloadMenu({
           aria-haspopup="true"
           onClick={handleToggle}
           startIcon={<Download />}
-          size="small"
+          // size="small"
         >
           Download
         </Button>
@@ -137,13 +137,24 @@ export default function DownloadMenu({
           role={undefined}
           placement="bottom-start"
           transition
-          disablePortal
+          // Render into a portal at <body> so the menu escapes the table's
+          // overflow:auto / sticky-header containers instead of being clipped.
+          disablePortal={false}
+          // Sit above MUI modal-level UI (and MRT's sticky toolbar/header) so the
+          // portaled menu is never painted behind other content.
+          sx={{ zIndex: (theme) => theme.zIndex.modal }}
+          modifiers={[
+            // Flip to the opposite side when there isn't room below the button.
+            { name: "flip", enabled: true },
+            // Nudge the menu back inside the viewport instead of overflowing it.
+            { name: "preventOverflow", enabled: true, options: { padding: 8 } },
+          ]}
         >
           {({ TransitionProps, placement }) => (
             <Grow
               {...TransitionProps}
               style={{
-                transformOrigin: placement === "bottom-start" ? "left top" : "left bottom",
+                transformOrigin: placement.startsWith("top") ? "left bottom" : "left top",
               }}
             >
               <Paper>

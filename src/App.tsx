@@ -1,5 +1,5 @@
 // App.tsx — wire up the table with your JSON data
-import { ThemeProvider, createTheme, CssBaseline, Container, Alert } from "@mui/material"
+import { ThemeProvider, createTheme, CssBaseline, Container, Alert, Box } from "@mui/material"
 
 import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
@@ -11,7 +11,10 @@ import { useDataSource } from "./hooks/useDataSource"
 import { useState } from "react"
 import type { PageViewOptions } from "./utils/types"
 
-const theme = createTheme({
+// Shared base config so both themes are built by a single createTheme() call.
+// (createTheme's 2nd-arg merge form does NOT re-process keys like `spacing`,
+//  which is why putting `spacing: 6` there broke theme.spacing().)
+const baseThemeOptions = {
   colorSchemes: {
     light: true,
     dark: true,
@@ -31,6 +34,40 @@ const theme = createTheme({
     ].join(","),
     fontSize: 11,
   },
+} as const
+
+// Denser variant: same base, plus density overrides — all in ONE createTheme call
+// so `spacing` is processed into a function.
+// TO REVERT to the plain theme: in <ThemeProvider> below, swap
+// `theme={denseTheme}` for `theme={createTheme(baseThemeOptions)}`
+// (and optionally delete this block).
+const denseTheme = createTheme({
+  ...baseThemeOptions,
+  spacing: 6, // ↓ from the default 8 — tightens all padding/margins/gaps globally
+  shape: { borderRadius: 6 },
+  typography: {
+    ...baseThemeOptions.typography,
+    button: { textTransform: "none" },
+    h6: { fontSize: "1rem", fontWeight: 600 },
+    body2: { fontSize: "0.78rem" },
+  },
+  components: {
+    // Apply small size everywhere without repeating the prop on each instance.
+    MuiTextField: { defaultProps: { size: "small", margin: "dense" } },
+    MuiFormControl: { defaultProps: { size: "small", margin: "dense" } },
+    MuiSelect: { defaultProps: { size: "small" } },
+    MuiButton: { defaultProps: { size: "small" } },
+    // Surgically shrink the input box itself when size="small" isn't enough.
+    MuiInputBase: {
+      styleOverrides: { input: { paddingTop: 4, paddingBottom: 4, fontSize: "0.8rem" } },
+    },
+    MuiOutlinedInput: {
+      defaultProps: { size: "small" },
+      styleOverrides: { input: { paddingTop: 5, paddingBottom: 5 } },
+    },
+    MuiInputLabel: { styleOverrides: { root: { fontSize: "0.8rem" } } },
+    MuiMenuItem: { styleOverrides: { root: { fontSize: "0.8rem", minHeight: 28 } } },
+  },
 })
 
 export default function App() {
@@ -39,22 +76,20 @@ export default function App() {
   const [conceptStats, setConceptStats] = useState<{ filtered: number; total: number } | null>(null)
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={createTheme(baseThemeOptions)}>
       <CssBaseline />
       {/* <Header /> */}
 
-      <Container
+      <Box
         id="main"
         component={"main"}
-        maxWidth={false}
         sx={{
           display: "flex",
           flexDirection: "column",
-          gap: 4,
           flexGrow: 1,
           minHeight: 0,
           overflow: "hidden",
-          pt: 2,
+          px: 0,
         }}
       >
         {loading && <Alert severity="info">Loading data from URL...</Alert>}
@@ -84,7 +119,7 @@ export default function App() {
             pageView={pageView}
           />
         )}
-      </Container>
+      </Box>
       <Footer
         text={filePath}
         dataSource={dataSource}

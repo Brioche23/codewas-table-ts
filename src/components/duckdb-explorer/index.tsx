@@ -15,6 +15,7 @@ import {
 import { alpha } from "@mui/material/styles"
 import {
   MaterialReactTable,
+  MRT_GlobalFilterTextField,
   useMaterialReactTable,
   type MRT_ColumnFiltersState,
   type MRT_ExpandedState,
@@ -424,6 +425,79 @@ export default function DuckDbExplorer({
             : undefined,
       },
     }),
+    renderTopToolbarCustomActions: () => (
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{
+          mb: 0,
+          flexWrap: "wrap",
+          placeContent: "space-between",
+          alignContent: "center",
+          overflow: "visible",
+        }}
+      >
+        <Stack direction="row" spacing={2}>
+          <FormControl sx={{ minWidth: 150 }} size="small">
+            <InputLabel id="table-mode-label">Table View</InputLabel>
+            <Select
+              labelId="table-mode-label"
+              value={tableMode}
+              label="Table View"
+              onChange={(event) => {
+                const nextMode = event.target.value as TableMode
+                setTableMode(nextMode)
+                if (nextMode === "hierarchy" && countMode === "code") {
+                  setCountMode("all")
+                }
+              }}
+            >
+              <MenuItem value="flat">Flat</MenuItem>
+              <MenuItem value="hierarchy">Hierarchy</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel id="count-mode-label">Count Mode</InputLabel>
+            <Select
+              labelId="count-mode-label"
+              value={countMode}
+              label="Count Mode"
+              onChange={(event) => setCountMode(event.target.value)}
+              disabled={tableMode === "hierarchy"}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="code">Exact code</MenuItem>
+              <MenuItem value="descendant">All descendants</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel id="domain-label">Domain</InputLabel>
+            <Select
+              labelId="domain-label"
+              value={selectedDomain}
+              label="Domain"
+              onChange={(event) => setSelectedDomain(event.target.value)}
+            >
+              <MenuItem value="all">All domains</MenuItem>
+              {domains.map((domain) => (
+                <MenuItem key={domain} value={domain}>
+                  {domain}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Search concept/code/id"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            sx={{ minWidth: 220 }}
+            size="small"
+          />
+        </Stack>
+
+        <DownloadMenu {...downloadMenuProps} />
+      </Stack>
+    ),
   })
 
   function focusRow(rowKey: string) {
@@ -458,9 +532,9 @@ export default function DuckDbExplorer({
   }
 
   return (
-    <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
+    <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-        <Stack direction="row" sx={{ mb: 2, flexWrap: "wrap", placeContent: "space-between" }}>
+        {/* <Stack direction="row" sx={{ mb: 2, flexWrap: "wrap", placeContent: "space-between" }}>
           <Stack direction="row" spacing={2}>
             <FormControl sx={{ minWidth: 150 }} size="small">
               <InputLabel id="table-mode-label">Table View</InputLabel>
@@ -520,7 +594,7 @@ export default function DuckDbExplorer({
           </Stack>
 
           <DownloadMenu {...downloadMenuProps} />
-        </Stack>
+        </Stack> */}
         <DuckDbFilterBar
           table={table}
           columnFilters={columnFilters}

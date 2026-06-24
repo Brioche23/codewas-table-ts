@@ -297,7 +297,7 @@ export function DuckDbHeatmap({
 
   return (
     <Stack spacing={3}>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ p: 1 }}>
         {sharedControls}
         <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size={"small"}>
@@ -383,8 +383,7 @@ export function DuckDbHeatmap({
         )}
         <Typography variant="body2" color="text.secondary">
           Heatmap colors show -log10(p) evidence by analysis block. Repeat counts show how many
-          blocks pass the selected threshold. Click a cell to jump that concept back into the
-          table.
+          blocks pass the selected threshold. Click a cell to jump that concept back into the table.
         </Typography>
         {heatmapSearchText.trim() ? (
           <Typography variant="body2" color="text.secondary">
@@ -404,10 +403,18 @@ export function DuckDbHeatmap({
           >
             {/* Spacer drives the scrollbar; the canvas inside stays pinned and draws the window. */}
             <div style={{ position: "relative", width: CANVAS_WIDTH, height: contentHeight }}>
-              <div style={{ position: "sticky", top: 0, height: viewportHeight, width: CANVAS_WIDTH }}>
+              <div
+                style={{ position: "sticky", top: 0, height: viewportHeight, width: CANVAS_WIDTH }}
+              >
                 <canvas
                   ref={canvasRef}
-                  style={{ position: "absolute", top: 0, left: 0, display: "block", cursor: "pointer" }}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    display: "block",
+                    cursor: "pointer",
+                  }}
                   onMouseMove={(event) => setHoveredCell(resolveHeatmapCell(event))}
                   onMouseLeave={() => setHoveredCell(null)}
                   onClick={(event) => {

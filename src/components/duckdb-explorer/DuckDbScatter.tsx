@@ -1,14 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react"
-import {
-  Alert,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-} from "@mui/material"
+import { Alert, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Stack } from "@mui/material"
 import { ScatterChart } from "@mui/x-charts"
 import { COLUMNS } from "../../utils/constants"
 import { SCATTER_POINT_CAP } from "./constants"

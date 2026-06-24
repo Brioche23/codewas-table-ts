@@ -72,14 +72,15 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
       elevation={3}
     >
       <BottomNavigation
-        showLabels
+        // showLabels
         value={pageView}
         onChange={(_event, newValue) => {
           setPageView(newValue)
         }}
+        sx={{ maxHeight: 40 }}
       >
-        <BottomNavigationAction label="Table" value="table" icon={<TableBar />} />
-        <BottomNavigationAction label="Charts" value="charts" icon={<GraphicEq />} />
+        <BottomNavigationAction label="Table" value="table" icon={<TableBar fontSize="10" />} />
+        <BottomNavigationAction label="Charts" value="charts" icon={<GraphicEq fontSize="10" />} />
       </BottomNavigation>
       <Box
         sx={{
@@ -104,6 +105,9 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
 
         {/* <ThemeToggle /> */}
         {/* <MenuListComposition /> */}
+        <Typography variant="caption" color="text.secondary">
+          CodeWAS Beta | FinnGen
+        </Typography>
       </Box>
     </Paper>
   )

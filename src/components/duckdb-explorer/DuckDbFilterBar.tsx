@@ -141,7 +141,9 @@ export function DuckDbFilterBar({
         gap: 2,
         alignItems: "center",
         flexWrap: "wrap",
-        mb: 2,
+        p: 1,
+        borderBottom: "1px solid",
+        borderColor: "divider",
       }}
     >
       {/* <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>

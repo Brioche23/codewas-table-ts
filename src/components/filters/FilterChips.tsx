@@ -79,11 +79,24 @@ export function FilterChips({ filters, onClearAll, onSave }: FilterChipsProps) {
           key={filter.id}
           label={`${filter.label}: ${filter.value}`}
           onDelete={filter.onClear}
+          size="small"
         />
       ))}
 
-      <Chip label="Clear all" icon={<Clear />} variant="outlined" onClick={onClearAll} />
-      <Chip label="Save Preset" icon={<Save />} variant="outlined" onClick={handleOpen} />
+      <Chip
+        label="Clear all"
+        icon={<Clear />}
+        variant="outlined"
+        onClick={onClearAll}
+        size="small"
+      />
+      <Chip
+        label="Save Preset"
+        icon={<Save />}
+        variant="outlined"
+        onClick={handleOpen}
+        size="small"
+      />
 
       <Modal open={open} onClose={handleClose}>
         <Box sx={modalStyle}>
