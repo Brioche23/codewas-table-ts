@@ -1,7 +1,6 @@
 import { BottomNavigation, BottomNavigationAction, Box, Paper, Typography } from "@mui/material"
 import type { Dispatch, SetStateAction } from "react"
 import type { LoadedDataSource, PageViewOptions } from "../utils/types"
-import MenuListComposition, { ThemeToggle } from "./ThemeToggle"
 import { TableBar, GraphicEq } from "@mui/icons-material"
 
 interface FooterProps {
@@ -79,8 +78,16 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
         }}
         sx={{ maxHeight: 40 }}
       >
-        <BottomNavigationAction label="Table" value="table" icon={<TableBar fontSize="10" />} />
-        <BottomNavigationAction label="Charts" value="charts" icon={<GraphicEq fontSize="10" />} />
+        <BottomNavigationAction
+          label="Table"
+          value="table"
+          icon={<TableBar sx={{ fontSize: 10 }} />}
+        />
+        <BottomNavigationAction
+          label="Charts"
+          value="charts"
+          icon={<GraphicEq sx={{ fontSize: 10 }} />}
+        />
       </BottomNavigation>
       <Box
         sx={{

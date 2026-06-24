@@ -33,7 +33,9 @@ export function TopToolbar({ table, setData }: TopToolbarProps) {
   }
 
   const handleExportRowsCSV = (rows: MRT_Row<ConceptRow>[]) => {
-    const rowData = rows.map((row) => row.original) as unknown as { [k: string]: unknown }[]
+    const rowData = rows.map((row) => row.original) as unknown as Parameters<
+      ReturnType<typeof generateCsv>
+    >[0]
     const csv = generateCsv(csvConfig)(rowData)
     download(csvConfig)(csv)
   }

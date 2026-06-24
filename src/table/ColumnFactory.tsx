@@ -172,7 +172,7 @@ export function makeStatGroup({
 // Lives outside the component — no deps on props/state, never triggers re-renders
 
 export const makeInfoColumn = (
-  conceptsById: Record<number, ConceptMetadata>,
+  _conceptsById: Record<number, ConceptMetadata>,
 ): MRT_ColumnDef<ConceptRow> => {
   return {
     id: "main_info",

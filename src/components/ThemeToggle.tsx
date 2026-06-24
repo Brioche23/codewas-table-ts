@@ -14,7 +14,7 @@ import Popper from "@mui/material/Popper"
 import MenuItem from "@mui/material/MenuItem"
 import MenuList from "@mui/material/MenuList"
 import Stack from "@mui/material/Stack"
-import { useState, useRef, type SyntheticEvent, useEffect } from "react"
+import { useState, useRef, type SyntheticEvent, type KeyboardEvent, useEffect } from "react"
 
 export function ThemeToggle() {
   const { mode, setMode } = useColorScheme()
@@ -67,7 +67,7 @@ export default function MenuListComposition() {
     setOpen(false)
   }
 
-  function handleListKeyDown(event: KeyboardEvent) {
+  function handleListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
     if (event.key === "Tab") {
       event.preventDefault()
       setOpen(false)
@@ -76,7 +76,7 @@ export default function MenuListComposition() {
     }
   }
 
-  function handleItemClick(menuMode: "light" | "dark" | "system" | undefined) {
+  function handleItemClick(menuMode: "light" | "dark" | "system") {
     setMode(menuMode)
     setOpen(false)
   }
@@ -128,9 +128,9 @@ export default function MenuListComposition() {
                     aria-labelledby="composition-button"
                     onKeyDown={handleListKeyDown}
                   >
-                    <MenuItem onClick={handleItemClick("system")}>Auto</MenuItem>
-                    <MenuItem onClick={handleItemClick("light")}>Light</MenuItem>
-                    <MenuItem onClick={handleItemClick("dark")}>Dark</MenuItem>
+                    <MenuItem onClick={() => handleItemClick("system")}>Auto</MenuItem>
+                    <MenuItem onClick={() => handleItemClick("light")}>Light</MenuItem>
+                    <MenuItem onClick={() => handleItemClick("dark")}>Dark</MenuItem>
                   </MenuList>
                 </ClickAwayListener>
               </Paper>

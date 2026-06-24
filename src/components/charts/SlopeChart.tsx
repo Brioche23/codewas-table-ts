@@ -2,7 +2,7 @@ import * as THREE from "three"
 import { Canvas } from "@react-three/fiber"
 
 import { extent, scaleLinear, type ScaleLinear } from "d3"
-import { useCallback, useMemo, useState, type MouseEvent } from "react"
+import { useMemo, useState } from "react"
 
 import { Box } from "@mui/material"
 import { YAxis } from "./YAxis"
@@ -17,6 +17,8 @@ type SlopeChartProps = {
   data: SlopeChartData[]
   visibleDataIds: number[]
 }
+// WIP: props for the disabled AllLines component (see below).
+/*
 type AllLinesProps = {
   data: SlopeChartData[]
   visibleDataIds: number[]
@@ -25,6 +27,7 @@ type AllLinesProps = {
   x1: number
   x2: number
 }
+*/
 
 type RangePolygonsProps = {
   data: SlopeChartData[]
@@ -64,7 +67,7 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
   console.log(data)
   console.log(visibleDataIds)
 
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [hoveredIndex] = useState<number | null>(null)
 
   const allValues = data.map((d) => [d.start, d.end]).flat()
   const ext = extent(allValues) as [number, number]
@@ -82,6 +85,7 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
 
   const [x1, x2] = [-worldWidth / 2 + 1, worldWidth / 2 - 1]
 
+  /* WIP: nearest-line hover detection — re-enable with onMouseMove on the canvas container below
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       const rect = e.currentTarget?.getBoundingClientRect()
@@ -108,6 +112,7 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
     },
     [data, yScale, worldHeight],
   )
+  */
 
   return (
     <Box
@@ -158,6 +163,7 @@ export function SlopeChart({ data, visibleDataIds }: SlopeChartProps) {
   )
 }
 
+/* WIP: GPU line rendering — currently disabled at the call site above
 function AllLines({ data, visibleDataIds, yScale, x1, x2 }: AllLinesProps) {
   const { selectedGeo, unselectedGeo } = useMemo(() => {
     const selected = data.filter((d) => visibleDataIds.includes(d.id))
@@ -209,6 +215,7 @@ function AllLines({ data, visibleDataIds, yScale, x1, x2 }: AllLinesProps) {
     </>
   )
 }
+*/
 
 export function RangePolygons({ data, yScale, x1, x2 }: RangePolygonsProps) {
   const { casesGeo, controlsGeo } = useMemo(() => {

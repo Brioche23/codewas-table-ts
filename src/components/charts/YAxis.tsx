@@ -11,7 +11,7 @@ type yAxisProps = {
   label: string
 }
 
-export function YAxis({ yScale, x, worldWidth, domain, tickCount = 8, label }: yAxisProps) {
+export function YAxis({ yScale, x, domain, tickCount = 8, label }: yAxisProps) {
   const ticks = useMemo(() => {
     // d3's scale .ticks() gives you "nice" round values in the domain
     return yScale.ticks(tickCount)

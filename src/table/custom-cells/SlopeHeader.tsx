@@ -1,5 +1,4 @@
 import type { MRT_TableInstance } from "material-react-table"
-import { SlopeChart } from "../../components/charts/SlopeChart"
 import type { ConceptRow } from "../../utils/types"
 
 interface SlopeHeaderProps {
@@ -11,7 +10,9 @@ interface SlopeHeaderProps {
   getEnd: (data: any) => number
 }
 
-export function SlopeHeader({ table, label, idKey, dataKey, getStart, getEnd }: SlopeHeaderProps) {
+export function SlopeHeader({ label }: SlopeHeaderProps) {
+  // WIP: per-header slope chart — disabled until the chart below is re-enabled.
+  /*
   const allValues = table.getFilteredRowModel().rows.map((row) => ({
     id: row.getValue<number>(idKey),
     data: row.getValue<any>(dataKey),
@@ -24,6 +25,7 @@ export function SlopeHeader({ table, label, idKey, dataKey, getStart, getEnd }: 
     start: getStart(d.data),
     end: getEnd(d.data),
   }))
+  */
 
   return (
     <div>

@@ -222,7 +222,7 @@ export default function MainTable({ data, setData, pageView }: ConceptTableProps
     }),
     displayColumnDefOptions: {
       "mrt-row-expand": {
-        Cell: ({ row, table }) => {
+        Cell: ({ row }) => {
           const isLastChild = () => {
             const parent = row.getParentRow()
             if (!parent) return false

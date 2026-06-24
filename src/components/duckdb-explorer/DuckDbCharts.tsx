@@ -1,8 +1,8 @@
 import { useState, type Dispatch, type SetStateAction } from "react"
 import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material"
-import { DuckDbHeatmap } from "./DuckDbHeatmap"
 import { DuckDbScatter } from "./DuckDbScatter"
 import type { ChartMode, ChartScope, ConceptSummaryRow } from "./types"
+import { DuckDbOverview } from "./DuckDbOverview"
 
 export function DuckDbCharts({
   rows,
@@ -55,11 +55,17 @@ export function DuckDbCharts({
   return chartMode === "scatter" ? (
     <DuckDbScatter rows={rows} chartLoading={chartLoading} sharedControls={sharedControls} />
   ) : (
-    <DuckDbHeatmap
+    <DuckDbOverview
       rows={rows}
       chartLoading={chartLoading}
       onSelectConcept={onSelectConcept}
       sharedControls={sharedControls}
     />
+    // <DuckDbHeatmap
+    //   rows={rows}
+    //   chartLoading={chartLoading}
+    //   onSelectConcept={onSelectConcept}
+    //   sharedControls={sharedControls}
+    // />
   )
 }

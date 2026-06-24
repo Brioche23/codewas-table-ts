@@ -1,7 +1,6 @@
 // App.tsx — wire up the table with your JSON data
-import { ThemeProvider, createTheme, CssBaseline, Container, Alert, Box } from "@mui/material"
+import { ThemeProvider, createTheme, CssBaseline, Alert, Box } from "@mui/material"
 
-import { Header } from "./components/Header"
 import { Footer } from "./components/Footer"
 import InputFileUpload from "./components/FileUpload"
 import DuckDbExplorer from "./components/duckdb-explorer"
@@ -41,6 +40,7 @@ const baseThemeOptions = {
 // TO REVERT to the plain theme: in <ThemeProvider> below, swap
 // `theme={denseTheme}` for `theme={createTheme(baseThemeOptions)}`
 // (and optionally delete this block).
+/* eslint-disable @typescript-eslint/no-unused-vars
 const denseTheme = createTheme({
   ...baseThemeOptions,
   spacing: 6, // ↓ from the default 8 — tightens all padding/margins/gaps globally
@@ -69,6 +69,7 @@ const denseTheme = createTheme({
     MuiMenuItem: { styleOverrides: { root: { fontSize: "0.8rem", minHeight: 28 } } },
   },
 })
+*/
 
 export default function App() {
   const { dataSource, setDataSource, loading, error, filePath } = useDataSource()

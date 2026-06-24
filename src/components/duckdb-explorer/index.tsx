@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateActio
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -15,7 +14,6 @@ import {
 import { alpha } from "@mui/material/styles"
 import {
   MaterialReactTable,
-  MRT_GlobalFilterTextField,
   useMaterialReactTable,
   type MRT_ColumnFiltersState,
   type MRT_ExpandedState,
@@ -37,7 +35,6 @@ import {
   withEmptySubRows,
 } from "./hierarchyUtils"
 import {
-  buildFullSummaryQuery,
   buildHeatmapQuery,
   buildHierarchyMetaQuery,
   buildPagedSummaryQuery,
@@ -53,7 +50,6 @@ import type {
   HierarchyIndex,
   TableMode,
 } from "./types"
-import { getSafeDownloadName, summaryRowsToTsv, triggerDownload } from "./utils"
 import DownloadMenu from "./DownloadMenu"
 
 export default function DuckDbExplorer({

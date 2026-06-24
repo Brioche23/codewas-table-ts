@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Box, Divider } from "@mui/material"
 import { FilterChips, type ActiveFilter } from "./FilterChips"
 import { FilterPresets } from "./FilterPresets"
-import { FilterStats } from "./FilterStats"
 import { loadPresets, savePresets } from "./presetStorage"
 
 const STORAGE_KEY = "mrt-filter-presets"

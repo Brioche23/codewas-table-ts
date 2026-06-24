@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
   type Dispatch,
+  type KeyboardEvent,
   type SetStateAction,
   type SyntheticEvent,
 } from "react"
@@ -55,7 +56,7 @@ export default function DownloadMenu({
     setOpen(false)
   }
 
-  function handleListKeyDown(event: KeyboardEvent) {
+  function handleListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
     if (event.key === "Tab") {
       event.preventDefault()
       setOpen(false)

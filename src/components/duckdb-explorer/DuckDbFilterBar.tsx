@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react"
-import { Box, Divider, Typography } from "@mui/material"
+import { Box, Divider } from "@mui/material"
 import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
 import type { FilterPreset } from "../../utils/types"
 import { FilterChips, type ActiveFilter } from "../filters/FilterChips"
@@ -46,7 +46,6 @@ export function DuckDbFilterBar({
   setSelectedDomain,
   searchText,
   setSearchText,
-  rowCount,
 }: DuckDbFilterBarProps) {
   const [presets, setPresets] = useState<FilterPreset[]>(() => loadPresets(STORAGE_KEY))
   const [selectedPresetId, setSelectedPresetId] = useState<string>("")

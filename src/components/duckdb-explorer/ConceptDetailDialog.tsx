@@ -9,7 +9,7 @@ import {
 } from "./utils"
 
 function renderTestSummary(
-  label: string,
+  _label: string,
   pValue?: number | null,
   effectSize?: number | null,
   smd?: number | null,
