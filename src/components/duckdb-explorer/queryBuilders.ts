@@ -394,6 +394,7 @@ export function buildHeatmapQuery(
       conceptId,
       conceptName,
       conceptCode,
+      ancestorConceptIds,
       domainId,
       countMode,
       bestPValue,

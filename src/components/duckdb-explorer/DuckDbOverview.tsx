@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -10,9 +11,11 @@ import {
 import {
   Alert,
   Box,
+  Breadcrumbs,
   FormControl,
   Grid,
   InputLabel,
+  Link,
   MenuItem,
   Paper,
   Select,
@@ -20,42 +23,54 @@ import {
   TextField,
   Typography,
 } from "@mui/material"
-import { COLUMNS } from "../../utils/constants"
-import { HEATMAP_BLOCKS, HEATMAP_MAX_CLUSTER_ROWS } from "./constants"
+import { HEATMAP_BLOCKS, OVERVIEW_MIN_COL_PX, OVERVIEW_MIN_LABEL_PX } from "./constants"
 import {
-  clusterHeatmapRows,
   computeHeatmapDerived,
-  getBestHeatmapScore,
-  getChartMetricValue,
   getHeatmapColor,
   getHeatmapHeaderLines,
-  getRepeatEvidenceCount,
-  getRepeatEvidenceCountFromLogp,
   matchesHeatmapSearch,
 } from "./heatmapUtils"
-import type {
-  ChartBlockKey,
-  ConceptSummaryRow,
-  HeatmapCell,
-  HeatmapOrderMode,
-  HeatmapScaleMode,
-} from "./types"
+import { buildHierarchyIndex } from "./hierarchyUtils"
+import type { ChartBlockKey, ConceptSummaryRow, HeatmapScaleMode } from "./types"
 import { formatNumber } from "./utils"
 
-// Canvas geometry (CSS pixels).
-const ROW_HEIGHT = 10
-const HEADER_HEIGHT = 36
-const LABEL_WIDTH = 250
-const REPEAT_WIDTH = 42
-const COLUMN_WIDTH = 108
-const CANVAS_WIDTH = LABEL_WIDTH + REPEAT_WIDTH + HEATMAP_BLOCKS.length * COLUMN_WIDTH
-// Visible canvas height; the row list scrolls within this window via virtualization.
-const VIEWPORT_MAX = 560
-// Extra rows drawn above/below the viewport so fast scrolling never reveals blank gaps.
-const OVERSCAN = 6
+// Canvas geometry (CSS pixels). The overview is transposed: analyses are the (few, fixed) rows and
+// concepts are the (many) columns. Columns follow the parent→children hierarchy (buildHierarchyIndex):
+// the top level is the tree roots; clicking a parent opens its direct children in a panel below — the
+// stack of panels keeps the whole drill path on screen so you always know where you are.
+const LABEL_WIDTH = 160 // left gutter for analysis row labels
+const HEADER_WIDTH = 34 // top strip for horizontal concept labels (hovered, or all when columns are wide)
+const ROW_HEIGHT = 30
+const CANVAS_HEIGHT = HEADER_WIDTH + HEATMAP_BLOCKS.length * ROW_HEIGHT
+const MIN_CANVAS_WIDTH = LABEL_WIDTH + 120
+// Affordance tick at the foot of the header strip: blue = parent (click opens children below),
+// gray = leaf (click opens the concept dialog). Always visible, even on 3px-wide columns.
+const AFFORD_BAND_H = 5
+const PARENT_COLOR = "#1976d2"
+const LEAF_COLOR = "#c2c2c2"
+
+// Per-node rollup: MAX -log10(p) per block over the node's whole subtree (itself + all descendants),
+// plus the subtree concept count and its strongest block (for sorting and the tooltip).
+type SubtreeAgg = {
+  maxLogp: (number | null)[]
+  bestScore: number
+  count: number
+}
+
+// One drawn column: a concept node at a hierarchy level, shown via its subtree rollup.
+type Column = {
+  row: ConceptSummaryRow
+  agg: SubtreeAgg
+  hasChildren: boolean
+}
+
+const EMPTY_AGG: SubtreeAgg = {
+  maxLogp: new Array<number | null>(HEATMAP_BLOCKS.length).fill(null),
+  bestScore: 0,
+  count: 1,
+}
 
 // Size a canvas for the current devicePixelRatio (crisp text on retina) and reset its transform.
-// Setting canvas.width also clears it, which is what we want before every redraw.
 function prepareCanvas(canvas: HTMLCanvasElement, cssWidth: number, cssHeight: number) {
   const dpr = window.devicePixelRatio || 1
   canvas.width = Math.round(cssWidth * dpr)
@@ -65,6 +80,260 @@ function prepareCanvas(canvas: HTMLCanvasElement, cssWidth: number, cssHeight: n
   const context = canvas.getContext("2d")
   if (context) context.scale(dpr, dpr)
   return context
+}
+
+// Trim text to fit maxWidth, appending an ellipsis when cut.
+function truncateToWidth(context: CanvasRenderingContext2D, text: string, maxWidth: number) {
+  if (context.measureText(text).width <= maxWidth) return text
+  let truncated = text
+  while (truncated.length > 1 && context.measureText(`${truncated}…`).width > maxWidth) {
+    truncated = truncated.slice(0, -1)
+  }
+  return `${truncated}…`
+}
+
+function conceptLabel(row: ConceptSummaryRow) {
+  return row.conceptName ?? row.conceptCode ?? String(row.conceptId)
+}
+
+// One hierarchy level as a transposed heatmap. Measures its own width, caps columns to what fits,
+// and highlights the currently-expanded child (activeRowKey) so the link to the panel below is clear.
+function OverviewLevel({
+  title,
+  columns,
+  activeRowKey,
+  scaleMode,
+  perColumnMax,
+  globalMax,
+  onPick,
+}: {
+  title: string
+  columns: Column[]
+  activeRowKey: string | null
+  scaleMode: HeatmapScaleMode
+  perColumnMax: Record<ChartBlockKey, number>
+  globalMax: number
+  onPick: (column: Column) => void
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH)
+  const [hovered, setHovered] = useState<{ column: number; block: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const element = containerRef.current
+    if (!element) return
+    const update = () => setCanvasWidth(Math.max(MIN_CANVAS_WIDTH, Math.floor(element.clientWidth)))
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  const gridWidth = canvasWidth - LABEL_WIDTH
+  const maxColumns = Math.max(1, Math.floor(gridWidth / OVERVIEW_MIN_COL_PX))
+  const shown = columns.length > maxColumns ? columns.slice(0, maxColumns) : columns
+  const hiddenCount = columns.length - shown.length
+  const columnWidth = shown.length > 0 ? gridWidth / shown.length : gridWidth
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const context = prepareCanvas(canvas, canvasWidth, CANVAS_HEIGHT)
+    if (!context) return
+
+    context.fillStyle = "#ffffff"
+    context.fillRect(0, 0, canvasWidth, CANVAS_HEIGHT)
+    context.font = "12px Hack, monospace"
+    context.textBaseline = "middle"
+
+    if (shown.length === 0) {
+      context.fillStyle = "#888"
+      context.textAlign = "left"
+      context.fillText("No concepts at this level.", 12, HEADER_WIDTH + ROW_HEIGHT)
+      return
+    }
+
+    const showAllLabels = columnWidth >= OVERVIEW_MIN_LABEL_PX
+    const cellWidth = columnWidth > 4 ? columnWidth - 1 : columnWidth
+    const activeIndex = activeRowKey ? shown.findIndex((c) => c.row.rowKey === activeRowKey) : -1
+
+    // Cells + analysis row labels.
+    for (let b = 0; b < HEATMAP_BLOCKS.length; b++) {
+      const block = HEATMAP_BLOCKS[b]
+      const y = HEADER_WIDTH + b * ROW_HEIGHT
+      const scaleMax = scaleMode === "perColumn" ? perColumnMax[block] : globalMax
+
+      for (let i = 0; i < shown.length; i++) {
+        context.fillStyle = getHeatmapColor(shown[i].agg.maxLogp[b], scaleMax)
+        context.fillRect(LABEL_WIDTH + i * columnWidth, y, cellWidth, ROW_HEIGHT - 1)
+      }
+
+      context.fillStyle = "#f3f3f3"
+      context.fillRect(0, y, LABEL_WIDTH - 1, ROW_HEIGHT - 1)
+      context.fillStyle = "#222"
+      context.textAlign = "left"
+      const lines = getHeatmapHeaderLines(block)
+      lines.forEach((line, lineIndex) => {
+        const lineY = lines.length === 1 ? y + ROW_HEIGHT / 2 : y + 9 + lineIndex * 13
+        context.fillText(line, 10, lineY)
+      })
+    }
+
+    // Header strip: gutter caption + rotated concept labels (all when wide enough, else only hovered).
+    context.fillStyle = "#f3f3f3"
+    context.fillRect(0, 0, LABEL_WIDTH - 1, HEADER_WIDTH)
+    context.fillStyle = "#444"
+    context.textAlign = "left"
+    context.fillText("Concept →", 10, HEADER_WIDTH / 2)
+
+    // Affordance tick per column: parents (blue) open children below; leaves (gray) open the dialog.
+    const bandTop = HEADER_WIDTH - AFFORD_BAND_H
+    for (let i = 0; i < shown.length; i++) {
+      context.fillStyle = shown[i].hasChildren ? PARENT_COLOR : LEAF_COLOR
+      context.fillRect(LABEL_WIDTH + i * columnWidth, bandTop, cellWidth, AFFORD_BAND_H)
+    }
+
+    // Horizontal label centered over the column. Clamped to the canvas so edge columns stay fully
+    // legible: a label that would spill past the left edge left-aligns, past the right edge right-aligns,
+    // otherwise it stays centered. `maxWidth` caps it (per-column when showing all, full plot when hovered).
+    const labelY = bandTop / 2
+    const labelMinX = LABEL_WIDTH + 3
+    const labelMaxX = canvasWidth - 3
+    const drawColumnLabel = (
+      index: number,
+      color: string,
+      maxWidth: number,
+      withBackground: boolean,
+    ) => {
+      const column = shown[index]
+      if (!column) return
+      const suffix = column.hasChildren ? " ▸" : ""
+      const text = truncateToWidth(context, conceptLabel(column.row) + suffix, maxWidth)
+      const textWidth = context.measureText(text).width
+      const centerX = LABEL_WIDTH + index * columnWidth + columnWidth / 2
+      let align: CanvasTextAlign = "center"
+      let x = centerX
+      if (centerX - textWidth / 2 < labelMinX) {
+        align = "left"
+        x = labelMinX
+      } else if (centerX + textWidth / 2 > labelMaxX) {
+        align = "right"
+        x = labelMaxX
+      }
+      if (withBackground) {
+        const left = align === "left" ? x : align === "right" ? x - textWidth : x - textWidth / 2
+        context.fillStyle = "rgba(255, 255, 255, 0.9)"
+        context.fillRect(left - 3, labelY - 8, textWidth + 6, 16)
+      }
+      context.fillStyle = color
+      context.textAlign = align
+      context.textBaseline = "middle"
+      context.fillText(text, x, labelY)
+      context.textAlign = "left"
+    }
+
+    // When columns are wide enough, label every one (kept inside its own column so they don't collide).
+    if (showAllLabels) {
+      for (let i = 0; i < shown.length; i++)
+        drawColumnLabel(i, shown[i].hasChildren ? "#0d47a1" : "#333", columnWidth - 6, false)
+    }
+
+    // Persistent highlight for the expanded column (its children are the panel below).
+    if (activeIndex >= 0) {
+      const x = LABEL_WIDTH + activeIndex * columnWidth
+      context.fillStyle = "#1b5e20"
+      context.fillRect(x, 0, Math.max(cellWidth, 2), 4)
+      context.strokeStyle = "#1b5e20"
+      context.lineWidth = 2
+      context.strokeRect(
+        x + 1,
+        HEADER_WIDTH + 1,
+        Math.max(cellWidth - 1, 2),
+        HEATMAP_BLOCKS.length * ROW_HEIGHT - 2,
+      )
+      drawColumnLabel(activeIndex, "#1b5e20", labelMaxX - labelMinX, true)
+    }
+
+    // Hover highlight: outline the hovered column across all rows, and always label it.
+    if (hovered && shown[hovered.column]) {
+      const x = LABEL_WIDTH + hovered.column * columnWidth
+      context.strokeStyle = "#0d47a1"
+      context.lineWidth = 1.5
+      context.strokeRect(
+        x + 0.5,
+        HEADER_WIDTH + 0.5,
+        Math.max(cellWidth, 2),
+        HEATMAP_BLOCKS.length * ROW_HEIGHT - 1,
+      )
+      drawColumnLabel(hovered.column, "#0d47a1", labelMaxX - labelMinX, true)
+    }
+  }, [activeRowKey, canvasWidth, columnWidth, globalMax, hovered, perColumnMax, scaleMode, shown])
+
+  useEffect(() => {
+    draw()
+  }, [draw])
+
+  const resolveCell = (event: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    if (x < LABEL_WIDTH || y < HEADER_WIDTH) return null
+    const column = Math.floor((x - LABEL_WIDTH) / columnWidth)
+    const block = Math.floor((y - HEADER_WIDTH) / ROW_HEIGHT)
+    if (column < 0 || column >= shown.length) return null
+    if (block < 0 || block >= HEATMAP_BLOCKS.length) return null
+    return { column, block }
+  }
+
+  const hoveredColumn = hovered ? shown[hovered.column] : null
+  const hoveredBlock = hovered ? HEATMAP_BLOCKS[hovered.block] : null
+  const hoveredValue = hovered && hoveredColumn ? hoveredColumn.agg.maxLogp[hovered.block] : null
+
+  return (
+    <Paper sx={{ p: 1.5 }} variant="outlined">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ alignItems: "baseline", justifyContent: "space-between", mb: 0.5 }}
+      >
+        <Typography variant="subtitle2">{title}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {shown.length.toLocaleString()} of {columns.length.toLocaleString()}
+          {hiddenCount > 0 ? ` · ${hiddenCount.toLocaleString()} weaker hidden` : ""}
+        </Typography>
+      </Stack>
+      <Box ref={containerRef} sx={{ width: "100%", overflow: "hidden" }}>
+        <canvas
+          ref={canvasRef}
+          style={{ display: "block", cursor: "pointer" }}
+          onMouseMove={(event) => setHovered(resolveCell(event))}
+          onMouseLeave={() => setHovered(null)}
+          onClick={(event) => {
+            const cell = resolveCell(event)
+            const column = cell ? shown[cell.column] : null
+            if (column) onPick(column)
+          }}
+        />
+      </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+        {hoveredColumn && hoveredBlock ? (
+          <>
+            <strong>{conceptLabel(hoveredColumn.row)}</strong>
+            {hoveredColumn.row.conceptCode ? ` | ${hoveredColumn.row.conceptCode}` : ""}
+            {hoveredColumn.agg.count > 1
+              ? ` | ${hoveredColumn.agg.count.toLocaleString()} in subtree — click to open below`
+              : " | leaf — click to open in the table"}
+            {` | ${hoveredBlock} | max -log10(p) ${hoveredValue == null ? "N/A" : formatNumber(hoveredValue, 2)}`}
+          </>
+        ) : (
+          "Hover a column to inspect the concept and subtree evidence."
+        )}
+      </Typography>
+    </Paper>
+  )
 }
 
 export function DuckDbOverview({
@@ -78,286 +347,134 @@ export function DuckDbOverview({
   onSelectConcept: (rowKey: string) => void
   sharedControls: ReactNode
 }) {
-  const [heatmapOrderMode, setHeatmapOrderMode] = useState<HeatmapOrderMode>("repeatEvidence")
-  const [heatmapScaleMode, setHeatmapScaleMode] = useState<HeatmapScaleMode>("perColumn")
-  const [heatmapOrderBlock, setHeatmapOrderBlock] = useState<ChartBlockKey>("Binary")
-  const [repeatThreshold, setRepeatThreshold] = useState(5)
-  const [heatmapSearchText, setHeatmapSearchText] = useState("")
-  const [hoveredCell, setHoveredCell] = useState<HeatmapCell | null>(null)
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const [scaleMode, setScaleMode] = useState<HeatmapScaleMode>("perColumn")
+  const [searchText, setSearchText] = useState("")
+  // Drill path of parent rowKeys. Empty = only the roots panel. Each entry adds a child panel below.
+  const [path, setPath] = useState<string[]>([])
 
-  // All per-row metrics + column/global maxima, computed once per data change (no per-row recompute
-  // during sort/draw, no stack-overflowing spreads).
   const { perColumnMax, globalMax, derivedByKey } = useMemo(
     () => computeHeatmapDerived(rows),
     [rows],
   )
 
-  const heatmapBaseRows = useMemo(
-    () => rows.filter((row) => matchesHeatmapSearch(row, heatmapSearchText)),
-    [heatmapSearchText, rows],
+  // The concept population for the overview: search-filtered. The hierarchy is rebuilt from this set,
+  // so a filtered-out parent re-links its children to the nearest surviving ancestor (same as the table).
+  const population = useMemo(
+    () => rows.filter((row) => matchesHeatmapSearch(row, searchText)),
+    [rows, searchText],
   )
-  const heatmapRows = useMemo(() => {
-    const sorted = [...heatmapBaseRows]
-    const scoreOf = (row: ConceptSummaryRow) => derivedByKey.get(row.rowKey)?.bestScore ?? 0
-    switch (heatmapOrderMode) {
-      case "selectedBlock": {
-        const blockIndex = HEATMAP_BLOCKS.indexOf(heatmapOrderBlock)
-        const blockValue = (row: ConceptSummaryRow) =>
-          derivedByKey.get(row.rowKey)?.logp[blockIndex] ?? 0
-        return sorted.sort((a, b) => blockValue(b) - blockValue(a))
+
+  const rowByKey = useMemo(
+    () => new Map(population.map((row) => [row.rowKey, row] as const)),
+    [population],
+  )
+
+  // Same parent→children logic the table uses (rootRowKeys + childRowKeysByParentRowKey).
+  const hierarchy = useMemo(() => buildHierarchyIndex(population), [population])
+
+  // Subtree rollups: MAX -log10(p) per block across each node's whole subtree. Post-order over the
+  // hierarchy, memoized per node, with a cycle guard. O(nodes); recomputed only when data changes.
+  const subtreeAggByKey = useMemo(() => {
+    const blockCount = HEATMAP_BLOCKS.length
+    const agg = new Map<string, SubtreeAgg>()
+    const visiting = new Set<string>()
+    const compute = (rowKey: string): SubtreeAgg => {
+      const cached = agg.get(rowKey)
+      if (cached) return cached
+      const derived = derivedByKey.get(rowKey)
+      const maxLogp: (number | null)[] = derived
+        ? [...derived.logp]
+        : new Array<number | null>(blockCount).fill(null)
+      let count = 1
+      if (!visiting.has(rowKey)) {
+        visiting.add(rowKey)
+        for (const childKey of hierarchy.childRowKeysByParentRowKey.get(rowKey) ?? []) {
+          if (childKey === rowKey) continue
+          const childAgg = compute(childKey)
+          count += childAgg.count
+          for (let b = 0; b < blockCount; b++) {
+            const value = childAgg.maxLogp[b]
+            if (value != null && (maxLogp[b] == null || value > (maxLogp[b] as number))) {
+              maxLogp[b] = value
+            }
+          }
+        }
+        visiting.delete(rowKey)
       }
-      case "repeatEvidence": {
-        const repeatOf = (row: ConceptSummaryRow) =>
-          getRepeatEvidenceCountFromLogp(derivedByKey.get(row.rowKey)?.logp ?? [], repeatThreshold)
-        return sorted.sort((a, b) => {
-          const repeatDiff = repeatOf(b) - repeatOf(a)
-          if (repeatDiff !== 0) return repeatDiff
-          return scoreOf(b) - scoreOf(a)
-        })
-      }
-      case "clustered":
-        return clusterHeatmapRows(sorted, derivedByKey, HEATMAP_MAX_CLUSTER_ROWS)
-      case "strongest":
-      default:
-        return sorted.sort((a, b) => scoreOf(b) - scoreOf(a))
+      let bestScore = 0
+      for (const value of maxLogp) if (value != null && value > bestScore) bestScore = value
+      const result: SubtreeAgg = { maxLogp, bestScore, count }
+      agg.set(rowKey, result)
+      return result
     }
-  }, [derivedByKey, heatmapBaseRows, heatmapOrderBlock, heatmapOrderMode, repeatThreshold])
+    for (const rowKey of rowByKey.keys()) compute(rowKey)
+    return agg
+  }, [derivedByKey, hierarchy, rowByKey])
 
-  const rowIndexByKey = useMemo(() => {
-    const index = new Map<string, number>()
-    heatmapRows.forEach((row, position) => index.set(row.rowKey, position))
-    return index
-  }, [heatmapRows])
-
-  const contentHeight = HEADER_HEIGHT + heatmapRows.length * ROW_HEIGHT
-  const viewportHeight = Math.min(VIEWPORT_MAX, contentHeight)
-
-  // Reset scroll to the top when the row set is reordered or refiltered, so the user isn't left
-  // staring at an offset that now points at unrelated concepts. Not on scale (recolor only).
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [heatmapOrderMode, heatmapOrderBlock, heatmapSearchText, repeatThreshold])
-
-  // The draw function closes over current state. It's mirrored into a ref (below) so the
-  // mount-only scroll listener always invokes the latest version without re-binding.
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const context = prepareCanvas(canvas, CANVAS_WIDTH, viewportHeight)
-    if (!context) return
-    const scrollTop = scrollRef.current?.scrollTop ?? 0
-    const hoveredIndex = hoveredCell ? rowIndexByKey.get(hoveredCell.row.rowKey) : undefined
-
-    context.fillStyle = "#ffffff"
-    context.fillRect(0, 0, CANVAS_WIDTH, viewportHeight)
-    context.font = "11px Hack, monospace"
-    context.textBaseline = "middle"
-
-    // Body — only the rows intersecting the viewport (+overscan), clipped below the header.
-    context.save()
-    context.beginPath()
-    context.rect(0, HEADER_HEIGHT, CANVAS_WIDTH, Math.max(0, viewportHeight - HEADER_HEIGHT))
-    context.clip()
-    const firstRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN)
-    const lastRow = Math.min(
-      heatmapRows.length,
-      Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN,
-    )
-    for (let rowIndex = firstRow; rowIndex < lastRow; rowIndex++) {
-      const row = heatmapRows[rowIndex]
-      const derived = derivedByKey.get(row.rowKey)
-      const y = HEADER_HEIGHT + rowIndex * ROW_HEIGHT - scrollTop
-      const label = row.conceptName
-        ? `${row.conceptName} (${row.conceptCode ?? row.conceptId})`
-        : String(row.conceptId)
-      const repeatCount = derived
-        ? getRepeatEvidenceCountFromLogp(derived.logp, repeatThreshold)
-        : 0
-
-      context.fillStyle = rowIndex === hoveredIndex ? "#f0f4ff" : "#ffffff"
-      context.fillRect(0, y, LABEL_WIDTH, ROW_HEIGHT - 1)
-      context.fillStyle = "#222"
-      context.textAlign = "left"
-      context.fillText(label.slice(0, 34), 8, y + ROW_HEIGHT / 2)
-
-      context.fillStyle = rowIndex === hoveredIndex ? "#f0f4ff" : "#ffffff"
-      context.fillRect(LABEL_WIDTH, y, REPEAT_WIDTH - 1, ROW_HEIGHT - 1)
-      context.fillStyle = repeatCount > 1 ? "#0d47a1" : "#666666"
-      context.textAlign = "center"
-      context.fillText(String(repeatCount), LABEL_WIDTH + REPEAT_WIDTH / 2, y + ROW_HEIGHT / 2)
-
-      for (let blockIndex = 0; blockIndex < HEATMAP_BLOCKS.length; blockIndex++) {
-        const value = derived ? derived.logp[blockIndex] : null
-        const scaleMax =
-          heatmapScaleMode === "perColumn" ? perColumnMax[HEATMAP_BLOCKS[blockIndex]] : globalMax
-        context.fillStyle = getHeatmapColor(value, scaleMax)
-        context.fillRect(
-          LABEL_WIDTH + REPEAT_WIDTH + blockIndex * COLUMN_WIDTH,
-          y,
-          COLUMN_WIDTH - 1,
-          ROW_HEIGHT - 1,
-        )
-      }
-    }
-    if (heatmapRows.length === 0) {
-      context.fillStyle = "#888"
-      context.textAlign = "left"
-      context.fillText("No concepts match the current filters.", 8, HEADER_HEIGHT + ROW_HEIGHT * 2)
-    }
-    context.restore()
-
-    // Header (drawn after the clipped body so it stays pinned at the top).
-    context.fillStyle = "#f3f3f3"
-    context.fillRect(0, 0, LABEL_WIDTH, HEADER_HEIGHT)
-    context.fillStyle = "#222"
-    context.textAlign = "left"
-    context.fillText("Concept", 8, HEADER_HEIGHT / 2)
-
-    context.fillStyle = "#f3f3f3"
-    context.fillRect(LABEL_WIDTH, 0, REPEAT_WIDTH, HEADER_HEIGHT)
-    context.fillStyle = "#222"
-    context.textAlign = "center"
-    context.fillText("Rep", LABEL_WIDTH + REPEAT_WIDTH / 2, HEADER_HEIGHT / 2)
-
-    HEATMAP_BLOCKS.forEach((block, blockIndex) => {
-      const x = LABEL_WIDTH + REPEAT_WIDTH + blockIndex * COLUMN_WIDTH
-      context.fillStyle = "#f3f3f3"
-      context.fillRect(x, 0, COLUMN_WIDTH, HEADER_HEIGHT)
-      context.fillStyle = "#222"
-      context.textAlign = "center"
-      const headerLines = getHeatmapHeaderLines(block)
-      headerLines.forEach((line, lineIndex) => {
-        const y = headerLines.length === 1 ? HEADER_HEIGHT / 2 : 12 + lineIndex * 12
-        context.fillText(line, x + COLUMN_WIDTH / 2, y)
-      })
-    })
-  }, [
-    derivedByKey,
-    globalMax,
-    heatmapRows,
-    heatmapScaleMode,
-    hoveredCell,
-    perColumnMax,
-    repeatThreshold,
-    rowIndexByKey,
-    viewportHeight,
-  ])
-
-  // Mirror the latest draw into a ref for the mount-only scroll listener, and repaint whenever the
-  // pixel-affecting inputs change. Cost is O(visible rows), so even hover repaints are cheap.
-  const drawRef = useRef(draw)
-  useEffect(() => {
-    drawRef.current = draw
-    draw()
-  }, [draw])
-
-  // Mount-only scroll listener: rAF-throttled so multiple scroll events coalesce into one repaint.
-  useEffect(() => {
-    const scroller = scrollRef.current
-    if (!scroller) return
-    let rafId = 0
-    const onScroll = () => {
-      if (rafId) return
-      rafId = requestAnimationFrame(() => {
-        rafId = 0
-        drawRef.current()
-      })
-    }
-    scroller.addEventListener("scroll", onScroll, { passive: true })
-    return () => {
-      scroller.removeEventListener("scroll", onScroll)
-      if (rafId) cancelAnimationFrame(rafId)
-    }
-  }, [])
-
-  function resolveHeatmapCell(event: MouseEvent<HTMLCanvasElement>): HeatmapCell | null {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const yPixel = event.clientY - rect.top
-    if (yPixel < HEADER_HEIGHT) return null
-    const scrollTop = scrollRef.current?.scrollTop ?? 0
-    const rowIndex = Math.floor((yPixel - HEADER_HEIGHT + scrollTop) / ROW_HEIGHT)
-    const row = heatmapRows[rowIndex]
-    if (!row) return null
-    if (x < LABEL_WIDTH + REPEAT_WIDTH) {
-      return { row, block: "Concept", value: getBestHeatmapScore(row) } satisfies HeatmapCell
-    }
-    const blockIndex = Math.floor((x - LABEL_WIDTH - REPEAT_WIDTH) / COLUMN_WIDTH)
-    const block = HEATMAP_BLOCKS[blockIndex]
-    if (!block) return null
-    return { row, block, value: getChartMetricValue(row, block, "-log10") } satisfies HeatmapCell
+  // Reset the drill path when the population changes (new data or search). Done during render —
+  // React's recommended alternative to a setState-in-effect.
+  const [prevPopulation, setPrevPopulation] = useState(population)
+  if (prevPopulation !== population) {
+    setPrevPopulation(population)
+    setPath([])
   }
 
-  const clusteringBounded =
-    heatmapOrderMode === "clustered" && heatmapRows.length > HEATMAP_MAX_CLUSTER_ROWS
+  // One entry per visible panel: the roots, then one panel per drilled parent in `path`. Each panel's
+  // columns are the level's nodes sorted by subtree evidence (strongest first); OverviewLevel caps them.
+  const levels = useMemo(() => {
+    const makeColumns = (keys: string[]): Column[] =>
+      keys
+        .map((rowKey) => {
+          const row = rowByKey.get(rowKey)
+          if (!row) return null
+          const agg = subtreeAggByKey.get(rowKey) ?? EMPTY_AGG
+          const hasChildren = (hierarchy.childRowKeysByParentRowKey.get(rowKey)?.length ?? 0) > 0
+          return { row, agg, hasChildren } satisfies Column
+        })
+        .filter((column): column is Column => column != null)
+        .sort((a, b) => b.agg.bestScore - a.agg.bestScore)
+
+    const rootKeys =
+      hierarchy.rootRowKeys.length > 0 ? hierarchy.rootRowKeys : population.map((row) => row.rowKey)
+    const result: { parentRow: ConceptSummaryRow | null; columns: Column[] }[] = [
+      { parentRow: null, columns: makeColumns(rootKeys) },
+    ]
+    for (let d = 0; d < path.length; d++) {
+      const childKeys = hierarchy.childRowKeysByParentRowKey.get(path[d]) ?? []
+      if (childKeys.length === 0) break
+      result.push({ parentRow: rowByKey.get(path[d]) ?? null, columns: makeColumns(childKeys) })
+    }
+    return result
+  }, [hierarchy, path, population, rowByKey, subtreeAggByKey])
+
+  // Click a parent → open its children in the panel below (or collapse if already open). Leaf → table.
+  const handlePick = (depth: number, column: Column) => {
+    if (column.hasChildren) {
+      setPath((current) =>
+        current[depth] === column.row.rowKey
+          ? current.slice(0, depth)
+          : [...current.slice(0, depth), column.row.rowKey],
+      )
+    } else {
+      onSelectConcept(column.row.rowKey)
+    }
+  }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       <Grid container spacing={2} sx={{ p: 1 }}>
         {sharedControls}
         <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size={"small"}>
-            <InputLabel id="duckdb-heatmap-order-label">Row Order</InputLabel>
+            <InputLabel id="duckdb-overview-scale-label">Color Scale</InputLabel>
             <Select
-              labelId="duckdb-heatmap-order-label"
-              value={heatmapOrderMode}
-              label="Row Order"
-              onChange={(event) => setHeatmapOrderMode(event.target.value as HeatmapOrderMode)}
-            >
-              <MenuItem value="repeatEvidence">Repeat evidence</MenuItem>
-              <MenuItem value="strongest">Strongest overall</MenuItem>
-              <MenuItem value="selectedBlock">Selected block</MenuItem>
-              <MenuItem value="clustered">Clustered rows</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <FormControl fullWidth size={"small"}>
-            <InputLabel id="duckdb-heatmap-scale-label">Color Scale</InputLabel>
-            <Select
-              labelId="duckdb-heatmap-scale-label"
-              value={heatmapScaleMode}
+              labelId="duckdb-overview-scale-label"
+              value={scaleMode}
               label="Color Scale"
-              onChange={(event) => setHeatmapScaleMode(event.target.value as HeatmapScaleMode)}
+              onChange={(event) => setScaleMode(event.target.value as HeatmapScaleMode)}
             >
-              <MenuItem value="perColumn">Per column</MenuItem>
+              <MenuItem value="perColumn">Per analysis</MenuItem>
               <MenuItem value="global">Global</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <FormControl fullWidth size={"small"} disabled={heatmapOrderMode !== "selectedBlock"}>
-            <InputLabel id="duckdb-heatmap-block-label">Order Block</InputLabel>
-            <Select
-              labelId="duckdb-heatmap-block-label"
-              value={heatmapOrderBlock}
-              label="Order Block"
-              onChange={(event) => setHeatmapOrderBlock(event.target.value as ChartBlockKey)}
-            >
-              {COLUMNS.map((column) => (
-                <MenuItem key={column.key} value={column.key}>
-                  {column.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <FormControl fullWidth size={"small"}>
-            <InputLabel id="duckdb-repeat-threshold-label">Repeat Threshold</InputLabel>
-            <Select
-              labelId="duckdb-repeat-threshold-label"
-              value={String(repeatThreshold)}
-              label="Repeat Threshold"
-              onChange={(event) => setRepeatThreshold(Number(event.target.value))}
-            >
-              <MenuItem value="3">-log10(p) {">="} 3</MenuItem>
-              <MenuItem value="5">-log10(p) {">="} 5</MenuItem>
-              <MenuItem value="8">-log10(p) {">="} 8</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -365,80 +482,107 @@ export function DuckDbOverview({
           <TextField
             fullWidth
             size={"small"}
-            label="Heatmap search"
-            value={heatmapSearchText}
-            onChange={(event) => setHeatmapSearchText(event.target.value)}
-            placeholder="Filter heatmap by concept/code/id"
+            label="Concept search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Filter the concept population by concept/code/id"
           />
         </Grid>
       </Grid>
 
-      <Stack spacing={1.5}>
+      <Stack spacing={1.5} sx={{ px: 1 }}>
         {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
-        {clusteringBounded && (
-          <Alert severity="info">
-            Clustered the top {HEATMAP_MAX_CLUSTER_ROWS} concepts by evidence; the remaining{" "}
-            {heatmapRows.length - HEATMAP_MAX_CLUSTER_ROWS} are appended by strength.
-          </Alert>
-        )}
-        <Typography variant="body2" color="text.secondary">
-          Heatmap colors show -log10(p) evidence by analysis block. Repeat counts show how many
-          blocks pass the selected threshold. Click a cell to jump that concept back into the table.
-        </Typography>
-        {heatmapSearchText.trim() ? (
-          <Typography variant="body2" color="text.secondary">
-            Showing {heatmapRows.length} of {rows.length} heatmap rows matching "{heatmapSearchText}
-            ".
-          </Typography>
-        ) : null}
-        <Paper sx={{ p: 1.5 }}>
+        <Typography variant="body2" color="text.secondary" component="div">
+          Each column is a concept; its color shows the strongest -log10(p) evidence across that
+          concept and all of its descendants. The tick under each column header shows what a click
+          does:
           <Box
-            ref={scrollRef}
-            sx={{
-              overflow: "auto",
-              maxHeight: VIEWPORT_MAX,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
+            component="span"
+            sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
           >
-            {/* Spacer drives the scrollbar; the canvas inside stays pinned and draws the window. */}
-            <div style={{ position: "relative", width: CANVAS_WIDTH, height: contentHeight }}>
-              <div
-                style={{ position: "sticky", top: 0, height: viewportHeight, width: CANVAS_WIDTH }}
-              >
-                <canvas
-                  ref={canvasRef}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    display: "block",
-                    cursor: "pointer",
-                  }}
-                  onMouseMove={(event) => setHoveredCell(resolveHeatmapCell(event))}
-                  onMouseLeave={() => setHoveredCell(null)}
-                  onClick={(event) => {
-                    const cell = resolveHeatmapCell(event)
-                    if (cell) {
-                      onSelectConcept(cell.row.rowKey)
-                    }
-                  }}
-                />
-              </div>
-            </div>
+            <Box
+              component="span"
+              sx={{
+                width: 14,
+                height: 6,
+                bgcolor: PARENT_COLOR,
+                borderRadius: 0.5,
+                display: "inline-block",
+              }}
+            />
+            parent → opens its children in a panel below
           </Box>
-        </Paper>
-        {hoveredCell ? (
-          <Alert severity="info">
-            <strong>{hoveredCell.row.conceptName ?? hoveredCell.row.conceptId}</strong>
-            {` | ${hoveredCell.block} | `}
-            {hoveredCell.block === "Concept"
-              ? `best cross-analysis -log10(p) ${hoveredCell.value == null ? "N/A" : formatNumber(hoveredCell.value, 2)} | repeat evidence ${getRepeatEvidenceCount(hoveredCell.row, repeatThreshold)}`
-              : `-log10(p) ${hoveredCell.value == null ? "N/A" : formatNumber(hoveredCell.value, 2)} | repeat evidence ${getRepeatEvidenceCount(hoveredCell.row, repeatThreshold)}`}
-          </Alert>
-        ) : (
-          <Alert severity="info">Hover a heatmap cell to inspect the concept and score.</Alert>
-        )}
+          <Box
+            component="span"
+            sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
+          >
+            <Box
+              component="span"
+              sx={{
+                width: 14,
+                height: 6,
+                bgcolor: LEAF_COLOR,
+                borderRadius: 0.5,
+                display: "inline-block",
+              }}
+            />
+            leaf → opens the concept dialog
+          </Box>
+          . The currently expanded column is outlined in green.
+        </Typography>
+
+        <Breadcrumbs aria-label="hierarchy path">
+          <Link
+            component="button"
+            type="button"
+            underline="hover"
+            color={path.length === 0 ? "text.primary" : "primary"}
+            onClick={() => setPath([])}
+          >
+            All roots
+          </Link>
+          {path.map((rowKey, index) => {
+            const isLast = index === path.length - 1
+            const label = conceptLabel(
+              rowByKey.get(rowKey) ?? ({ conceptId: 0, conceptName: rowKey } as ConceptSummaryRow),
+            )
+            return isLast ? (
+              <Typography key={rowKey} color="text.primary">
+                {label}
+              </Typography>
+            ) : (
+              <Link
+                key={rowKey}
+                component="button"
+                type="button"
+                underline="hover"
+                color="primary"
+                onClick={() => setPath((current) => current.slice(0, index + 1))}
+              >
+                {label}
+              </Link>
+            )
+          })}
+        </Breadcrumbs>
+      </Stack>
+
+      <Stack spacing={1.5} sx={{ px: 1 }}>
+        {levels.map((level, depth) => (
+          <OverviewLevel
+            key={depth === 0 ? "roots" : path[depth - 1]}
+            title={
+              depth === 0
+                ? "Roots"
+                : `Children of ${conceptLabel(level.parentRow ?? ({ conceptId: 0 } as ConceptSummaryRow))}`
+            }
+            columns={level.columns}
+            activeRowKey={path[depth] ?? null}
+            scaleMode={scaleMode}
+            perColumnMax={perColumnMax}
+            globalMax={globalMax}
+            onPick={(column) => handlePick(depth, column)}
+          />
+        ))}
       </Stack>
     </Stack>
   )

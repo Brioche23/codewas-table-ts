@@ -41,3 +41,13 @@ export const CHART_ROWS_LIMIT = 50000
 export const HEATMAP_MAX_CLUSTER_ROWS = 1500
 // @mui/x-charts ScatterChart renders SVG — no virtualization.
 export const SCATTER_POINT_CAP = 3000
+
+// DuckDbOverview (transposed population heatmap): concepts run along X, analyses along Y. The whole
+// population is shown at once by aggregating adjacent concepts into pixel-column buckets; zoom resolves
+// detail. Cap the in-memory concept population so the bucket pass stays trivial.
+export const OVERVIEW_MAX_CONCEPTS = 5000
+// Minimum drawn width (CSS px) of one aggregated column. plotWidth / MIN_COL_PX caps the bucket count.
+export const OVERVIEW_MIN_COL_PX = 3
+// Once a column is at least this wide, every column is labelled (horizontal text needs room to read);
+// narrower than this, only the hovered/expanded column is labelled.
+export const OVERVIEW_MIN_LABEL_PX = 64

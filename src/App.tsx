@@ -101,7 +101,6 @@ export default function App() {
           <DuckDbExplorer
             dataSource={dataSource}
             pageView={pageView}
-            setPageView={setPageView}
             onConceptStats={setConceptStats}
           />
         ) : (

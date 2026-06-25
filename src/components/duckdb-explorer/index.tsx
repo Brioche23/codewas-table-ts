@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   Alert,
   Box,
@@ -18,7 +18,6 @@ import {
   type MRT_ColumnFiltersState,
   type MRT_ExpandedState,
   type MRT_PaginationState,
-  type MRT_Row,
   type MRT_SortingState,
   type MRT_VisibilityState,
 } from "material-react-table"
@@ -55,15 +54,13 @@ import DownloadMenu from "./DownloadMenu"
 export default function DuckDbExplorer({
   dataSource,
   pageView,
-  setPageView,
   onConceptStats,
 }: {
   dataSource: DuckDbDataSource
   pageView: PageViewOptions
-  setPageView: Dispatch<SetStateAction<PageViewOptions>>
   onConceptStats?: (stats: { filtered: number; total: number }) => void
 }) {
-  const [countMode, setCountMode] = useState("descendant")
+  const [countMode, setCountMode] = useState("all")
   const [selectedDomain, setSelectedDomain] = useState("all")
   const [searchText, setSearchText] = useState("")
   const [domains, setDomains] = useState<string[]>([])
@@ -498,23 +495,19 @@ export default function DuckDbExplorer({
 
   function focusRow(rowKey: string) {
     setFocusedRowKey(rowKey)
-    setPageView("table")
+    // Stay on the charts view we came from; the concept dialog opens over it. Show the lean chart row
+    // immediately, then upgrade to the full row so the dialog has complete stats.
     const fallbackRow = chartRows.find((row) => row.rowKey === rowKey) ?? null
     setSelectedDetailRow(fallbackRow)
-    requestAnimationFrame(() => {
-      const visibleRows = table.getPrePaginationRowModel().rows
-      const matchedRow = visibleRows.find(
-        (row: MRT_Row<ConceptSummaryRow>) => row.original.rowKey === rowKey,
-      )
-      const index = matchedRow ? visibleRows.indexOf(matchedRow) : -1
-      if (matchedRow) {
-        setSelectedDetailRow(matchedRow.original)
-      }
-      if (index >= 0) {
-        const pageSize = table.getState().pagination.pageSize
-        table.setPageIndex(Math.floor(index / pageSize))
-      }
-    })
+    void dataSource
+      .runQuery(buildSummaryRowsByRowKeysQuery(countMode, selectedDomain, searchText, [rowKey]))
+      .then((rowsRaw) => {
+        const full = (rowsRaw as BlockMetricRow[]).map(mapSummaryRow)[0]
+        if (full) setSelectedDetailRow(full)
+      })
+      .catch(() => {
+        // Keep the lean fallback row on failure.
+      })
   }
 
   const downloadMenuProps = {

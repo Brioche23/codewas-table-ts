@@ -119,7 +119,8 @@ export function mapHeatmapRow(row: BlockMetricRow): ConceptSummaryRow {
     conceptId: Number(row.conceptId),
     conceptName: (row.conceptName as string | null) ?? null,
     conceptCode: (row.conceptCode as string | null) ?? null,
-    ancestorConceptIds: null,
+    // Carried so DuckDbOverview can rebuild the parent→children hierarchy (buildHierarchyIndex).
+    ancestorConceptIds: (row.ancestorConceptIds as string | null) ?? null,
     domainId: String(row.domainId),
     countMode: String(row.countMode),
     bestPValue: (row.bestPValue as number | null) ?? null,
