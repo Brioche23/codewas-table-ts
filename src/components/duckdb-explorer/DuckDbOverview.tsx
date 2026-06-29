@@ -49,6 +49,15 @@ const AFFORD_BAND_H = 5
 const PARENT_COLOR = "#1976d2"
 const LEAF_COLOR = "#c2c2c2"
 
+// Per-row sort glyph in the label gutter: a fixed icon column near the gutter's right edge.
+const SORT_ICON_RIGHT_PAD = 4
+const SORT_ICON_W = 16
+const SORT_ACTIVE_COLOR = "#0d47a1"
+const SORT_INACTIVE_COLOR = "#bbbbbb"
+
+const VERTICAL_GUTTER = 0
+const HORIZONTAL_GUTTER = 0
+
 // Per-node rollup: MAX -log10(p) per block over the node's whole subtree (itself + all descendants),
 // plus the subtree concept count and its strongest block (for sorting and the tooltip).
 type SubtreeAgg = {
@@ -119,6 +128,8 @@ function OverviewLevel({
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH)
   const [hovered, setHovered] = useState<{ column: number; block: number } | null>(null)
+  // null = use the relevance default (so the default stays dynamic until the user picks a row).
+  const [sort, setSort] = useState<{ block: ChartBlockKey; dir: "asc" | "desc" } | null>(null)
 
   useLayoutEffect(() => {
     const element = containerRef.current
@@ -130,10 +141,53 @@ function OverviewLevel({
     return () => observer.disconnect()
   }, [])
 
+  // Relevance default: the analysis with the highest summed -log10(p) across this panel's columns.
+  const relevanceBlock = useMemo(() => {
+    let bestBlock = HEATMAP_BLOCKS[0]
+    let bestSum = -1
+    for (let b = 0; b < HEATMAP_BLOCKS.length; b++) {
+      let sum = 0
+      for (const column of columns) {
+        const value = column.agg.maxLogp[b]
+        if (value != null) sum += value
+      }
+      if (sum > bestSum) {
+        bestSum = sum
+        bestBlock = HEATMAP_BLOCKS[b]
+      }
+    }
+    return bestBlock
+  }, [columns])
+
+  const effectiveSort: { block: ChartBlockKey; dir: "asc" | "desc" } = sort ?? {
+    block: relevanceBlock,
+    dir: "desc",
+  }
+  const sortBlockIndex = HEATMAP_BLOCKS.indexOf(effectiveSort.block)
+
+  // Rank by the active analysis (desc, nulls last) so the width cap keeps the most significant columns;
+  // ascending just reverses the kept set for display. Tiebreak by overall bestScore, then name.
+  const ranked = useMemo(() => {
+    return [...columns].sort((a, b) => {
+      const av = a.agg.maxLogp[sortBlockIndex]
+      const bv = b.agg.maxLogp[sortBlockIndex]
+      if (av == null && bv == null) {
+        return (
+          b.agg.bestScore - a.agg.bestScore ||
+          conceptLabel(a.row).localeCompare(conceptLabel(b.row))
+        )
+      }
+      if (av == null) return 1
+      if (bv == null) return -1
+      return bv - av || b.agg.bestScore - a.agg.bestScore
+    })
+  }, [columns, sortBlockIndex])
+
   const gridWidth = canvasWidth - LABEL_WIDTH
   const maxColumns = Math.max(1, Math.floor(gridWidth / OVERVIEW_MIN_COL_PX))
-  const shown = columns.length > maxColumns ? columns.slice(0, maxColumns) : columns
-  const hiddenCount = columns.length - shown.length
+  const kept = ranked.length > maxColumns ? ranked.slice(0, maxColumns) : ranked
+  const shown = effectiveSort.dir === "asc" ? [...kept].reverse() : kept
+  const hiddenCount = columns.length - kept.length
   const columnWidth = shown.length > 0 ? gridWidth / shown.length : gridWidth
 
   const draw = useCallback(() => {
@@ -155,7 +209,7 @@ function OverviewLevel({
     }
 
     const showAllLabels = columnWidth >= OVERVIEW_MIN_LABEL_PX
-    const cellWidth = columnWidth > 4 ? columnWidth - 1 : columnWidth
+    const cellWidth = columnWidth > 4 ? columnWidth - VERTICAL_GUTTER : columnWidth
     const activeIndex = activeRowKey ? shown.findIndex((c) => c.row.rowKey === activeRowKey) : -1
 
     // Cells + analysis row labels.
@@ -166,11 +220,16 @@ function OverviewLevel({
 
       for (let i = 0; i < shown.length; i++) {
         context.fillStyle = getHeatmapColor(shown[i].agg.maxLogp[b], scaleMax)
-        context.fillRect(LABEL_WIDTH + i * columnWidth, y, cellWidth, ROW_HEIGHT - 1)
+        context.fillRect(
+          LABEL_WIDTH + i * columnWidth,
+          y,
+          cellWidth,
+          ROW_HEIGHT - HORIZONTAL_GUTTER,
+        )
       }
 
       context.fillStyle = "#f3f3f3"
-      context.fillRect(0, y, LABEL_WIDTH - 1, ROW_HEIGHT - 1)
+      context.fillRect(0, y, LABEL_WIDTH - HORIZONTAL_GUTTER, ROW_HEIGHT - VERTICAL_GUTTER)
       context.fillStyle = "#222"
       context.textAlign = "left"
       const lines = getHeatmapHeaderLines(block)
@@ -178,11 +237,22 @@ function OverviewLevel({
         const lineY = lines.length === 1 ? y + ROW_HEIGHT / 2 : y + 9 + lineIndex * 13
         context.fillText(line, 10, lineY)
       })
+
+      // Sort affordance: the active row shows its direction arrow; others a faint toggle hint.
+      const isSortBlock = b === sortBlockIndex
+      context.fillStyle = isSortBlock ? SORT_ACTIVE_COLOR : SORT_INACTIVE_COLOR
+      context.textAlign = "center"
+      context.fillText(
+        isSortBlock ? (effectiveSort.dir === "desc" ? "▼" : "▲") : "⇅",
+        LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W / 2,
+        y + ROW_HEIGHT / 2,
+      )
+      context.textAlign = "left"
     }
 
     // Header strip: gutter caption + rotated concept labels (all when wide enough, else only hovered).
     context.fillStyle = "#f3f3f3"
-    context.fillRect(0, 0, LABEL_WIDTH - 1, HEADER_WIDTH)
+    context.fillRect(0, 0, LABEL_WIDTH - HORIZONTAL_GUTTER, HEADER_WIDTH)
     context.fillStyle = "#444"
     context.textAlign = "left"
     context.fillText("Concept →", 10, HEADER_WIDTH / 2)
@@ -249,7 +319,7 @@ function OverviewLevel({
       context.strokeRect(
         x + 1,
         HEADER_WIDTH + 1,
-        Math.max(cellWidth - 1, 2),
+        Math.max(cellWidth - HORIZONTAL_GUTTER, 2),
         HEATMAP_BLOCKS.length * ROW_HEIGHT - 2,
       )
       drawColumnLabel(activeIndex, "#1b5e20", labelMaxX - labelMinX, true)
@@ -264,11 +334,22 @@ function OverviewLevel({
         x + 0.5,
         HEADER_WIDTH + 0.5,
         Math.max(cellWidth, 2),
-        HEATMAP_BLOCKS.length * ROW_HEIGHT - 1,
+        HEATMAP_BLOCKS.length * ROW_HEIGHT - VERTICAL_GUTTER,
       )
       drawColumnLabel(hovered.column, "#0d47a1", labelMaxX - labelMinX, true)
     }
-  }, [activeRowKey, canvasWidth, columnWidth, globalMax, hovered, perColumnMax, scaleMode, shown])
+  }, [
+    activeRowKey,
+    canvasWidth,
+    columnWidth,
+    effectiveSort.dir,
+    globalMax,
+    hovered,
+    perColumnMax,
+    scaleMode,
+    shown,
+    sortBlockIndex,
+  ])
 
   useEffect(() => {
     draw()
@@ -288,6 +369,30 @@ function OverviewLevel({
     return { column, block }
   }
 
+  // Hit-test the sort-icon column in the gutter; returns the analysis row index, or null.
+  const resolveGutterSort = (event: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    const iconCenter = LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W / 2
+    if (x < iconCenter - SORT_ICON_W / 2 || x > iconCenter + SORT_ICON_W / 2) return null
+    if (y < HEADER_WIDTH) return null
+    const block = Math.floor((y - HEADER_WIDTH) / ROW_HEIGHT)
+    if (block < 0 || block >= HEATMAP_BLOCKS.length) return null
+    return block
+  }
+
+  const toggleSort = (blockIndex: number) => {
+    const block = HEATMAP_BLOCKS[blockIndex]
+    setSort((current) => {
+      const active = current ?? { block: relevanceBlock, dir: "desc" as const }
+      if (active.block === block) return { block, dir: active.dir === "desc" ? "asc" : "desc" }
+      return { block, dir: "desc" }
+    })
+  }
+
   const hoveredColumn = hovered ? shown[hovered.column] : null
   const hoveredBlock = hovered ? HEATMAP_BLOCKS[hovered.block] : null
   const hoveredValue = hovered && hoveredColumn ? hoveredColumn.agg.maxLogp[hovered.block] : null
@@ -303,6 +408,7 @@ function OverviewLevel({
         <Typography variant="caption" color="text.secondary">
           {shown.length.toLocaleString()} of {columns.length.toLocaleString()}
           {hiddenCount > 0 ? ` · ${hiddenCount.toLocaleString()} weaker hidden` : ""}
+          {` · sorted by ${effectiveSort.block} ${effectiveSort.dir === "desc" ? "▼" : "▲"}`}
         </Typography>
       </Stack>
       <Box ref={containerRef} sx={{ width: "100%", overflow: "hidden" }}>
@@ -312,6 +418,11 @@ function OverviewLevel({
           onMouseMove={(event) => setHovered(resolveCell(event))}
           onMouseLeave={() => setHovered(null)}
           onClick={(event) => {
+            const sortHit = resolveGutterSort(event)
+            if (sortHit != null) {
+              toggleSort(sortHit)
+              return
+            }
             const cell = resolveCell(event)
             const column = cell ? shown[cell.column] : null
             if (column) onPick(column)
@@ -419,8 +530,8 @@ export function DuckDbOverview({
     setPath([])
   }
 
-  // One entry per visible panel: the roots, then one panel per drilled parent in `path`. Each panel's
-  // columns are the level's nodes sorted by subtree evidence (strongest first); OverviewLevel caps them.
+  // One entry per visible panel: the roots, then one panel per drilled parent in `path`. Columns are the
+  // level's nodes in hierarchy order; each OverviewLevel sorts (by its chosen analysis) and caps them.
   const levels = useMemo(() => {
     const makeColumns = (keys: string[]): Column[] =>
       keys
@@ -432,7 +543,6 @@ export function DuckDbOverview({
           return { row, agg, hasChildren } satisfies Column
         })
         .filter((column): column is Column => column != null)
-        .sort((a, b) => b.agg.bestScore - a.agg.bestScore)
 
     const rootKeys =
       hierarchy.rootRowKeys.length > 0 ? hierarchy.rootRowKeys : population.map((row) => row.rowKey)
@@ -478,7 +588,7 @@ export function DuckDbOverview({
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             size={"small"}
@@ -488,6 +598,7 @@ export function DuckDbOverview({
             placeholder="Filter the concept population by concept/code/id"
           />
         </Grid>
+        <Stack>Color multi slider</Stack>
       </Grid>
 
       <Stack spacing={1.5} sx={{ px: 1 }}>
