@@ -3,7 +3,7 @@ import { Alert, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Stack } 
 import { ScatterChart } from "@mui/x-charts"
 import { COLUMNS } from "../../utils/constants"
 import { SCATTER_POINT_CAP } from "./constants"
-import { getChartMetricValue } from "./heatmapUtils"
+import { getChartMetricValue } from "./utils/heatmapUtils"
 import type { ChartBlockKey, ChartMetricKey, ConceptSummaryRow } from "./types"
 
 export function DuckDbScatter({
@@ -37,7 +37,7 @@ export function DuckDbScatter({
     <Stack spacing={3}>
       <Grid container spacing={2} sx={{ p: 1 }}>
         {sharedControls}
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-chart-x-label">X Axis</InputLabel>
             <Select
@@ -54,7 +54,7 @@ export function DuckDbScatter({
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-chart-y-label">Y Axis</InputLabel>
             <Select
@@ -71,7 +71,7 @@ export function DuckDbScatter({
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-chart-metric-label">Metric</InputLabel>
             <Select

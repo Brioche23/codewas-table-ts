@@ -6,7 +6,7 @@ import {
   buildStats,
   formatNumber,
   parseCategoricalDistribution,
-} from "./utils"
+} from "./utils/utils"
 
 function renderTestSummary(
   _label: string,

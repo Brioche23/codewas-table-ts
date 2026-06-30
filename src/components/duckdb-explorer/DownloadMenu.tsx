@@ -19,7 +19,7 @@ import {
 import { buildFullSummaryQuery } from "./queryBuilders"
 import { mapSummaryRow } from "./rowMappers"
 import type { BlockMetricRow, MRT_ColumnFiltersState } from "./types"
-import { summaryRowsToTsv, triggerDownload, getSafeDownloadName } from "./utils"
+import { summaryRowsToTsv, triggerDownload, getSafeDownloadName } from "./utils/utils"
 import type { DuckDbDataSource } from "../../utils/types"
 
 interface DownloadMenuProps {

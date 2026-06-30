@@ -3,6 +3,7 @@ import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material"
 import { DuckDbScatter } from "./DuckDbScatter"
 import type { ChartMode, ChartScope, ConceptSummaryRow } from "./types"
 import { DuckDbOverview } from "./DuckDbOverview"
+import { Map, ScatterPlotSharp } from "@mui/icons-material"
 
 export function DuckDbCharts({
   rows,
@@ -21,7 +22,7 @@ export function DuckDbCharts({
 
   const sharedControls = (
     <>
-      <Grid size={{ xs: 12, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <FormControl fullWidth size={"small"}>
           <InputLabel id="duckdb-chart-scope-label">Chart Scope</InputLabel>
           <Select
@@ -35,7 +36,7 @@ export function DuckDbCharts({
           </Select>
         </FormControl>
       </Grid>
-      <Grid size={{ xs: 12, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <FormControl fullWidth size={"small"}>
           <InputLabel id="duckdb-chart-mode-label">Chart Mode</InputLabel>
           <Select
@@ -44,8 +45,15 @@ export function DuckDbCharts({
             label="Chart Mode"
             onChange={(event) => setChartMode(event.target.value as ChartMode)}
           >
-            <MenuItem value="heatmap">Heatmap</MenuItem>
-            <MenuItem value="scatter">Scatter</MenuItem>
+            {/* Icon alignment (open + closed) is handled globally by the theme — see App.tsx. */}
+            <MenuItem value="heatmap">
+              <Map sx={{ fontSize: 16 }} />
+              Heatmap
+            </MenuItem>
+            <MenuItem value="scatter">
+              <ScatterPlotSharp sx={{ fontSize: 16 }} />
+              Scatter
+            </MenuItem>
           </Select>
         </FormControl>
       </Grid>

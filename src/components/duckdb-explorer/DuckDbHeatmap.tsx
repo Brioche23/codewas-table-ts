@@ -32,7 +32,7 @@ import {
   getRepeatEvidenceCount,
   getRepeatEvidenceCountFromLogp,
   matchesHeatmapSearch,
-} from "./heatmapUtils"
+} from "./utils/heatmapUtils"
 import type {
   ChartBlockKey,
   ConceptSummaryRow,
@@ -40,7 +40,7 @@ import type {
   HeatmapOrderMode,
   HeatmapScaleMode,
 } from "./types"
-import { formatNumber } from "./utils"
+import { formatNumber } from "./utils/utils"
 
 // Canvas geometry (CSS pixels).
 const ROW_HEIGHT = 10

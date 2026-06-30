@@ -4,7 +4,7 @@ import { CasesControlCell } from "../../table/custom-cells/CasesControlsCell"
 import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "../Visuals"
 import { parseNumericFilter } from "./queryBuilders"
 import type { ConceptSummaryRow } from "./types"
-import { buildDistributionRows, buildStats, parseCategoricalDistribution } from "./utils"
+import { buildDistributionRows, buildStats, parseCategoricalDistribution } from "./utils/utils"
 
 export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   row,

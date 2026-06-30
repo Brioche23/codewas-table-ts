@@ -1,5 +1,5 @@
-import type { BinaryDistribution, DistributionRow, SummaryStats } from "../../utils/types"
-import type { ConceptSummaryRow } from "./types"
+import type { BinaryDistribution, DistributionRow, SummaryStats } from "../../../utils/types"
+import type { ConceptSummaryRow } from "../types"
 
 export function formatNumber(value: number | null | undefined, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) return ""
@@ -64,9 +64,7 @@ export function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
     categoricalCases: row.categoricalCaseYes ?? "",
     categoricalControls: row.categoricalControlYes ?? "",
     categoricalLogP:
-      row.categoricalPValue && row.categoricalPValue > 0
-        ? -Math.log10(row.categoricalPValue)
-        : "",
+      row.categoricalPValue && row.categoricalPValue > 0 ? -Math.log10(row.categoricalPValue) : "",
     categoricalEffect: row.categoricalEffectSize ?? "",
   }))
 
@@ -87,7 +85,9 @@ export function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
   return lines.join("\n")
 }
 
-export function parseCategoricalDistribution(value: string | null | undefined): BinaryDistribution[] {
+export function parseCategoricalDistribution(
+  value: string | null | undefined,
+): BinaryDistribution[] {
   if (!value) return []
   return value
     .split("|")

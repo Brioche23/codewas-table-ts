@@ -1,5 +1,5 @@
 import type { MRT_ExpandedState } from "material-react-table"
-import type { ConceptSummaryRow, HierarchyIndex, HierarchyMetaRow } from "./types"
+import type { ConceptSummaryRow, HierarchyIndex, HierarchyMetaRow } from "../types"
 
 export function parseAncestorIds(value: string | null | undefined) {
   if (!value) return []

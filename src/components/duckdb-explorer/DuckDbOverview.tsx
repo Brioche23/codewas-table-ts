@@ -12,11 +12,13 @@ import {
   Alert,
   Box,
   Breadcrumbs,
+  Button,
   FormControl,
   Grid,
   InputLabel,
   Link,
   MenuItem,
+  Modal,
   Paper,
   Select,
   Stack,
@@ -26,13 +28,18 @@ import {
 import { HEATMAP_BLOCKS, OVERVIEW_MIN_COL_PX, OVERVIEW_MIN_LABEL_PX } from "./constants"
 import {
   computeHeatmapDerived,
+  getBucketColor,
   getHeatmapColor,
   getHeatmapHeaderLines,
   matchesHeatmapSearch,
-} from "./heatmapUtils"
-import { buildHierarchyIndex } from "./hierarchyUtils"
+  OVERVIEW_BUCKET_COLORS,
+} from "./utils/heatmapUtils"
+import { buildHierarchyIndex } from "./utils/hierarchyUtils"
 import type { ChartBlockKey, ConceptSummaryRow, HeatmapScaleMode } from "./types"
-import { formatNumber } from "./utils"
+import { formatNumber } from "./utils/utils"
+import MultiTrackColorSlider from "./UI/MultiTrackColorSlider"
+import { AllInbox, Info, Restore, Search } from "@mui/icons-material"
+import React from "react"
 
 // Canvas geometry (CSS pixels). The overview is transposed: analyses are the (few, fixed) rows and
 // concepts are the (many) columns. Columns follow the parent→children hierarchy (buildHierarchyIndex):
@@ -113,7 +120,8 @@ function OverviewLevel({
   activeRowKey,
   scaleMode,
   perColumnMax,
-  globalMax,
+  bucketBreakpoints,
+  bucketColors,
   onPick,
 }: {
   title: string
@@ -121,7 +129,8 @@ function OverviewLevel({
   activeRowKey: string | null
   scaleMode: HeatmapScaleMode
   perColumnMax: Record<ChartBlockKey, number>
-  globalMax: number
+  bucketBreakpoints: number[]
+  bucketColors: string[]
   onPick: (column: Column) => void
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -216,10 +225,13 @@ function OverviewLevel({
     for (let b = 0; b < HEATMAP_BLOCKS.length; b++) {
       const block = HEATMAP_BLOCKS[b]
       const y = HEADER_WIDTH + b * ROW_HEIGHT
-      const scaleMax = scaleMode === "perColumn" ? perColumnMax[block] : globalMax
 
       for (let i = 0; i < shown.length; i++) {
-        context.fillStyle = getHeatmapColor(shown[i].agg.maxLogp[b], scaleMax)
+        const value = shown[i].agg.maxLogp[b]
+        context.fillStyle =
+          scaleMode === "global"
+            ? getBucketColor(value, bucketBreakpoints, bucketColors)
+            : getHeatmapColor(value, perColumnMax[block])
         context.fillRect(
           LABEL_WIDTH + i * columnWidth,
           y,
@@ -340,10 +352,11 @@ function OverviewLevel({
     }
   }, [
     activeRowKey,
+    bucketBreakpoints,
+    bucketColors,
     canvasWidth,
     columnWidth,
     effectiveSort.dir,
-    globalMax,
     hovered,
     perColumnMax,
     scaleMode,
@@ -447,6 +460,122 @@ function OverviewLevel({
   )
 }
 
+function ColorRangeSlider({
+  value,
+  onChange,
+  max,
+  colors,
+  resetBreakpoints,
+}: {
+  value: number[]
+  onChange: (value: number[]) => void
+  max: number
+  colors: string[]
+  resetBreakpoints: () => void
+}) {
+  return (
+    <Box sx={{ px: 1 }}>
+      <MultiTrackColorSlider
+        value={value}
+        onChange={onChange}
+        colors={colors}
+        max={max}
+        marks={[
+          { value: 0, label: "0" },
+          // A mark under each handle so its threshold value is always visible (not just on hover).
+          ...value.map((breakpoint) => ({ value: breakpoint, label: breakpoint.toFixed(1) })),
+          { value: max, label: formatNumber(max, 0) },
+        ]}
+      />
+      <Typography variant="caption">-Log(p) color buckets (drag to set thresholds)</Typography>
+      <Button size="small" startIcon={<Restore />} onClick={resetBreakpoints} />
+    </Box>
+  )
+}
+
+function InfoModal() {
+  const [open, setOpen] = React.useState(false)
+  const handleOpen = () => setOpen(true)
+  const handleClose = () => setOpen(false)
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 400,
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 4,
+    borderRadius: 2,
+  }
+
+  return (
+    <Box>
+      <Button onClick={handleOpen} startIcon={<Info />}>
+        About
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            component="div"
+            sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+          >
+            Each column is a concept; its color shows the strongest -log10(p) evidence across that
+            concept and all of its descendants. The tick under each column header shows what a click
+            does:
+            <Box
+              component="span"
+              sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  width: 14,
+                  height: 6,
+                  bgcolor: PARENT_COLOR,
+                  borderRadius: 0.5,
+                  display: "inline-block",
+                }}
+              />
+              parent → opens its children in a panel below
+            </Box>
+            <Box
+              component="span"
+              sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
+            >
+              <Box
+                component="span"
+                sx={{
+                  width: 14,
+                  height: 6,
+                  bgcolor: LEAF_COLOR,
+                  borderRadius: 0.5,
+                  display: "inline-block",
+                }}
+              />
+              leaf → opens the concept dialog.
+            </Box>
+            <Box>The currently expanded column is outlined in green.</Box>
+            <Box>
+              When color scale is set to <b>Global</b> you can use the slider to adjust the
+              thresholds
+            </Box>
+          </Typography>
+        </Box>
+      </Modal>
+    </Box>
+  )
+}
+
 export function DuckDbOverview({
   rows,
   chartLoading,
@@ -462,6 +591,8 @@ export function DuckDbOverview({
   const [searchText, setSearchText] = useState("")
   // Drill path of parent rowKeys. Empty = only the roots panel. Each entry adds a child panel below.
   const [path, setPath] = useState<string[]>([])
+  // Breakpoints (in -log10 value units) for the global bucketed color scale; 3 thumbs -> 4 buckets.
+  const [breakpoints, setBreakpoints] = useState<number[]>([])
 
   const { perColumnMax, globalMax, derivedByKey } = useMemo(
     () => computeHeatmapDerived(rows),
@@ -530,6 +661,18 @@ export function DuckDbOverview({
     setPath([])
   }
 
+  // Reset the global color-scale breakpoints to equal quarters whenever the value range changes (new
+  // data/scope). Also render-time, mirroring the path reset above.
+  const [prevGlobalMax, setPrevGlobalMax] = useState<number | null>(null)
+  if (prevGlobalMax !== globalMax) {
+    resetBreakpoints()
+  }
+
+  function resetBreakpoints() {
+    setPrevGlobalMax(globalMax)
+    setBreakpoints([globalMax * 0.25, globalMax * 0.5, globalMax * 0.75])
+  }
+
   // One entry per visible panel: the roots, then one panel per drilled parent in `path`. Columns are the
   // level's nodes in hierarchy order; each OverviewLevel sorts (by its chosen analysis) and caps them.
   const levels = useMemo(() => {
@@ -572,9 +715,9 @@ export function DuckDbOverview({
 
   return (
     <Stack spacing={2}>
-      <Grid container spacing={2} sx={{ p: 1 }}>
+      <Grid container spacing={2} sx={{ p: 1, pt: 2, placeContent: "space-between" }}>
         {sharedControls}
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size={"small"}>
             <InputLabel id="duckdb-overview-scale-label">Color Scale</InputLabel>
             <Select
@@ -588,59 +731,39 @@ export function DuckDbOverview({
             </Select>
           </FormControl>
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <TextField
             fullWidth
             size={"small"}
-            label="Concept search"
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                <Search sx={{ fontSize: 16 }} />
+                Concept search
+              </Box>
+            }
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Filter the concept population by concept/code/id"
           />
         </Grid>
-        <Stack>Color multi slider</Stack>
+        <Grid columns={2} size={{ xs: 12, md: 6 }}>
+          {scaleMode === "global" && (
+            <ColorRangeSlider
+              value={breakpoints}
+              onChange={setBreakpoints}
+              max={globalMax}
+              colors={OVERVIEW_BUCKET_COLORS}
+              resetBreakpoints={resetBreakpoints}
+            />
+          )}
+        </Grid>
+        <Grid size={{ xs: 12, md: 1 }}>
+          <InfoModal />
+        </Grid>
       </Grid>
 
       <Stack spacing={1.5} sx={{ px: 1 }}>
         {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
-        <Typography variant="body2" color="text.secondary" component="div">
-          Each column is a concept; its color shows the strongest -log10(p) evidence across that
-          concept and all of its descendants. The tick under each column header shows what a click
-          does:
-          <Box
-            component="span"
-            sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
-          >
-            <Box
-              component="span"
-              sx={{
-                width: 14,
-                height: 6,
-                bgcolor: PARENT_COLOR,
-                borderRadius: 0.5,
-                display: "inline-block",
-              }}
-            />
-            parent → opens its children in a panel below
-          </Box>
-          <Box
-            component="span"
-            sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
-          >
-            <Box
-              component="span"
-              sx={{
-                width: 14,
-                height: 6,
-                bgcolor: LEAF_COLOR,
-                borderRadius: 0.5,
-                display: "inline-block",
-              }}
-            />
-            leaf → opens the concept dialog
-          </Box>
-          . The currently expanded column is outlined in green.
-        </Typography>
 
         <Breadcrumbs aria-label="hierarchy path">
           <Link
@@ -690,7 +813,8 @@ export function DuckDbOverview({
             activeRowKey={path[depth] ?? null}
             scaleMode={scaleMode}
             perColumnMax={perColumnMax}
-            globalMax={globalMax}
+            bucketBreakpoints={breakpoints}
+            bucketColors={OVERVIEW_BUCKET_COLORS}
             onPick={(column) => handlePick(depth, column)}
           />
         ))}

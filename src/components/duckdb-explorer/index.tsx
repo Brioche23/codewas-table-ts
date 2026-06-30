@@ -32,7 +32,7 @@ import {
   getExpandedRowKeys,
   orderRowsByRowKeys,
   withEmptySubRows,
-} from "./hierarchyUtils"
+} from "./utils/hierarchyUtils"
 import {
   buildHeatmapQuery,
   buildHierarchyMetaQuery,

@@ -35,6 +35,21 @@ const baseThemeOptions = {
   },
 } as const
 
+// Global input ergonomics: drop an icon directly inside any Select/MenuItem and it stays aligned in
+// BOTH states. MenuItem is already flex+center by default, so it only needs the icon↔text gap; the
+// CLOSED Select renders the selected value into `.MuiSelect-select`, which isn't flex by default — so
+// that slot needs the same flex/center/gap. Merged via createTheme's 2nd arg so it isn't reprocessed.
+const inputThemeOverrides = {
+  components: {
+    MuiSelect: {
+      styleOverrides: { select: { display: "flex", alignItems: "center", gap: 8 } },
+    },
+    MuiMenuItem: {
+      styleOverrides: { root: { gap: 8 } },
+    },
+  },
+}
+
 // Denser variant: same base, plus density overrides — all in ONE createTheme call
 // so `spacing` is processed into a function.
 // TO REVERT to the plain theme: in <ThemeProvider> below, swap
@@ -77,7 +92,7 @@ export default function App() {
   const [conceptStats, setConceptStats] = useState<{ filtered: number; total: number } | null>(null)
 
   return (
-    <ThemeProvider theme={createTheme(baseThemeOptions)}>
+    <ThemeProvider theme={createTheme(baseThemeOptions, inputThemeOverrides)}>
       <CssBaseline />
       {/* <Header /> */}
 
