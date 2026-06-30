@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Alert,
   Box,
@@ -50,6 +50,16 @@ import type {
   TableMode,
 } from "./types"
 import DownloadMenu from "./DownloadMenu"
+import { Search } from "@mui/icons-material"
+
+// Order-independent deep comparison of two MRT column-filter states, used to detect whether the
+// draft filters differ from the applied snapshot ("dirty" state).
+function filtersEqual(a: MRT_ColumnFiltersState, b: MRT_ColumnFiltersState): boolean {
+  if (a.length !== b.length) return false
+  const normalize = (filters: MRT_ColumnFiltersState) =>
+    [...filters].sort((x, y) => x.id.localeCompare(y.id))
+  return JSON.stringify(normalize(a)) === JSON.stringify(normalize(b))
+}
 
 export default function DuckDbExplorer({
   dataSource,
@@ -81,13 +91,40 @@ export default function DuckDbExplorer({
   const [tableLoading, setTableLoading] = useState(false)
   const [hierarchyLoading, setHierarchyLoading] = useState(false)
   const [tableMode, setTableMode] = useState<TableMode>("flat")
+  // Draft column filters drive the MRT inputs; the applied snapshot drives the SQL queries. Edits to
+  // the inputs (and Search) are staged until the user applies them, to avoid a query per keystroke.
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(DEFAULT_COLUMN_FILTERS)
+  const [appliedColumnFilters, setAppliedColumnFilters] =
+    useState<MRT_ColumnFiltersState>(DEFAULT_COLUMN_FILTERS)
+  const [appliedSearchText, setAppliedSearchText] = useState("")
   const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>({
     ancestorConceptIds: false,
   })
   const [sorting, setSorting] = useState<MRT_SortingState>([{ id: "binaryEffect", desc: true }])
   const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 20 })
   const hierarchyLoadingParentRowKeysRef = useRef(new Set<string>())
+
+  // Commit the staged column filters + search into the applied snapshot (button / Enter key).
+  const applyFilters = useCallback(() => {
+    setAppliedColumnFilters(columnFilters)
+    setAppliedSearchText(searchText)
+  }, [columnFilters, searchText])
+
+  // Explicit single-click actions (chips, clear-all, presets) take effect immediately: they update
+  // both the draft inputs and the applied snapshot in one step.
+  const commitColumnFilters = useCallback((next: MRT_ColumnFiltersState) => {
+    setColumnFilters(next)
+    setAppliedColumnFilters(next)
+  }, [])
+  const commitSearchText = useCallback((next: string) => {
+    setSearchText(next)
+    setAppliedSearchText(next)
+  }, [])
+
+  const filtersDirty = useMemo(
+    () => searchText !== appliedSearchText || !filtersEqual(columnFilters, appliedColumnFilters),
+    [searchText, appliedSearchText, columnFilters, appliedColumnFilters],
+  )
 
   useEffect(() => {
     let active = true
@@ -119,8 +156,8 @@ export default function DuckDbExplorer({
           buildHeatmapQuery(
             countMode,
             selectedDomain,
-            searchText,
-            chartScope === "filtered" ? columnFilters : [],
+            appliedSearchText,
+            chartScope === "filtered" ? appliedColumnFilters : [],
             CHART_ROWS_LIMIT,
           ),
         )
@@ -139,7 +176,7 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [chartScope, columnFilters, countMode, dataSource, searchText, selectedDomain])
+  }, [chartScope, appliedColumnFilters, countMode, dataSource, appliedSearchText, selectedDomain])
 
   useEffect(() => {
     let active = true
@@ -151,14 +188,19 @@ export default function DuckDbExplorer({
             buildPagedSummaryQuery(
               countMode,
               selectedDomain,
-              searchText,
-              columnFilters,
+              appliedSearchText,
+              appliedColumnFilters,
               sorting,
               pagination,
             ),
           ),
           dataSource.runQuery(
-            buildSummaryCountQuery(countMode, selectedDomain, searchText, columnFilters),
+            buildSummaryCountQuery(
+              countMode,
+              selectedDomain,
+              appliedSearchText,
+              appliedColumnFilters,
+            ),
           ),
         ])
         if (!active) return
@@ -179,14 +221,22 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [columnFilters, countMode, dataSource, pagination, searchText, selectedDomain, sorting])
+  }, [
+    appliedColumnFilters,
+    countMode,
+    dataSource,
+    pagination,
+    appliedSearchText,
+    selectedDomain,
+    sorting,
+  ])
 
   // Unfiltered concept total for the current view (countMode/domain/search), so the footer can show
   // "filtered of total". Depends on the view selectors but NOT on columnFilters.
   useEffect(() => {
     let active = true
     dataSource
-      .runQuery(buildSummaryCountQuery(countMode, selectedDomain, searchText, []))
+      .runQuery(buildSummaryCountQuery(countMode, selectedDomain, appliedSearchText, []))
       .then((countRaw) => {
         if (!active) return
         setTotalRowCount(
@@ -199,7 +249,7 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [countMode, dataSource, searchText, selectedDomain])
+  }, [countMode, dataSource, appliedSearchText, selectedDomain])
 
   // Lift the table's row counts so the footer reflects exactly what the table shows.
   useEffect(() => {
@@ -214,7 +264,12 @@ export default function DuckDbExplorer({
       try {
         const hierarchyCountMode = countMode === "code" ? "all" : countMode
         const metadataRowsRaw = await dataSource.runQuery(
-          buildHierarchyMetaQuery(hierarchyCountMode, selectedDomain, searchText, columnFilters),
+          buildHierarchyMetaQuery(
+            hierarchyCountMode,
+            selectedDomain,
+            appliedSearchText,
+            appliedColumnFilters,
+          ),
         )
         const hierarchyMetaRows = (metadataRowsRaw as BlockMetricRow[]).map(mapHierarchyMetaRow)
         const nextHierarchyIndex = buildHierarchyIndex(hierarchyMetaRows)
@@ -225,7 +280,7 @@ export default function DuckDbExplorer({
                 buildSummaryRowsByRowKeysQuery(
                   hierarchyCountMode,
                   selectedDomain,
-                  searchText,
+                  appliedSearchText,
                   rootRowKeys,
                 ),
               )
@@ -253,7 +308,7 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [columnFilters, countMode, dataSource, searchText, selectedDomain, tableMode])
+  }, [appliedColumnFilters, countMode, dataSource, appliedSearchText, selectedDomain, tableMode])
 
   useEffect(() => {
     if (tableMode !== "hierarchy" || !hierarchyIndex) return
@@ -287,7 +342,7 @@ export default function DuckDbExplorer({
           buildSummaryRowsByRowKeysQuery(
             hierarchyCountMode,
             selectedDomain,
-            searchText,
+            appliedSearchText,
             childRowKeys,
           ),
         )
@@ -332,14 +387,14 @@ export default function DuckDbExplorer({
     hierarchyExpanded,
     hierarchyIndex,
     hierarchyLoadedParentRowKeys,
-    searchText,
+    appliedSearchText,
     selectedDomain,
     tableMode,
   ])
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }))
-  }, [columnFilters, countMode, searchText, selectedDomain])
+  }, [appliedColumnFilters, countMode, appliedSearchText, selectedDomain])
 
   const columns = useMemo(() => buildColumns(), [])
 
@@ -359,10 +414,18 @@ export default function DuckDbExplorer({
       sx: { flex: 1, minHeight: 0, overflow: "auto" },
     },
     enableExpanding: tableMode === "hierarchy",
-    manualFiltering: tableMode === "flat",
+    // Always treat filtering as manual: the rows we hand MRT are already filtered by SQL (the applied
+    // snapshot). Client-side filtering would re-hide rows against the unapplied draft filters and
+    // break the deferred-apply model in hierarchy mode.
+    manualFiltering: true,
     manualPagination: tableMode === "flat",
     manualSorting: tableMode === "flat",
     onColumnFiltersChange: setColumnFilters,
+    muiFilterTextFieldProps: {
+      onKeyDown: (event) => {
+        if (event.key === "Enter") applyFilters()
+      },
+    },
     onColumnVisibilityChange: setColumnVisibility,
     onExpandedChange: setHierarchyExpanded,
     onPaginationChange: setPagination,
@@ -480,9 +543,17 @@ export default function DuckDbExplorer({
             </Select>
           </FormControl>
           <TextField
-            label="Search concept/code/id"
+            label={
+              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                <Search sx={{ fontSize: 16 }} />
+                Search concept/code/id
+              </Box>
+            }
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") applyFilters()
+            }}
             sx={{ minWidth: 220 }}
             size="small"
           />
@@ -500,7 +571,9 @@ export default function DuckDbExplorer({
     const fallbackRow = chartRows.find((row) => row.rowKey === rowKey) ?? null
     setSelectedDetailRow(fallbackRow)
     void dataSource
-      .runQuery(buildSummaryRowsByRowKeysQuery(countMode, selectedDomain, searchText, [rowKey]))
+      .runQuery(
+        buildSummaryRowsByRowKeysQuery(countMode, selectedDomain, appliedSearchText, [rowKey]),
+      )
       .then((rowsRaw) => {
         const full = (rowsRaw as BlockMetricRow[]).map(mapSummaryRow)[0]
         if (full) setSelectedDetailRow(full)
@@ -514,8 +587,8 @@ export default function DuckDbExplorer({
     dataSource,
     countMode,
     selectedDomain,
-    searchText,
-    columnFilters,
+    searchText: appliedSearchText,
+    columnFilters: appliedColumnFilters,
     exportLoading,
     setExportLoading,
   }
@@ -523,77 +596,18 @@ export default function DuckDbExplorer({
   return (
     <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-        {/* <Stack direction="row" sx={{ mb: 2, flexWrap: "wrap", placeContent: "space-between" }}>
-          <Stack direction="row" spacing={2}>
-            <FormControl sx={{ minWidth: 150 }} size="small">
-              <InputLabel id="table-mode-label">Table View</InputLabel>
-              <Select
-                labelId="table-mode-label"
-                value={tableMode}
-                label="Table View"
-                onChange={(event) => {
-                  const nextMode = event.target.value as TableMode
-                  setTableMode(nextMode)
-                  if (nextMode === "hierarchy" && countMode === "code") {
-                    setCountMode("all")
-                  }
-                }}
-              >
-                <MenuItem value="flat">Flat</MenuItem>
-                <MenuItem value="hierarchy">Hierarchy</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{ minWidth: 160 }} size="small">
-              <InputLabel id="count-mode-label">Count Mode</InputLabel>
-              <Select
-                labelId="count-mode-label"
-                value={countMode}
-                label="Count Mode"
-                onChange={(event) => setCountMode(event.target.value)}
-                disabled={tableMode === "hierarchy"}
-              >
-                <MenuItem value="all">All</MenuItem>
-                <MenuItem value="code">Exact code</MenuItem>
-                <MenuItem value="descendant">All descendants</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{ minWidth: 160 }} size="small">
-              <InputLabel id="domain-label">Domain</InputLabel>
-              <Select
-                labelId="domain-label"
-                value={selectedDomain}
-                label="Domain"
-                onChange={(event) => setSelectedDomain(event.target.value)}
-              >
-                <MenuItem value="all">All domains</MenuItem>
-                {domains.map((domain) => (
-                  <MenuItem key={domain} value={domain}>
-                    {domain}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label="Search concept/code/id"
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              sx={{ minWidth: 220 }}
-              size="small"
-            />
-          </Stack>
-
-          <DownloadMenu {...downloadMenuProps} />
-        </Stack> */}
         <DuckDbFilterBar
           table={table}
-          columnFilters={columnFilters}
-          setColumnFilters={setColumnFilters}
+          appliedColumnFilters={appliedColumnFilters}
+          commitColumnFilters={commitColumnFilters}
           countMode={countMode}
           setCountMode={setCountMode}
           selectedDomain={selectedDomain}
           setSelectedDomain={setSelectedDomain}
-          searchText={searchText}
-          setSearchText={setSearchText}
+          appliedSearchText={appliedSearchText}
+          commitSearchText={commitSearchText}
+          isDirty={filtersDirty}
+          onApply={applyFilters}
           rowCount={tableRowCount}
         />
         {(tableLoading || chartLoading || hierarchyLoading || exportLoading) && (

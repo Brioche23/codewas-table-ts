@@ -38,7 +38,7 @@ import { buildHierarchyIndex } from "./utils/hierarchyUtils"
 import type { ChartBlockKey, ConceptSummaryRow, HeatmapScaleMode } from "./types"
 import { formatNumber } from "./utils/utils"
 import MultiTrackColorSlider from "./UI/MultiTrackColorSlider"
-import { AllInbox, Info, Restore, Search } from "@mui/icons-material"
+import { Info, Restore, Search } from "@mui/icons-material"
 import React from "react"
 
 // Canvas geometry (CSS pixels). The overview is transposed: analyses are the (few, fixed) rows and
@@ -746,7 +746,7 @@ export function DuckDbOverview({
             placeholder="Filter the concept population by concept/code/id"
           />
         </Grid>
-        <Grid columns={2} size={{ xs: 12, md: 6 }}>
+        <Grid columns={2} size={{ xs: 12, sm: 6 }}>
           {scaleMode === "global" && (
             <ColorRangeSlider
               value={breakpoints}
@@ -757,7 +757,7 @@ export function DuckDbOverview({
             />
           )}
         </Grid>
-        <Grid size={{ xs: 12, md: 1 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
           <InfoModal />
         </Grid>
       </Grid>

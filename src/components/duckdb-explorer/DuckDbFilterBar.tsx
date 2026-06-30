@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react"
-import { Box, Divider } from "@mui/material"
+import { Badge, Box, Button, Divider } from "@mui/material"
 import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
 import type { FilterPreset } from "../../utils/types"
 import { FilterChips, type ActiveFilter } from "../filters/FilterChips"
@@ -19,14 +19,18 @@ const SEARCH_ID = "__searchText"
 
 type DuckDbFilterBarProps = {
   table: MRT_TableInstance<ConceptSummaryRow>
-  columnFilters: MRT_ColumnFiltersState
-  setColumnFilters: Dispatch<SetStateAction<MRT_ColumnFiltersState>>
+  // The chips reflect the *applied* (active) filters; commit* helpers update draft + applied at once
+  // so chip/clear/preset actions take effect immediately without a separate Apply click.
+  appliedColumnFilters: MRT_ColumnFiltersState
+  commitColumnFilters: (next: MRT_ColumnFiltersState) => void
   countMode: string
   setCountMode: Dispatch<SetStateAction<string>>
   selectedDomain: string
   setSelectedDomain: Dispatch<SetStateAction<string>>
-  searchText: string
-  setSearchText: Dispatch<SetStateAction<string>>
+  appliedSearchText: string
+  commitSearchText: (next: string) => void
+  isDirty: boolean
+  onApply: () => void
   rowCount: number
 }
 
@@ -38,25 +42,27 @@ function isFilterActive(value: unknown): boolean {
 
 export function DuckDbFilterBar({
   table,
-  columnFilters,
-  setColumnFilters,
+  appliedColumnFilters,
+  commitColumnFilters,
   countMode,
   setCountMode,
   selectedDomain,
   setSelectedDomain,
-  searchText,
-  setSearchText,
+  appliedSearchText,
+  commitSearchText,
+  isDirty,
+  onApply,
 }: DuckDbFilterBarProps) {
   const [presets, setPresets] = useState<FilterPreset[]>(() => loadPresets(STORAGE_KEY))
   const [selectedPresetId, setSelectedPresetId] = useState<string>("")
 
-  const columnFilterEntries: ActiveFilter[] = columnFilters
+  const columnFilterEntries: ActiveFilter[] = appliedColumnFilters
     .filter((f) => isFilterActive(f.value))
     .map((f) => ({
       id: f.id,
       label: String(table.getColumn(f.id)?.columnDef.header ?? f.id),
       value: Array.isArray(f.value) ? `${f.value[0]} – ${f.value[1]}` : String(f.value),
-      onClear: () => setColumnFilters((prev) => prev.filter((c) => c.id !== f.id)),
+      onClear: () => commitColumnFilters(appliedColumnFilters.filter((c) => c.id !== f.id)),
     }))
 
   const extraEntries: ActiveFilter[] = []
@@ -76,35 +82,35 @@ export function DuckDbFilterBar({
       onClear: () => setSelectedDomain(DEFAULT_DOMAIN),
     })
   }
-  if (searchText.trim() !== "") {
+  if (appliedSearchText.trim() !== "") {
     extraEntries.push({
       id: SEARCH_ID,
       label: "Search",
-      value: searchText,
-      onClear: () => setSearchText(""),
+      value: appliedSearchText,
+      onClear: () => commitSearchText(""),
     })
   }
 
   const activeFilters = [...columnFilterEntries, ...extraEntries]
 
   const handleClearAll = () => {
-    setColumnFilters([])
+    commitColumnFilters([])
     setCountMode(DEFAULT_COUNT_MODE)
     setSelectedDomain(DEFAULT_DOMAIN)
-    setSearchText("")
+    commitSearchText("")
   }
 
   const handleSave = (name: string, includedIds: string[]) => {
     const preset: FilterPreset = {
       id: String(Date.now()),
       name,
-      filters: columnFilters
+      filters: appliedColumnFilters
         .filter((f) => isFilterActive(f.value))
         .filter((f) => includedIds.includes(f.id)),
     }
     if (includedIds.includes(COUNT_MODE_ID)) preset.countMode = countMode
     if (includedIds.includes(DOMAIN_ID)) preset.selectedDomain = selectedDomain
-    if (includedIds.includes(SEARCH_ID)) preset.searchText = searchText
+    if (includedIds.includes(SEARCH_ID)) preset.searchText = appliedSearchText
     const updated = [...presets, preset]
     setPresets(updated)
     savePresets(STORAGE_KEY, updated)
@@ -127,10 +133,10 @@ export function DuckDbFilterBar({
 
   const handleApply = (preset: FilterPreset) => {
     setSelectedPresetId(preset.id)
-    setColumnFilters(preset.filters)
+    commitColumnFilters(preset.filters)
     setCountMode(preset.countMode ?? DEFAULT_COUNT_MODE)
     setSelectedDomain(preset.selectedDomain ?? DEFAULT_DOMAIN)
-    setSearchText(preset.searchText ?? "")
+    commitSearchText(preset.searchText ?? "")
   }
 
   return (
@@ -148,6 +154,18 @@ export function DuckDbFilterBar({
       {/* <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
         {rowCount} rows
       </Typography> */}
+      <Badge color="warning" variant="dot" invisible={!isDirty}>
+        <Button
+          size="small"
+          variant={isDirty ? "contained" : "outlined"}
+          color="primary"
+          disabled={!isDirty}
+          onClick={onApply}
+        >
+          Apply Filters
+        </Button>
+      </Badge>
+      <Divider orientation="vertical" flexItem />
       <FilterChips filters={activeFilters} onClearAll={handleClearAll} onSave={handleSave} />
       {presets.length > 0 && <Divider orientation="vertical" flexItem />}
       <FilterPresets
