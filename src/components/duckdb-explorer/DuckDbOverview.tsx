@@ -46,13 +46,19 @@ import React from "react"
 // the top level is the tree roots; clicking a parent opens its direct children in a panel below — the
 // stack of panels keeps the whole drill path on screen so you always know where you are.
 const LABEL_WIDTH = 160 // left gutter for analysis row labels
-const HEADER_WIDTH = 34 // top strip for horizontal concept labels (hovered, or all when columns are wide)
+// Top strip, split into two sub-bands: labels on top (~6-22px) and the affordance/child-count band
+// at the foot (28-50px). Enlarged from 34 so the parent bars have room to grow without hitting labels.
+const HEADER_WIDTH = 50
 const ROW_HEIGHT = 30
 const CANVAS_HEIGHT = HEADER_WIDTH + HEATMAP_BLOCKS.length * ROW_HEIGHT
 const MIN_CANVAS_WIDTH = LABEL_WIDTH + 120
-// Affordance tick at the foot of the header strip: blue = parent (click opens children below),
-// gray = leaf (click opens the concept dialog). Always visible, even on 3px-wide columns.
-const AFFORD_BAND_H = 5
+// Affordance band at the foot of the header strip. Parents draw a blue bar whose height encodes the
+// number of direct children (sqrt-scaled per panel to the busiest parent); clicking one opens its
+// children below. Leaves draw a thin gray tick and open the concept dialog. Always visible, even on
+// 3px-wide columns.
+const AFFORD_BAND_H = 15 // max bar height (a parent with the most children in its panel)
+const AFFORD_MIN_BAR_H = 4 // min bar height so a single-child parent still reads as a bar
+const LEAF_TICK_H = 3
 const PARENT_COLOR = "#1976d2"
 const LEAF_COLOR = "#c2c2c2"
 
@@ -78,7 +84,11 @@ type Column = {
   row: ConceptSummaryRow
   agg: SubtreeAgg
   hasChildren: boolean
+  directChildCount: number
 }
+
+// What a panel is sorted by: one of the analysis blocks (by subtree -log10(p)) or the direct-child count.
+type SortKey = { type: "block"; block: ChartBlockKey } | { type: "children" }
 
 const EMPTY_AGG: SubtreeAgg = {
   maxLogp: new Array<number | null>(HEATMAP_BLOCKS.length).fill(null),
@@ -138,7 +148,7 @@ function OverviewLevel({
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH)
   const [hovered, setHovered] = useState<{ column: number; block: number } | null>(null)
   // null = use the relevance default (so the default stays dynamic until the user picks a row).
-  const [sort, setSort] = useState<{ block: ChartBlockKey; dir: "asc" | "desc" } | null>(null)
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null)
 
   useLayoutEffect(() => {
     const element = containerRef.current
@@ -168,16 +178,25 @@ function OverviewLevel({
     return bestBlock
   }, [columns])
 
-  const effectiveSort: { block: ChartBlockKey; dir: "asc" | "desc" } = sort ?? {
-    block: relevanceBlock,
+  const effectiveSort: { key: SortKey; dir: "asc" | "desc" } = sort ?? {
+    key: { type: "block", block: relevanceBlock },
     dir: "desc",
   }
-  const sortBlockIndex = HEATMAP_BLOCKS.indexOf(effectiveSort.block)
+  const sortBlockIndex =
+    effectiveSort.key.type === "block" ? HEATMAP_BLOCKS.indexOf(effectiveSort.key.block) : -1
+  const sortByChildren = effectiveSort.key.type === "children"
 
-  // Rank by the active analysis (desc, nulls last) so the width cap keeps the most significant columns;
+  // Rank by the active dimension (desc, nulls last) so the width cap keeps the strongest columns;
   // ascending just reverses the kept set for display. Tiebreak by overall bestScore, then name.
   const ranked = useMemo(() => {
     return [...columns].sort((a, b) => {
+      if (sortByChildren) {
+        return (
+          b.directChildCount - a.directChildCount ||
+          b.agg.bestScore - a.agg.bestScore ||
+          conceptLabel(a.row).localeCompare(conceptLabel(b.row))
+        )
+      }
       const av = a.agg.maxLogp[sortBlockIndex]
       const bv = b.agg.maxLogp[sortBlockIndex]
       if (av == null && bv == null) {
@@ -190,7 +209,7 @@ function OverviewLevel({
       if (bv == null) return -1
       return bv - av || b.agg.bestScore - a.agg.bestScore
     })
-  }, [columns, sortBlockIndex])
+  }, [columns, sortBlockIndex, sortByChildren])
 
   const gridWidth = canvasWidth - LABEL_WIDTH
   const maxColumns = Math.max(1, Math.floor(gridWidth / OVERVIEW_MIN_COL_PX))
@@ -198,6 +217,13 @@ function OverviewLevel({
   const shown = effectiveSort.dir === "asc" ? [...kept].reverse() : kept
   const hiddenCount = columns.length - kept.length
   const columnWidth = shown.length > 0 ? gridWidth / shown.length : gridWidth
+
+  // Busiest parent in this level — the reference the sqrt-scaled child-count bars normalize against.
+  // Over `columns` (not `shown`) so the scale is stable regardless of the width cap.
+  const maxChildCount = useMemo(
+    () => Math.max(1, ...columns.map((column) => column.directChildCount)),
+    [columns],
+  )
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -269,17 +295,39 @@ function OverviewLevel({
     context.textAlign = "left"
     context.fillText("Concept →", 10, HEADER_WIDTH / 2)
 
-    // Affordance tick per column: parents (blue) open children below; leaves (gray) open the dialog.
-    const bandTop = HEADER_WIDTH - AFFORD_BAND_H
+    // Child-count sort toggle, stacked in the sort-icon column above the per-analysis sort arrows.
+    context.fillStyle = sortByChildren ? SORT_ACTIVE_COLOR : SORT_INACTIVE_COLOR
+    context.textAlign = "right"
+    context.fillText("children", LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W, HEADER_WIDTH / 2)
+    context.textAlign = "center"
+    context.fillText(
+      sortByChildren ? (effectiveSort.dir === "desc" ? "▼" : "▲") : "⇅",
+      LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W / 2,
+      HEADER_WIDTH / 2,
+    )
+    context.textAlign = "left"
+
+    // Affordance band per column: parents draw a blue bar whose height (sqrt-scaled to the busiest
+    // parent in this panel) encodes direct-child count; leaves draw a thin gray tick. Bars grow up
+    // from the heatmap baseline so a taller bar = more direct children.
     for (let i = 0; i < shown.length; i++) {
-      context.fillStyle = shown[i].hasChildren ? PARENT_COLOR : LEAF_COLOR
-      context.fillRect(LABEL_WIDTH + i * columnWidth, bandTop, cellWidth, AFFORD_BAND_H)
+      const x = LABEL_WIDTH + i * columnWidth
+      if (shown[i].directChildCount > 0) {
+        const barHeight =
+          // AFFORD_MIN_BAR_H +
+          (AFFORD_BAND_H - AFFORD_MIN_BAR_H) * Math.sqrt(shown[i].directChildCount / maxChildCount)
+        context.fillStyle = PARENT_COLOR
+        context.fillRect(x, HEADER_WIDTH - barHeight, cellWidth, barHeight)
+      } else {
+        context.fillStyle = LEAF_COLOR
+        context.fillRect(x, HEADER_WIDTH - LEAF_TICK_H, cellWidth, LEAF_TICK_H)
+      }
     }
 
     // Horizontal label centered over the column. Clamped to the canvas so edge columns stay fully
     // legible: a label that would spill past the left edge left-aligns, past the right edge right-aligns,
     // otherwise it stays centered. `maxWidth` caps it (per-column when showing all, full plot when hovered).
-    const labelY = bandTop / 2
+    const labelY = HEADER_WIDTH / 2
     const labelMinX = LABEL_WIDTH + 3
     const labelMaxX = canvasWidth - 3
     const drawColumnLabel = (
@@ -358,10 +406,12 @@ function OverviewLevel({
     columnWidth,
     effectiveSort.dir,
     hovered,
+    maxChildCount,
     perColumnMax,
     scaleMode,
     shown,
     sortBlockIndex,
+    sortByChildren,
   ])
 
   useEffect(() => {
@@ -397,12 +447,33 @@ function OverviewLevel({
     return block
   }
 
-  const toggleSort = (blockIndex: number) => {
-    const block = HEATMAP_BLOCKS[blockIndex]
+  // Hit-test the child-count sort toggle (caption + glyph) in the header row of the gutter.
+  const resolveHeaderSort = (event: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return false
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    if (y < 0 || y >= HEADER_WIDTH) return false
+    return (
+      x >= LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W - 60 &&
+      x <= LABEL_WIDTH - SORT_ICON_RIGHT_PAD
+    )
+  }
+
+  const sameSortKey = (a: SortKey, b: SortKey) =>
+    a.type === "children" ? b.type === "children" : b.type === "block" && a.block === b.block
+
+  const toggleSort = (key: SortKey) => {
     setSort((current) => {
-      const active = current ?? { block: relevanceBlock, dir: "desc" as const }
-      if (active.block === block) return { block, dir: active.dir === "desc" ? "asc" : "desc" }
-      return { block, dir: "desc" }
+      const active = current ?? {
+        key: { type: "block", block: relevanceBlock } as SortKey,
+        dir: "desc" as const,
+      }
+      if (sameSortKey(active.key, key)) {
+        return { key, dir: active.dir === "desc" ? "asc" : "desc" }
+      }
+      return { key, dir: "desc" }
     })
   }
 
@@ -421,7 +492,9 @@ function OverviewLevel({
         <Typography variant="caption" color="text.secondary">
           {shown.length.toLocaleString()} of {columns.length.toLocaleString()}
           {hiddenCount > 0 ? ` · ${hiddenCount.toLocaleString()} weaker hidden` : ""}
-          {` · sorted by ${effectiveSort.block} ${effectiveSort.dir === "desc" ? "▼" : "▲"}`}
+          {` · sorted by ${
+            effectiveSort.key.type === "children" ? "children" : effectiveSort.key.block
+          } ${effectiveSort.dir === "desc" ? "▼" : "▲"}`}
         </Typography>
       </Stack>
       <Box ref={containerRef} sx={{ width: "100%", overflow: "hidden" }}>
@@ -431,9 +504,13 @@ function OverviewLevel({
           onMouseMove={(event) => setHovered(resolveCell(event))}
           onMouseLeave={() => setHovered(null)}
           onClick={(event) => {
+            if (resolveHeaderSort(event)) {
+              toggleSort({ type: "children" })
+              return
+            }
             const sortHit = resolveGutterSort(event)
             if (sortHit != null) {
-              toggleSort(sortHit)
+              toggleSort({ type: "block", block: HEATMAP_BLOCKS[sortHit] })
               return
             }
             const cell = resolveCell(event)
@@ -447,8 +524,8 @@ function OverviewLevel({
           <>
             <strong>{conceptLabel(hoveredColumn.row)}</strong>
             {hoveredColumn.row.conceptCode ? ` | ${hoveredColumn.row.conceptCode}` : ""}
-            {hoveredColumn.agg.count > 1
-              ? ` | ${hoveredColumn.agg.count.toLocaleString()} in subtree — click to open below`
+            {hoveredColumn.directChildCount > 0
+              ? ` | ${hoveredColumn.directChildCount.toLocaleString()} direct children · ${hoveredColumn.agg.count.toLocaleString()} in subtree — click to open below`
               : " | leaf — click to open in the table"}
             {` | ${hoveredBlock} | max -log10(p) ${hoveredValue == null ? "N/A" : formatNumber(hoveredValue, 2)}`}
           </>
@@ -530,8 +607,8 @@ function InfoModal() {
             sx={{ display: "flex", flexDirection: "column", gap: 1 }}
           >
             Each column is a concept; its color shows the strongest -log10(p) evidence across that
-            concept and all of its descendants. The tick under each column header shows what a click
-            does:
+            concept and all of its descendants. The bar under each column header shows what a click
+            does — and, for parents, how many direct children it has:
             <Box
               component="span"
               sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
@@ -540,13 +617,14 @@ function InfoModal() {
                 component="span"
                 sx={{
                   width: 14,
-                  height: 6,
+                  height: 14,
                   bgcolor: PARENT_COLOR,
                   borderRadius: 0.5,
                   display: "inline-block",
                 }}
               />
-              parent → opens its children in a panel below
+              parent → opens its children in a panel below. Bar height = number of direct children
+              (scaled to the busiest parent in that level).
             </Box>
             <Box
               component="span"
@@ -682,8 +760,9 @@ export function DuckDbOverview({
           const row = rowByKey.get(rowKey)
           if (!row) return null
           const agg = subtreeAggByKey.get(rowKey) ?? EMPTY_AGG
-          const hasChildren = (hierarchy.childRowKeysByParentRowKey.get(rowKey)?.length ?? 0) > 0
-          return { row, agg, hasChildren } satisfies Column
+          const directChildCount = hierarchy.childRowKeysByParentRowKey.get(rowKey)?.length ?? 0
+          const hasChildren = directChildCount > 0
+          return { row, agg, hasChildren, directChildCount } satisfies Column
         })
         .filter((column): column is Column => column != null)
 
