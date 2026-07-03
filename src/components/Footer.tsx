@@ -1,7 +1,7 @@
 import { BottomNavigation, BottomNavigationAction, Box, Paper, Typography } from "@mui/material"
 import type { Dispatch, SetStateAction } from "react"
 import type { LoadedDataSource, PageViewOptions } from "../utils/types"
-import { TableBar, GraphicEq } from "@mui/icons-material"
+import { PieChart, TableChart } from "@mui/icons-material"
 
 interface FooterProps {
   text: string | null
@@ -71,7 +71,7 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
       elevation={3}
     >
       <BottomNavigation
-        // showLabels
+        showLabels
         value={pageView}
         onChange={(_event, newValue) => {
           setPageView(newValue)
@@ -81,12 +81,12 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
         <BottomNavigationAction
           label="Table"
           value="table"
-          icon={<TableBar sx={{ fontSize: 10 }} />}
+          icon={<TableChart sx={{ fontSize: 10 }} />}
         />
         <BottomNavigationAction
           label="Charts"
           value="charts"
-          icon={<GraphicEq sx={{ fontSize: 10 }} />}
+          icon={<PieChart sx={{ fontSize: 10 }} />}
         />
       </BottomNavigation>
       <Box

@@ -52,7 +52,7 @@ export function getRepeatEvidenceCount(row: ConceptSummaryRow, threshold: number
 }
 
 export function getHeatmapColor(value: number | null, maxValue: number) {
-  if (value == null) return "#dadada"
+  if (value == null) return "#ffffff"
   if (!Number.isFinite(value)) return rampColor(1)
   return rampColor(value / Math.max(maxValue, 1))
 }
@@ -61,7 +61,7 @@ export function getHeatmapColor(value: number | null, maxValue: number) {
 // defined by the ascending `breakpoints` (length colors.length - 1): a value lands in bucket `i`
 // when it is >= breakpoints[i-1] and < breakpoints[i]. e.g. [0,b1)->colors[0] ... [b3,∞)->colors[3].
 export function getBucketColor(value: number | null, breakpoints: number[], colors: string[]) {
-  if (value == null) return "#dadada"
+  if (value == null) return "#ffffff"
   if (!Number.isFinite(value)) return colors[colors.length - 1]
   let bucket = 0
   while (bucket < breakpoints.length && value >= breakpoints[bucket]) bucket++

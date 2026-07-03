@@ -404,6 +404,7 @@ export default function DuckDbExplorer({
     enableSorting: true,
     enableColumnFilters: true,
     enablePagination: true,
+    enableBottomToolbar: true,
     enableStickyHeader: true,
     enableStickyFooter: true,
     // Fill the flex parent and keep the header/toolbars fixed while the rows scroll inside.
