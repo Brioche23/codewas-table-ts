@@ -4,12 +4,14 @@ import {
   Box,
   Divider,
   FormControl,
+  FormControlLabel,
   Grid,
   InputLabel,
   MenuItem,
   Paper,
   Select,
   Stack,
+  Switch,
   Typography,
   useTheme,
 } from "@mui/material"
@@ -22,11 +24,13 @@ import {
   useSeries,
   useXScale,
   useYScale,
+  type ScatterItemIdentifier,
 } from "@mui/x-charts"
 import { COLUMNS } from "../../utils/constants"
 import { CHART_BLOCK_FIELD_PREFIX, SCATTER_POINT_CAP } from "./constants"
 import { getChartMetricValue } from "./utils/heatmapUtils"
 import type { ChartBlockKey, ChartMetricKey, ConceptSummaryRow } from "./types"
+import { useClipboard } from "./context/ClipboardContext"
 
 type ScatterPoint = { id: string; label: string; x: number | null; y: number | null }
 
@@ -39,9 +43,13 @@ export function DuckDbScatter({
   chartLoading: boolean
   sharedControls: ReactNode
 }) {
+  const { copy } = useClipboard()
   const [xBlock, setXBlock] = useState<ChartBlockKey>("Binary")
   const [yBlock, setYBlock] = useState<ChartBlockKey>("Count")
   const [metric, setMetric] = useState<ChartMetricKey>("-log10")
+
+  const [showRegression, setShowRegression] = useState(true)
+  const toggleRegression = () => setShowRegression((prev) => !prev)
 
   const allScatterPoints = useMemo<ScatterPoint[]>(
     () =>
@@ -133,6 +141,12 @@ export function DuckDbScatter({
             </Select>
           </FormControl>
         </Grid>
+        <FormControl size="small">
+          <FormControlLabel
+            control={<Switch defaultChecked size="small" onChange={toggleRegression} />}
+            label="Regression line"
+          />
+        </FormControl>
       </Grid>
 
       {chartLoading && <Alert severity="info">Loading chart concepts from DuckDB...</Alert>}
@@ -169,8 +183,11 @@ export function DuckDbScatter({
             height={460}
             hitAreaRadius="item"
             slots={{ tooltip: ConceptTooltip }}
+            onItemClick={(_: any, d: ScatterItemIdentifier) => {
+              copy(dataset[d.dataIndex].label, "Copied Concept Name")
+            }}
           >
-            <RegressionLine seriesId="has-value" colorIndex={2} />
+            {showRegression && <RegressionLine seriesId="has-value" colorIndex={2} />}{" "}
             <HoveredPointHighlight dataset={dataset} />
           </ScatterChart>
         </Paper>
@@ -301,7 +318,10 @@ function getBlockDetail(row: ConceptSummaryRow, block: ChartBlockKey): BlockDeta
     const totalControls = readNumber(row, "binaryTotalControls")
     detail.lines.push({
       label: "Present",
-      caseText: totalCases != null ? `${formatNumber(caseYes, 0)} / ${formatNumber(totalCases, 0)}` : formatNumber(caseYes, 0),
+      caseText:
+        totalCases != null
+          ? `${formatNumber(caseYes, 0)} / ${formatNumber(totalCases, 0)}`
+          : formatNumber(caseYes, 0),
       controlText:
         totalControls != null
           ? `${formatNumber(controlYes, 0)} / ${formatNumber(totalControls, 0)}`
@@ -353,7 +373,15 @@ function ConceptTooltipContent({
   }
 
   return (
-    <Box sx={{ p: 1.5, maxWidth: 340, boxShadow: theme.shadows[3], borderRadius: 1, bgcolor: "background.paper" }}>
+    <Box
+      sx={{
+        p: 1.5,
+        maxWidth: 340,
+        boxShadow: theme.shadows[3],
+        borderRadius: 1,
+        bgcolor: "background.paper",
+      }}
+    >
       <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
         {row.conceptName ?? `Concept ${row.conceptId}`}
       </Typography>
@@ -390,7 +418,7 @@ function ConceptTooltipContent({
                 fontSize: theme.typography.caption.fontSize,
               }}
             >
-              <Box />
+              {/* <Box />
               <Box sx={{ fontWeight: 600 }}>Case</Box>
               <Box sx={{ fontWeight: 600 }}>Control</Box>
               {detail.lines.map((line) => (
@@ -399,7 +427,7 @@ function ConceptTooltipContent({
                   <Box>{line.caseText}</Box>
                   <Box>{line.controlText}</Box>
                 </Fragment>
-              ))}
+              ))} */}
             </Box>
             <Box sx={{ mt: 0.5, display: "flex", flexWrap: "wrap", gap: 1.5 }}>
               <MetricChip
@@ -417,7 +445,7 @@ function ConceptTooltipContent({
                 value={formatNumber(detail.effectSize)}
                 highlight={metric === "effectSize"}
               />
-              <MetricChip label="SMD" value={formatNumber(detail.smd)} highlight={false} />
+              {/* <MetricChip label="SMD" value={formatNumber(detail.smd)} highlight={false} /> */}
             </Box>
           </Fragment>
         )

@@ -5,6 +5,7 @@ import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "..
 import { parseNumericFilter } from "./queryBuilders"
 import type { ConceptSummaryRow } from "./types"
 import { buildDistributionRows, buildStats, parseCategoricalDistribution } from "./utils/utils"
+import { CopyButton } from "./UI/CopyButton"
 
 export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   row,

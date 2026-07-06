@@ -1,10 +1,13 @@
 import {
   FormControl,
+  FormControlLabel,
+  FormGroup,
   Grid,
   InputLabel,
   MenuItem,
   Paper,
   Select,
+  Switch,
   useTheme,
   type SelectChangeEvent,
 } from "@mui/material"
@@ -64,6 +67,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
   })
 
   const [scatterPlotValue, setScatterPlotValue] = useState<Metric>("-log10")
+  const [showRegression, setShowRegression] = useState(true)
 
   const rows = data.getSortedRowModel().rows
   console.log(rows.length)
@@ -140,6 +144,9 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
             ))}
           </Select>
         </FormControl>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <FormControlLabel control={<Switch defaultChecked />} label="Regression line" />
+        </FormControl>
       </Grid>
       <Paper sx={{ width: "100%", height: 400 }}>
         <ScatterChart
@@ -179,7 +186,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
           ]}
           grid={{ vertical: true, horizontal: true }}
         >
-          <RegressionLine seriesId="has-value" colorIndex={2} />
+          {showRegression && <RegressionLine seriesId="has-value" colorIndex={2} />}
         </ScatterChart>
       </Paper>
     </Grid>

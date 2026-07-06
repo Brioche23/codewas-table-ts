@@ -1,4 +1,13 @@
-import { Dialog, DialogContent, DialogTitle, Grid, Paper, Stack, Typography } from "@mui/material"
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material"
 import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "../Visuals"
 import type { ConceptSummaryRow } from "./types"
 import {
@@ -7,6 +16,8 @@ import {
   formatNumber,
   parseCategoricalDistribution,
 } from "./utils/utils"
+import { CopyButton } from "./UI/CopyButton"
+import { useClipboard } from "./context/ClipboardContext"
 
 function renderTestSummary(
   _label: string,
@@ -32,6 +43,21 @@ function renderTestSummary(
         Test: {testName ?? "N/A"}
       </Typography>
     </Stack>
+  )
+}
+
+const CopyableEntry = ({ label, value }: { label: string; value: string | number }) => {
+  const { copy } = useClipboard()
+  return (
+    <Typography
+      variant="body2"
+      onClick={() => copy(String(value))}
+      sx={{ ":hover": { cursor: "copy", backgroundColor: "primary.light" } }}
+    >
+      <b>{label}: </b>
+      {value}
+      {/* <CopyButton value={value} /> */}
+    </Typography>
   )
 }
 
@@ -74,18 +100,24 @@ export function ConceptDetailDialog({
 
   return (
     <Dialog open={Boolean(row)} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle sx={{ color: "primary.main" }}>{row.conceptName ?? row.conceptId}</DialogTitle>
+      <Stack direction={"row"}>
+        <DialogTitle sx={{ color: "primary.main" }}>
+          {row.conceptName ?? row.conceptId}
+          <CopyButton value={row.conceptName ?? row.conceptId} />
+        </DialogTitle>
+      </Stack>
+
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Stack spacing={0.5}>
-            <Typography variant="body2">Source code: {row.conceptCode ?? "N/A"}</Typography>
-            <Typography variant="body2">Concept ID: {row.conceptId}</Typography>
-            <Typography variant="body2">Domain: {row.domainId}</Typography>
-            <Typography variant="body2">Count mode: {row.countMode}</Typography>
-            <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-              Ancestors:{" "}
-              {row.ancestorConceptIds ? row.ancestorConceptIds.split(",").join(", ") : "N/A"}
-            </Typography>
+          <Stack spacing={0}>
+            <CopyableEntry label="Source code" value={row.conceptCode ?? "N/A"} />
+            <CopyableEntry label="Concept ID" value={row.conceptId} />
+            <CopyableEntry label="Domain" value={row.domainId} />
+            <CopyableEntry label="Count mode" value={row.countMode} />
+            <CopyableEntry
+              label="Ancestors"
+              value={row.ancestorConceptIds ? row.ancestorConceptIds.split(",").join(", ") : "N/A"}
+            />
           </Stack>
 
           <Grid container spacing={1}>
