@@ -28,12 +28,18 @@ import {
 import { HEATMAP_BLOCKS, OVERVIEW_MIN_COL_PX, OVERVIEW_MIN_LABEL_PX } from "./constants"
 import {
   computeHeatmapDerived,
-  getBucketColor,
-  getHeatmapColor,
   getHeatmapHeaderLines,
   matchesHeatmapSearch,
-  OVERVIEW_BUCKET_COLORS,
 } from "./utils/heatmapUtils"
+import {
+  bucketPatternLevel,
+  getBucketSegmentStyles,
+  heatmapPatternLevel,
+  HEATMAP_LEVEL_COLORS,
+  HEATMAP_LEVEL_COUNT,
+  paintHeatmapCell,
+} from "./utils/heatmapPatterns"
+import PatternLegend from "./UI/PatternLegend"
 import { buildHierarchyIndex } from "./utils/hierarchyUtils"
 import type { ChartBlockKey, ConceptSummaryRow, HeatmapScaleMode } from "./types"
 import { formatNumber } from "./utils/utils"
@@ -131,7 +137,6 @@ function OverviewLevel({
   scaleMode,
   perColumnMax,
   bucketBreakpoints,
-  bucketColors,
   onPick,
 }: {
   title: string
@@ -140,7 +145,6 @@ function OverviewLevel({
   scaleMode: HeatmapScaleMode
   perColumnMax: Record<ChartBlockKey, number>
   bucketBreakpoints: number[]
-  bucketColors: string[]
   onPick: (column: Column) => void
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -252,17 +256,25 @@ function OverviewLevel({
       const block = HEATMAP_BLOCKS[b]
       const y = HEADER_WIDTH + b * ROW_HEIGHT
 
+      // Shared by every cell in the row: columns are data-width, so anchoring the texture to the
+      // plot's left edge is what lets a run of same-level columns read as one continuous field
+      // instead of restarting the pattern at each (fractional) column boundary.
+      const textureOrigin = { x: LABEL_WIDTH, y }
+
       for (let i = 0; i < shown.length; i++) {
         const value = shown[i].agg.maxLogp[b]
-        context.fillStyle =
+        const level =
           scaleMode === "global"
-            ? getBucketColor(value, bucketBreakpoints, bucketColors)
-            : getHeatmapColor(value, perColumnMax[block])
-        context.fillRect(
+            ? bucketPatternLevel(value, bucketBreakpoints)
+            : heatmapPatternLevel(value, perColumnMax[block])
+        paintHeatmapCell(
+          context,
+          level,
           LABEL_WIDTH + i * columnWidth,
           y,
           cellWidth,
           ROW_HEIGHT - HORIZONTAL_GUTTER,
+          textureOrigin,
         )
       }
 
@@ -401,7 +413,6 @@ function OverviewLevel({
   }, [
     activeRowKey,
     bucketBreakpoints,
-    bucketColors,
     canvasWidth,
     columnWidth,
     effectiveSort.dir,
@@ -537,6 +548,10 @@ function OverviewLevel({
   )
 }
 
+// Rail height for the bucket slider. Also what the texture swatches are fitted to, so each bucket
+// shows a whole number of tile rows.
+const BUCKET_RAIL_HEIGHT = 16
+
 function ColorRangeSlider({
   value,
   onChange,
@@ -556,6 +571,9 @@ function ColorRangeSlider({
         value={value}
         onChange={onChange}
         colors={colors}
+        // Rail buckets rendered with the same textures the cells use.
+        segmentStyles={getBucketSegmentStyles(BUCKET_RAIL_HEIGHT)}
+        segmentHeight={BUCKET_RAIL_HEIGHT}
         max={max}
         marks={[
           { value: 0, label: "0" },
@@ -564,7 +582,7 @@ function ColorRangeSlider({
           { value: max, label: formatNumber(max, 0) },
         ]}
       />
-      <Typography variant="caption">-Log(p) color buckets (drag to set thresholds)</Typography>
+      <Typography variant="caption">-Log(p) buckets (drag to set thresholds)</Typography>
       <Button size="small" startIcon={<Restore />} onClick={resetBreakpoints} />
     </Box>
   )
@@ -606,9 +624,10 @@ function InfoModal() {
             component="div"
             sx={{ display: "flex", flexDirection: "column", gap: 1 }}
           >
-            Each column is a concept; its color shows the strongest -log10(p) evidence across that
-            concept and all of its descendants. The bar under each column header shows what a click
-            does — and, for parents, how many direct children it has:
+            Each column is a concept; its texture shows the strongest -log10(p) evidence across that
+            concept and all of its descendants — the denser the pattern, the stronger the evidence.
+            The bar under each column header shows what a click does — and, for parents, how many
+            direct children it has:
             <Box
               component="span"
               sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, mx: 0.75 }}
@@ -644,9 +663,10 @@ function InfoModal() {
             </Box>
             <Box>The currently expanded column is outlined in green.</Box>
             <Box>
-              When color scale is set to <b>Global</b> you can use the slider to adjust the
-              thresholds
+              When the scale is set to <b>Global</b> you can use the slider to adjust the thresholds
+              at which each texture level kicks in.
             </Box>
+            <PatternLegend />
           </Typography>
         </Box>
       </Modal>
@@ -669,7 +689,8 @@ export function DuckDbOverview({
   const [searchText, setSearchText] = useState("")
   // Drill path of parent rowKeys. Empty = only the roots panel. Each entry adds a child panel below.
   const [path, setPath] = useState<string[]>([])
-  // Breakpoints (in -log10 value units) for the global bucketed color scale; 3 thumbs -> 4 buckets.
+  // Breakpoints (in -log10 value units) for the global bucketed scale: one bucket per texture level,
+  // so HEATMAP_LEVEL_COUNT - 1 thumbs.
   const [breakpoints, setBreakpoints] = useState<number[]>([])
 
   const { perColumnMax, globalMax, derivedByKey } = useMemo(
@@ -739,7 +760,7 @@ export function DuckDbOverview({
     setPath([])
   }
 
-  // Reset the global color-scale breakpoints to equal quarters whenever the value range changes (new
+  // Reset the global scale's breakpoints to equal steps whenever the value range changes (new
   // data/scope). Also render-time, mirroring the path reset above.
   const [prevGlobalMax, setPrevGlobalMax] = useState<number | null>(null)
   if (prevGlobalMax !== globalMax) {
@@ -748,7 +769,12 @@ export function DuckDbOverview({
 
   function resetBreakpoints() {
     setPrevGlobalMax(globalMax)
-    setBreakpoints([globalMax * 0.25, globalMax * 0.5, globalMax * 0.75])
+    setBreakpoints(
+      Array.from(
+        { length: HEATMAP_LEVEL_COUNT - 1 },
+        (_, index) => (globalMax * (index + 1)) / HEATMAP_LEVEL_COUNT,
+      ),
+    )
   }
 
   // One entry per visible panel: the roots, then one panel per drilled parent in `path`. Columns are the
@@ -826,14 +852,19 @@ export function DuckDbOverview({
           />
         </Grid>
         <Grid columns={2} size={{ xs: 12, sm: 6 }}>
-          {scaleMode === "global" && (
+          {scaleMode === "global" ? (
             <ColorRangeSlider
               value={breakpoints}
               onChange={setBreakpoints}
               max={globalMax}
-              colors={OVERVIEW_BUCKET_COLORS}
+              colors={HEATMAP_LEVEL_COLORS}
               resetBreakpoints={resetBreakpoints}
             />
+          ) : (
+            // Per-analysis mode has no thresholds to drag — just the texture key.
+            <Box sx={{ px: 1, pt: 1 }}>
+              <PatternLegend />
+            </Box>
           )}
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}>
@@ -893,7 +924,6 @@ export function DuckDbOverview({
             scaleMode={scaleMode}
             perColumnMax={perColumnMax}
             bucketBreakpoints={breakpoints}
-            bucketColors={OVERVIEW_BUCKET_COLORS}
             onPick={(column) => handlePick(depth, column)}
           />
         ))}

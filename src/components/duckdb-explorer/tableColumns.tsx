@@ -1,4 +1,5 @@
 import { Box, Chip, Stack, Typography } from "@mui/material"
+import { alpha, type Theme } from "@mui/material/styles"
 import type { MRT_ColumnDef, MRT_FilterFn } from "material-react-table"
 import { CasesControlCell } from "../../table/custom-cells/CasesControlsCell"
 import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "../Visuals"
@@ -146,8 +147,33 @@ export function makeContinuousColumns(
   }
 }
 
+// Faint wash used to separate adjacent column groups. Translucent on purpose: MRT applies our sx last,
+// so an opaque color would hide the row-level tints (focus highlight, hierarchy depth) painted on <tr>.
+const groupShadeSx = (theme: Theme) => ({
+  backgroundColor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.07 : 0.04),
+})
+
+// Shade every other top-level group (Binary, Age First Event, Continuous) plus its leaf columns, so the
+// analysis blocks read as bands instead of one continuous grid.
+function withAlternatingGroupShading(
+  groups: MRT_ColumnDef<ConceptSummaryRow>[],
+): MRT_ColumnDef<ConceptSummaryRow>[] {
+  return groups.map((group, index) => {
+    if (index % 2 === 0) return group
+    return {
+      ...group,
+      muiTableHeadCellProps: { sx: groupShadeSx },
+      columns: group.columns?.map((column) => ({
+        ...column,
+        muiTableHeadCellProps: { sx: groupShadeSx },
+        muiTableBodyCellProps: { sx: groupShadeSx },
+      })),
+    }
+  })
+}
+
 export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
-  return [
+  return withAlternatingGroupShading([
     {
       id: "info",
       header: "Info",
@@ -354,5 +380,5 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
         },
       ],
     },
-  ]
+  ])
 }

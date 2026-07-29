@@ -3,24 +3,18 @@ import { COLUMNS } from "../../../utils/constants"
 import {
   CHART_BLOCK_FIELD_PREFIX,
   HEATMAP_BLOCKS,
-  OVERVIEW_BUCKET_COUNT,
   OVERVIEW_RAMP_FROM,
   OVERVIEW_RAMP_TO,
 } from "../constants"
 import type { ChartBlockKey, ChartMetricKey, ConceptSummaryRow } from "../types"
 
-// Perceptual white→main-color ramp (d3 Lab interpolation). `t` is clamped to [0, 1]. This is the single
-// palette behind both heatmap scales: the continuous per-analysis scale and the global bucket scale.
+// Perceptual white→main-color ramp (d3 Lab interpolation). `t` is clamped to [0, 1]. Cells are encoded
+// with texture rather than color (see utils/heatmapPatterns); this ramp backs the color fallback and
+// the level swatches derived from it.
 const rampInterpolator = interpolateLab(OVERVIEW_RAMP_FROM, OVERVIEW_RAMP_TO)
 export function rampColor(t: number) {
   return rampInterpolator(Math.max(0, Math.min(1, t)))
 }
-
-// Bucket swatches sampled at each bucket's midpoint along the ramp, so the discrete global scale reads
-// as the same palette as the continuous one. The user drags the breakpoints; these colors stay put.
-export const OVERVIEW_BUCKET_COLORS = Array.from({ length: OVERVIEW_BUCKET_COUNT }, (_, index) =>
-  rampColor((index + 0.5) / OVERVIEW_BUCKET_COUNT),
-)
 
 export function getChartMetricValue(
   row: ConceptSummaryRow,
@@ -51,22 +45,8 @@ export function getRepeatEvidenceCount(row: ConceptSummaryRow, threshold: number
   }, 0)
 }
 
-export function getHeatmapColor(value: number | null, maxValue: number) {
-  if (value == null) return "#ffffff"
-  if (!Number.isFinite(value)) return rampColor(1)
-  return rampColor(value / Math.max(maxValue, 1))
-}
-
-// Step ("bucketed") color scale used by the overview's global scale. `colors.length` buckets are
-// defined by the ascending `breakpoints` (length colors.length - 1): a value lands in bucket `i`
-// when it is >= breakpoints[i-1] and < breakpoints[i]. e.g. [0,b1)->colors[0] ... [b3,∞)->colors[3].
-export function getBucketColor(value: number | null, breakpoints: number[], colors: string[]) {
-  if (value == null) return "#ffffff"
-  if (!Number.isFinite(value)) return colors[colors.length - 1]
-  let bucket = 0
-  while (bucket < breakpoints.length && value >= breakpoints[bucket]) bucket++
-  return colors[bucket] ?? colors[colors.length - 1]
-}
+// Both heatmap scales (continuous per-column and bucketed global) now resolve a value to a texture
+// level rather than a color: see heatmapPatternLevel / bucketPatternLevel in utils/heatmapPatterns.
 
 // Per-row metrics derived once from the heatmap rows so sorting, clustering, and drawing don't
 // recompute them. `logp` is the per-block -log10(p) (indexed by HEATMAP_BLOCKS, null when absent),

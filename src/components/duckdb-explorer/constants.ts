@@ -51,10 +51,10 @@ export const OVERVIEW_MIN_COL_PX = 3
 // Once a column is at least this wide, every column is labelled (horizontal text needs room to read);
 // narrower than this, only the hovered/expanded column is labelled.
 export const OVERVIEW_MIN_LABEL_PX = 64
-// Single source-of-truth color ramp for the overview, shared by the continuous (per-analysis) scale and
-// the global bucket scale so the two never mismatch. Give the two ends; everything interpolates between
-// (see rampColor in utils/heatmapUtils). Change OVERVIEW_RAMP_TO to recolor the whole heatmap.
+// Color ramp behind the heatmap's color *fallback* (HEATMAP_ENCODING in utils/heatmapPatterns) and the
+// swatches sampled from it. Give the two ends; everything interpolates between (see rampColor in
+// utils/heatmapUtils). Cells themselves are encoded with texture — the ramp is not on that path.
 export const OVERVIEW_RAMP_FROM = "#ffefef"
 export const OVERVIEW_RAMP_TO = "#d32f34"
-// Buckets for the global step scale (draggable breakpoints = OVERVIEW_BUCKET_COUNT - 1).
-export const OVERVIEW_BUCKET_COUNT = 4
+// The number of steps in both heatmap scales — and so the number of draggable breakpoints on the
+// global scale (steps - 1) — comes from HEATMAP_PATTERNS.length in utils/heatmapPatterns.

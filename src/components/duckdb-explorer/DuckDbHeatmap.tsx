@@ -27,12 +27,13 @@ import {
   computeHeatmapDerived,
   getBestHeatmapScore,
   getChartMetricValue,
-  getHeatmapColor,
   getHeatmapHeaderLines,
   getRepeatEvidenceCount,
   getRepeatEvidenceCountFromLogp,
   matchesHeatmapSearch,
 } from "./utils/heatmapUtils"
+import { heatmapPatternLevel, paintHeatmapCell } from "./utils/heatmapPatterns"
+import PatternLegend from "./UI/PatternLegend"
 import type {
   ChartBlockKey,
   ConceptSummaryRow,
@@ -188,16 +189,21 @@ export function DuckDbHeatmap({
       context.textAlign = "center"
       context.fillText(String(repeatCount), LABEL_WIDTH + REPEAT_WIDTH / 2, y + ROW_HEIGHT / 2)
 
+      // One tile grid per row, starting at the plot's left edge, so cells line up across blocks.
+      const textureOrigin = { x: LABEL_WIDTH + REPEAT_WIDTH, y }
+
       for (let blockIndex = 0; blockIndex < HEATMAP_BLOCKS.length; blockIndex++) {
         const value = derived ? derived.logp[blockIndex] : null
         const scaleMax =
           heatmapScaleMode === "perColumn" ? perColumnMax[HEATMAP_BLOCKS[blockIndex]] : globalMax
-        context.fillStyle = getHeatmapColor(value, scaleMax)
-        context.fillRect(
+        paintHeatmapCell(
+          context,
+          heatmapPatternLevel(value, scaleMax),
           LABEL_WIDTH + REPEAT_WIDTH + blockIndex * COLUMN_WIDTH,
           y,
           COLUMN_WIDTH - 1,
           ROW_HEIGHT - 1,
+          textureOrigin,
         )
       }
     }
@@ -382,9 +388,11 @@ export function DuckDbHeatmap({
           </Alert>
         )}
         <Typography variant="body2" color="text.secondary">
-          Heatmap colors show -log10(p) evidence by analysis block. Repeat counts show how many
-          blocks pass the selected threshold. Click a cell to jump that concept back into the table.
+          Cell texture shows -log10(p) evidence by analysis block — the denser the pattern, the
+          stronger the evidence. Repeat counts show how many blocks pass the selected threshold.
+          Click a cell to jump that concept back into the table.
         </Typography>
+        <PatternLegend />
         {heatmapSearchText.trim() ? (
           <Typography variant="body2" color="text.secondary">
             Showing {heatmapRows.length} of {rows.length} heatmap rows matching "{heatmapSearchText}
