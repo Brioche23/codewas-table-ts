@@ -52,7 +52,7 @@ const CopyableEntry = ({ label, value }: { label: string; value: string | number
     <Typography
       variant="body2"
       onClick={() => copy(String(value))}
-      sx={{ ":hover": { cursor: "copy", backgroundColor: "primary.light" } }}
+      sx={{ ":hover": { cursor: "copy", backgroundColor: "action.hover" } }}
     >
       <b>{label}: </b>
       {value}
