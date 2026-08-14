@@ -151,7 +151,7 @@ export function DuckDbHeatmap({
     const scrollTop = scrollRef.current?.scrollTop ?? 0
     const hoveredIndex = hoveredCell ? rowIndexByKey.get(hoveredCell.row.rowKey) : undefined
 
-    context.fillStyle = "#ffffff"
+    context.fillStyle = "#edf2f7"
     context.fillRect(0, 0, CANVAS_WIDTH, viewportHeight)
     context.font = "11px Hack, monospace"
     context.textBaseline = "middle"

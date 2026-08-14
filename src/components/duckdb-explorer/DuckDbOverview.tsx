@@ -235,7 +235,7 @@ function OverviewLevel({
     const context = prepareCanvas(canvas, canvasWidth, CANVAS_HEIGHT)
     if (!context) return
 
-    context.fillStyle = "#ffffff"
+    context.fillStyle = "#edf2f7"
     context.fillRect(0, 0, canvasWidth, CANVAS_HEIGHT)
     context.font = "12px Hack, monospace"
     context.textBaseline = "middle"
@@ -278,7 +278,7 @@ function OverviewLevel({
         )
       }
 
-      context.fillStyle = "#f3f3f3"
+      context.fillStyle = "#edf2f7"
       context.fillRect(0, y, LABEL_WIDTH - HORIZONTAL_GUTTER, ROW_HEIGHT - VERTICAL_GUTTER)
       context.fillStyle = "#222"
       context.textAlign = "left"
@@ -301,7 +301,7 @@ function OverviewLevel({
     }
 
     // Header strip: gutter caption + rotated concept labels (all when wide enough, else only hovered).
-    context.fillStyle = "#f3f3f3"
+    context.fillStyle = "#edf2f7"
     context.fillRect(0, 0, LABEL_WIDTH - HORIZONTAL_GUTTER, HEADER_WIDTH)
     context.fillStyle = "#444"
     context.textAlign = "left"
@@ -365,7 +365,7 @@ function OverviewLevel({
       }
       if (withBackground) {
         const left = align === "left" ? x : align === "right" ? x - textWidth : x - textWidth / 2
-        context.fillStyle = "rgba(255, 255, 255, 0.9)"
+        context.fillStyle = "#edf2f7"
         context.fillRect(left - 3, labelY - 8, textWidth + 6, 16)
       }
       context.fillStyle = color

@@ -401,12 +401,14 @@ export default function DuckDbExplorer({
   const table = useMaterialReactTable({
     columns,
     data: tableMode === "hierarchy" ? hierarchyRows : tableRows,
-    enableSorting: true,
+    enableSorting: false,
     enableColumnFilters: true,
     enablePagination: true,
     enableBottomToolbar: true,
     enableStickyHeader: true,
     enableStickyFooter: true,
+    enableColumnActions: false,
+    enableColumnOrdering: false,
     // Fill the flex parent and keep the header/toolbars fixed while the rows scroll inside.
     muiTablePaperProps: {
       sx: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 },

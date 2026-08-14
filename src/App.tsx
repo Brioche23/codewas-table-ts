@@ -19,6 +19,21 @@ const baseThemeOptions = {
     light: true,
     dark: true,
   },
+  palette: {
+    primary: {
+      main: "#3084b5",
+    },
+    secondary: {
+      main: "#a600f5",
+    },
+    background: {
+      default: "#e8f0f9",
+      paper: "#edf2f7",
+    },
+    success: {
+      main: "#3a7d2e",
+    },
+  },
   typography: {
     fontFamily: [
       "Hack",

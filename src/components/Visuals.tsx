@@ -13,8 +13,8 @@ import type { BinaryDistribution, DistributionRow, SummaryStats } from "../utils
 import { scaleOrdinal, scaleLinear } from "d3-scale"
 import { schemeTableau10 } from "d3-scale-chromatic"
 
-const casesColor = "#00ff00"
-const controlsColor = "#d29659"
+const casesColor = "#000000"
+const controlsColor = "#afaeae"
 
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
@@ -89,7 +89,7 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
   const domainMax = Math.max(...allValues)
   const domainRange = domainMax - domainMin || 1 // avoid /0
 
-  const W = 150 // SVG width
+  const W = 100 // SVG width
   const H = 40 // SVG height
   const PAD = 12 // left/right padding in px
 
@@ -213,7 +213,7 @@ export function CategoryBar({
   controlCount,
   totalCases,
   totalControls,
-  maxWidth = 80,
+  maxWidth = 50,
 }: CategoryBarProps) {
   // Proportions 0–1; guard against divide-by-zero
   const casePct = totalCases > 0 ? caseCount / totalCases : 0

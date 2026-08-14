@@ -33,16 +33,24 @@ export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   }
 }
 
+function NA_Chip() {
+  return (
+    <Typography variant="body2" sx={{ opacity: 0.25 }}>
+      N/A
+    </Typography>
+  )
+}
+
 export function valueChip(value: number | null | undefined, threshold: number, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) {
-    return <Typography variant="body2">N/A</Typography>
+    return <NA_Chip />
   }
   return (
     <Chip
       label={value.toFixed(digits)}
       size="small"
       color={value >= threshold ? "success" : "default"}
-      variant={value >= threshold ? "filled" : "outlined"}
+      variant={"outlined"}
     />
   )
 }
@@ -73,7 +81,7 @@ export function makeContinuousColumns(
             | number
             | null
           if (caseMean == null || controlMean == null || caseSd == null || controlSd == null) {
-            return <Typography variant="body2">N/A</Typography>
+            return <NA_Chip />
           }
           return (
             <CasesControlCell
@@ -84,11 +92,11 @@ export function makeContinuousColumns(
             />
           )
         },
-        size: 140,
+        size: 50,
       },
       {
         id: `${prefix}Distribution`,
-        header: "Distribution",
+        header: "Dist",
         accessorFn: (row) => row[`${prefix}CaseMean` as keyof ConceptSummaryRow] as number | null,
         Cell: ({ row }) => {
           const stats = buildStats(
@@ -109,7 +117,7 @@ export function makeContinuousColumns(
             row.original[`${prefix}P75Control` as keyof ConceptSummaryRow] as number | null,
             row.original[`${prefix}P90Control` as keyof ConceptSummaryRow] as number | null,
           )
-          if (!stats || !distributions) return <Typography variant="body2">N/A</Typography>
+          if (!stats || !distributions) return <NA_Chip />
           return (
             <MeanComparisonChart
               stats={stats}
@@ -122,26 +130,26 @@ export function makeContinuousColumns(
             />
           )
         },
-        size: 180,
+        size: 50,
       },
       {
         id: `${prefix}LogP`,
-        header: "-log10(p)",
+        header: "pVal",
         accessorFn: (row) => {
           const pValue = row[`${prefix}PValue` as keyof ConceptSummaryRow] as number | null
           return pValue && pValue > 0 ? -Math.log10(pValue) : null
         },
         filterFn: numericExpressionFilter,
         Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
-        size: 95,
+        size: 50,
       },
       {
         id: `${prefix}Effect`,
-        header: "Effect",
+        header: "Eff.",
         accessorFn: (row) => row[`${prefix}EffectSize` as keyof ConceptSummaryRow] as number | null,
         filterFn: numericExpressionFilter,
         Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), colorThreshold),
-        size: 90,
+        size: 50,
       },
     ],
   }
@@ -230,7 +238,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
               </Box>
             </Stack>
           ),
-          size: 240,
+          size: 180,
         },
         {
           accessorKey: "ancestorConceptIds",
@@ -238,7 +246,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
           size: 200,
           Cell: ({ cell }) => {
             const value = cell.getValue<string | null>()
-            if (!value) return <Typography variant="body2">N/A</Typography>
+            if (!value) return <NA_Chip />
             return (
               <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                 {value.split(",").join("\n")}
@@ -254,7 +262,9 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
       columns: [
         {
           id: "binaryCasesControl",
-          header: "Cases / Controls",
+          header: "C/C",
+          // enableColumnActions: false,
+          // enableColumnOrdering: false,
           accessorFn: (row) => row.binaryCaseYes ?? null,
           filterFn: numericExpressionFilter,
           Cell: ({ row }) =>
@@ -265,13 +275,13 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                 nDecimals={0}
               />
             ) : (
-              <Typography variant="body2">N/A</Typography>
+              <NA_Chip />
             ),
-          size: 135,
+          size: 50,
         },
         {
           id: "binaryDistribution",
-          header: "Distribution",
+          header: "Dist",
           accessorFn: (row) => row.binaryCaseYes ?? null,
           Cell: ({ row }) => {
             const caseCount = row.original.binaryCaseYes
@@ -284,7 +294,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
               totalCases == null ||
               totalControls == null
             ) {
-              return <Typography variant="body2">N/A</Typography>
+              return <NA_Chip />
             }
             return (
               <CategoryBar
@@ -295,16 +305,16 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
               />
             )
           },
-          size: 130,
+          size: 50,
         },
         {
           id: "binaryLogP",
-          header: "-log10(p)",
+          header: "pVal",
           accessorFn: (row) =>
             row.binaryPValue && row.binaryPValue > 0 ? -Math.log10(row.binaryPValue) : null,
           filterFn: numericExpressionFilter,
           Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
-          size: 95,
+          size: 80,
         },
         {
           id: "binaryEffect",
@@ -312,7 +322,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
           accessorFn: (row) => row.binaryEffectSize ?? null,
           filterFn: numericExpressionFilter,
           Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2),
-          size: 90,
+          size: 80,
         },
       ],
     },
@@ -326,7 +336,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
       columns: [
         {
           id: "categoricalCasesControl",
-          header: "Cases / Controls",
+          header: "C/C",
           accessorFn: (row) => row.categoricalCaseYes ?? null,
           filterFn: numericExpressionFilter,
           Cell: ({ row }) =>
@@ -338,17 +348,17 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                 nDecimals={0}
               />
             ) : (
-              <Typography variant="body2">N/A</Typography>
+              <NA_Chip />
             ),
-          size: 135,
+          size: 50,
         },
         {
           id: "categoricalDistribution",
-          header: "Distribution",
+          header: "Dist",
           accessorFn: (row) => row.categoricalDistribution ?? null,
           Cell: ({ row }) => {
             const distributions = parseCategoricalDistribution(row.original.categoricalDistribution)
-            if (distributions.length === 0) return <Typography variant="body2">N/A</Typography>
+            if (distributions.length === 0) return <NA_Chip />
             return (
               <CategoricalDistributionBar
                 totalCases={row.original.categoricalCaseYes ?? 0}
@@ -357,18 +367,18 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
               />
             )
           },
-          size: 180,
+          size: 50,
         },
         {
           id: "categoricalLogP",
-          header: "-log10(p)",
+          header: "pVal",
           accessorFn: (row) =>
             row.categoricalPValue && row.categoricalPValue > 0
               ? -Math.log10(row.categoricalPValue)
               : null,
           filterFn: numericExpressionFilter,
           Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
-          size: 95,
+          size: 50,
         },
         {
           id: "categoricalEffect",
@@ -376,7 +386,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
           accessorFn: (row) => row.categoricalEffectSize ?? null,
           filterFn: numericExpressionFilter,
           Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2),
-          size: 90,
+          size: 50,
         },
       ],
     },

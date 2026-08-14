@@ -55,6 +55,6 @@ export const OVERVIEW_MIN_LABEL_PX = 64
 // swatches sampled from it. Give the two ends; everything interpolates between (see rampColor in
 // utils/heatmapUtils). Cells themselves are encoded with texture — the ramp is not on that path.
 export const OVERVIEW_RAMP_FROM = "#ffefef"
-export const OVERVIEW_RAMP_TO = "#d32f34"
+export const OVERVIEW_RAMP_TO = "#a600f5"
 // The number of steps in both heatmap scales — and so the number of draggable breakpoints on the
 // global scale (steps - 1) — comes from HEATMAP_PATTERNS.length in utils/heatmapPatterns.

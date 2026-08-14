@@ -13,7 +13,7 @@ import { rampColor } from "./heatmapUtils"
 
 // "pattern" = textures (this experiment). "color" = the old red ramp, quantized
 // into the same levels so the two encodings are directly comparable.
-export const HEATMAP_ENCODING: "pattern" | "color" = "pattern"
+export const HEATMAP_ENCODING: "pattern" | "color" = "color"
 
 export const PATTERN_INK = "#000000" // the marks
 export const PATTERN_BG = "#ffffff" // behind the marks
