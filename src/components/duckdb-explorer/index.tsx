@@ -40,17 +40,19 @@ import {
   buildSummaryCountQuery,
   buildSummaryRowsByRowKeysQuery,
 } from "./queryBuilders"
-import { mapHeatmapRow, mapHierarchyMetaRow, mapSummaryRow } from "./rowMappers"
+import { mapCohortInfoRow, mapHeatmapRow, mapHierarchyMetaRow, mapSummaryRow } from "./rowMappers"
 import { buildColumns } from "./tableColumns"
 import type {
   BlockMetricRow,
   ChartScope,
+  CohortInfoIndex,
   ConceptSummaryRow,
   HierarchyIndex,
   TableMode,
 } from "./types"
 import DownloadMenu from "./DownloadMenu"
 import { Search } from "@mui/icons-material"
+import { CohortsInfoTable } from "./CohortsInfoTable"
 
 // Order-independent deep comparison of two MRT column-filter states, used to detect whether the
 // draft filters differ from the applied snapshot ("dirty" state).
@@ -74,6 +76,7 @@ export default function DuckDbExplorer({
   const [selectedDomain, setSelectedDomain] = useState("all")
   const [searchText, setSearchText] = useState("")
   const [domains, setDomains] = useState<string[]>([])
+  const [cohortsInfo, setCohortsInfo] = useState<CohortInfoIndex>({})
   const [chartRows, setChartRows] = useState<ConceptSummaryRow[]>([])
   const [tableRows, setTableRows] = useState<ConceptSummaryRow[]>([])
   const [tableRowCount, setTableRowCount] = useState(0)
@@ -141,6 +144,37 @@ export default function DuckDbExplorer({
         if (!active) return
         setDomains(rows.map((row) => String(row.domainId)))
       })
+
+    // cohortsInfo is keyed by cohort, not by analysis: it has no domainId/analysisType to filter on.
+    // Read every row and index it by cohortId. `use` is quoted because it is a DuckDB statement
+    // keyword, and aliased so the mapped object stays a valid TS identifier.
+    dataSource
+      .runQuery(
+        `
+          SELECT
+            cohortId,
+            cohortName,
+            shortName,
+            subsetParent,
+            isSubset,
+            subsetDefinitionId,
+            cohortEntries,
+            cohortSubjects,
+            "use" AS cohortUse
+          FROM cohortsInfo
+          ORDER BY cohortId
+        `,
+      )
+      .then((rows) => {
+        if (!active) return
+        const index: CohortInfoIndex = {}
+        for (const row of rows) {
+          const cohort = mapCohortInfoRow(row)
+          index[cohort.cohortId] = cohort
+        }
+        setCohortsInfo(index)
+      })
+
     return () => {
       active = false
     }
@@ -401,7 +435,8 @@ export default function DuckDbExplorer({
   const table = useMaterialReactTable({
     columns,
     data: tableMode === "hierarchy" ? hierarchyRows : tableRows,
-    enableSorting: false,
+    // enableSorting: false,
+    enableColumnPinning: true,
     enableColumnFilters: true,
     enablePagination: true,
     enableBottomToolbar: true,
@@ -437,7 +472,9 @@ export default function DuckDbExplorer({
       sorting: [{ id: "binaryEffect", desc: true }],
       pagination: { pageSize: 20, pageIndex: 0 },
       density: "compact",
-      columnPinning: { left: ["mrt-row-expand", "info"] },
+      // Pinning state holds *leaf* column ids only — TanStack matches them against each column's
+      // leaves, so the "info" group id would never resolve. Its two leaves have to be named instead.
+      columnPinning: { left: ["mrt-row-expand", "conceptInfo", "ancestorConceptIds", "info"] },
       showColumnFilters: true,
     },
     rowCount: tableMode === "flat" ? tableRowCount : undefined,
@@ -467,9 +504,11 @@ export default function DuckDbExplorer({
             : tableMode === "hierarchy" && row.depth > 0
               ? alpha("#1976d2", Math.min(0.035 + row.depth * 0.025, 0.12))
               : undefined,
-        "& td:first-of-type": {
-          position: "relative",
-        },
+        // No `position` here: MRT already gives body cells `position: relative`, and a pinned cell
+        // gets `sticky` instead. A rule at this level (`.row-class td:first-of-type`) outranks the
+        // cell's own class, so re-declaring `relative` would un-stick the pinned first column while
+        // leaving the header — a <th>, untouched by this row sx — stuck. Either value still anchors
+        // the ::before depth bar below.
         "& td:first-of-type::before":
           tableMode === "hierarchy" && row.depth > 0
             ? {
@@ -599,6 +638,7 @@ export default function DuckDbExplorer({
   return (
     <Stack sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {cohortsInfo && <CohortsInfoTable cohortsInfo={cohortsInfo} />}
         <DuckDbFilterBar
           table={table}
           appliedColumnFilters={appliedColumnFilters}

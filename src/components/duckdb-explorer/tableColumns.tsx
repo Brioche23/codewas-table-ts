@@ -5,8 +5,13 @@ import { CasesControlCell } from "../../table/custom-cells/CasesControlsCell"
 import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "../Visuals"
 import { parseNumericFilter } from "./queryBuilders"
 import type { ConceptSummaryRow } from "./types"
-import { buildDistributionRows, buildStats, parseCategoricalDistribution } from "./utils/utils"
-import { CopyButton } from "./UI/CopyButton"
+import {
+  MAX_NEG_LOG10,
+  buildDistributionRows,
+  buildStats,
+  negLog10,
+  parseCategoricalDistribution,
+} from "./utils/utils"
 
 export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   row,
@@ -44,6 +49,7 @@ function NA_Chip() {
 export function valueChip(value: number | null | undefined, threshold: number, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return <NA_Chip />
+    // return value
   }
   return (
     <Chip
@@ -53,6 +59,25 @@ export function valueChip(value: number | null | undefined, threshold: number, d
       variant={"outlined"}
     />
   )
+}
+
+// -log10(p) threshold above which the chip turns green (genome-wide-significance style cutoff).
+const LOG_P_THRESHOLD = 8
+
+// Cell renderer for the -log10(p) columns. A value sitting at the underflow ceiling means the
+// p-value was exported as 0, so it shows as a lower bound instead of a spuriously precise "323.31".
+function logPChip(value: number | null | undefined) {
+  if (value != null && !Number.isNaN(value) && value >= MAX_NEG_LOG10) {
+    return (
+      <Chip
+        label={`>${MAX_NEG_LOG10.toFixed(0)}`}
+        size="small"
+        color="success"
+        variant="outlined"
+      />
+    )
+  }
+  return valueChip(value, LOG_P_THRESHOLD)
 }
 
 export function makeContinuousColumns(
@@ -135,12 +160,10 @@ export function makeContinuousColumns(
       {
         id: `${prefix}LogP`,
         header: "pVal",
-        accessorFn: (row) => {
-          const pValue = row[`${prefix}PValue` as keyof ConceptSummaryRow] as number | null
-          return pValue && pValue > 0 ? -Math.log10(pValue) : null
-        },
+        accessorFn: (row) =>
+          negLog10(row[`${prefix}PValue` as keyof ConceptSummaryRow] as number | null),
         filterFn: numericExpressionFilter,
-        Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
+        Cell: ({ cell }) => logPChip(cell.getValue<number | null>()),
         size: 50,
       },
       {
@@ -184,10 +207,12 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
   return withAlternatingGroupShading([
     {
       id: "info",
+      accessorKey: "info",
       header: "Info",
       columns: [
         {
           id: "conceptInfo",
+          accessorKey: "conceptInfo",
           header: "Concept",
           accessorFn: (row) =>
             [
@@ -310,10 +335,9 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
         {
           id: "binaryLogP",
           header: "pVal",
-          accessorFn: (row) =>
-            row.binaryPValue && row.binaryPValue > 0 ? -Math.log10(row.binaryPValue) : null,
+          accessorFn: (row) => negLog10(row.binaryPValue),
           filterFn: numericExpressionFilter,
-          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
+          Cell: ({ cell }) => logPChip(cell.getValue<number | null>()),
           size: 80,
         },
         {
@@ -372,12 +396,9 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
         {
           id: "categoricalLogP",
           header: "pVal",
-          accessorFn: (row) =>
-            row.categoricalPValue && row.categoricalPValue > 0
-              ? -Math.log10(row.categoricalPValue)
-              : null,
+          accessorFn: (row) => negLog10(row.categoricalPValue),
           filterFn: numericExpressionFilter,
-          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 8),
+          Cell: ({ cell }) => logPChip(cell.getValue<number | null>()),
           size: 50,
         },
         {

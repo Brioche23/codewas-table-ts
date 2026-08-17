@@ -7,6 +7,7 @@ import {
   OVERVIEW_RAMP_TO,
 } from "../constants"
 import type { ChartBlockKey, ChartMetricKey, ConceptSummaryRow } from "../types"
+import { negLog10 } from "./utils"
 
 // Perceptual white→main-color ramp (d3 Lab interpolation). `t` is clamped to [0, 1]. Cells are encoded
 // with texture rather than color (see utils/heatmapPatterns); this ramp backs the color fallback and
@@ -25,8 +26,7 @@ export function getChartMetricValue(
   if (metric === "effectSize") {
     return row[`${prefix}EffectSize` as keyof ConceptSummaryRow] as number | null
   }
-  const pValue = row[`${prefix}PValue` as keyof ConceptSummaryRow] as number | null
-  return pValue && pValue > 0 ? -Math.log10(pValue) : null
+  return negLog10(row[`${prefix}PValue` as keyof ConceptSummaryRow] as number | null)
 }
 
 export function getBestHeatmapScore(row: ConceptSummaryRow) {

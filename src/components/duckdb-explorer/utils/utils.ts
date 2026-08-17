@@ -7,6 +7,26 @@ export function formatNumber(value: number | null | undefined, digits = 2) {
   return value.toFixed(digits)
 }
 
+// A p-value of exactly 0 is IEEE-754 underflow, not a true zero: the smallest positive double is
+// ~4.94e-324, so any p below that is written as 0 on export. -log10(0) is +Infinity, so every layer
+// used to map p = 0 to null — which rendered the *most* significant hits as "N/A", sorted them last
+// (NULLS LAST) and dropped them from "> x" filters. Clamp to the underflow ceiling instead: the true
+// -log10(p) is at least this large.
+export const MAX_NEG_LOG10 = -Math.log10(Number.MIN_VALUE) // ≈ 323.31
+
+export function negLog10(pValue: number | null | undefined): number | null {
+  if (pValue == null || Number.isNaN(pValue) || pValue < 0) return null
+  return pValue === 0 ? MAX_NEG_LOG10 : -Math.log10(pValue)
+}
+
+// Display form of -log10(p). Clamped values print as a lower bound (">323") rather than implying
+// two decimals of precision the export never had.
+export function formatNegLog10(pValue: number | null | undefined, digits = 2) {
+  const value = negLog10(pValue)
+  if (value == null) return "N/A"
+  return value >= MAX_NEG_LOG10 ? `>${MAX_NEG_LOG10.toFixed(0)}` : formatNumber(value, digits)
+}
+
 export function getSafeDownloadName(sourceLabel: string) {
   const baseName = sourceLabel.split("/").at(-1)?.split("\\").at(-1) ?? "codewas_results"
   return baseName.replace(/[^a-zA-Z0-9._-]/g, "_")
@@ -41,30 +61,28 @@ export function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
     countMode: row.countMode,
     binaryCases: row.binaryCaseYes ?? "",
     binaryControls: row.binaryControlYes ?? "",
-    binaryLogP: row.binaryPValue && row.binaryPValue > 0 ? -Math.log10(row.binaryPValue) : "",
+    binaryLogP: negLog10(row.binaryPValue) ?? "",
     binaryEffect: row.binaryEffectSize ?? "",
     countsCaseMean: row.countsCaseMean ?? "",
     countsControlMean: row.countsControlMean ?? "",
-    countsLogP: row.countsPValue && row.countsPValue > 0 ? -Math.log10(row.countsPValue) : "",
+    countsLogP: negLog10(row.countsPValue) ?? "",
     countsEffect: row.countsEffectSize ?? "",
     ageCaseMean: row.ageCaseMean ?? "",
     ageControlMean: row.ageControlMean ?? "",
-    ageLogP: row.agePValue && row.agePValue > 0 ? -Math.log10(row.agePValue) : "",
+    ageLogP: negLog10(row.agePValue) ?? "",
     ageEffect: row.ageEffectSize ?? "",
     daysCaseMean: row.daysCaseMean ?? "",
     daysControlMean: row.daysControlMean ?? "",
-    daysLogP: row.daysPValue && row.daysPValue > 0 ? -Math.log10(row.daysPValue) : "",
+    daysLogP: negLog10(row.daysPValue) ?? "",
     daysEffect: row.daysEffectSize ?? "",
     continuousCaseMean: row.continuousCaseMean ?? "",
     continuousControlMean: row.continuousControlMean ?? "",
     continuousUnit: row.continuousUnit ?? "",
-    continuousLogP:
-      row.continuousPValue && row.continuousPValue > 0 ? -Math.log10(row.continuousPValue) : "",
+    continuousLogP: negLog10(row.continuousPValue) ?? "",
     continuousEffect: row.continuousEffectSize ?? "",
     categoricalCases: row.categoricalCaseYes ?? "",
     categoricalControls: row.categoricalControlYes ?? "",
-    categoricalLogP:
-      row.categoricalPValue && row.categoricalPValue > 0 ? -Math.log10(row.categoricalPValue) : "",
+    categoricalLogP: negLog10(row.categoricalPValue) ?? "",
     categoricalEffect: row.categoricalEffectSize ?? "",
   }))
 

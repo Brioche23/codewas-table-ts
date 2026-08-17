@@ -1,4 +1,18 @@
-import type { BlockMetricRow, ConceptSummaryRow, HierarchyMetaRow } from "./types"
+import type { BlockMetricRow, CohortInfoRow, ConceptSummaryRow, HierarchyMetaRow } from "./types"
+
+export function mapCohortInfoRow(row: BlockMetricRow): CohortInfoRow {
+  return {
+    cohortId: Number(row.cohortId),
+    cohortName: (row.cohortName as string | null) ?? null,
+    shortName: (row.shortName as string | null) ?? null,
+    subsetParent: row.subsetParent == null ? null : Number(row.subsetParent),
+    isSubset: Boolean(row.isSubset),
+    subsetDefinitionId: row.subsetDefinitionId == null ? null : Number(row.subsetDefinitionId),
+    cohortEntries: row.cohortEntries == null ? null : Number(row.cohortEntries),
+    cohortSubjects: row.cohortSubjects == null ? null : Number(row.cohortSubjects),
+    cohortUse: (row.cohortUse as string | null) ?? null,
+  }
+}
 
 export function mapSummaryRow(row: BlockMetricRow): ConceptSummaryRow {
   return {

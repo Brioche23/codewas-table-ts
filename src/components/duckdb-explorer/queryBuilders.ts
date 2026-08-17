@@ -1,8 +1,21 @@
 import type { MRT_ColumnFiltersState, MRT_PaginationState, MRT_SortingState } from "material-react-table"
 import { DISPLAY_ANALYSIS_TYPES } from "./constants"
+import { MAX_NEG_LOG10 } from "./utils/utils"
 
 export function escapeSqlString(value: string) {
   return value.replace(/'/g, "''")
+}
+
+// -log10(p) that survives underflow. Two reasons this is not just `-log10(expr)`: DuckDB raises
+// "cannot take logarithm of zero" rather than returning infinity, and a p exported as 0 is really
+// "smaller than a double can hold", so it gets the clamped ceiling (see MAX_NEG_LOG10). Sorting and
+// column filters run on this expression, so it has to agree with the client-side negLog10().
+function negLog10Sql(expr: string) {
+  return `CASE
+    WHEN ${expr} > 0 THEN -log10(${expr})
+    WHEN ${expr} = 0 THEN ${MAX_NEG_LOG10}
+    ELSE NULL
+  END`
 }
 
 export function parseNumericFilter(filterValue: string) {
@@ -137,7 +150,7 @@ function buildContinuousBlockQueryFromBase(
       MAX(control_cov.p75Value) AS ${prefix}P75Control,
       MAX(control_cov.p90Value) AS ${prefix}P90Control,
       MIN(st.pValue) AS ${prefix}PValue,
-      CASE WHEN MIN(st.pValue) > 0 THEN -log10(MIN(st.pValue)) ELSE NULL END AS ${prefix}LogP,
+      ${negLog10Sql("MIN(st.pValue)")} AS ${prefix}LogP,
       MAX(st.effectSize) AS ${prefix}EffectSize,
       MAX(st.standarizeMeanDifference) AS ${prefix}Smd,
       MAX(st.testName) AS ${prefix}TestName,
@@ -287,14 +300,14 @@ function buildSummaryQueryCtes(countMode: string, domainId: string, searchText: 
         bs.binaryTotalCases,
         bs.binaryTotalControls,
         bs.binaryPValue,
-        CASE WHEN bs.binaryPValue > 0 THEN -log10(bs.binaryPValue) ELSE NULL END AS binaryLogP,
+        ${negLog10Sql("bs.binaryPValue")} AS binaryLogP,
         bs.binaryEffectSize,
         bs.binarySmd,
         bs.binaryTestName,
         cs.categoricalCaseYes,
         cs.categoricalControlYes,
         cs.categoricalPValue,
-        CASE WHEN cs.categoricalPValue > 0 THEN -log10(cs.categoricalPValue) ELSE NULL END AS categoricalLogP,
+        ${negLog10Sql("cs.categoricalPValue")} AS categoricalLogP,
         cs.categoricalEffectSize,
         cs.categoricalSmd,
         cs.categoricalTestName,

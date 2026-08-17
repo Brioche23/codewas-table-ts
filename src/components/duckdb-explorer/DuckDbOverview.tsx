@@ -125,7 +125,9 @@ function truncateToWidth(context: CanvasRenderingContext2D, text: string, maxWid
 }
 
 function conceptLabel(row: ConceptSummaryRow) {
-  return row.conceptName ?? row.conceptCode ?? String(row.conceptId)
+  return row.conceptName
+    ? `${row.conceptName} ${row.conceptCode}`
+    : (row.conceptCode ?? String(row.conceptId))
 }
 
 // One hierarchy level as a transposed heatmap. Measures its own width, caps columns to what fits,

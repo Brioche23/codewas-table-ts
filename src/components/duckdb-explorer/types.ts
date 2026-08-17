@@ -116,6 +116,26 @@ export type ConceptSummaryRow = {
   subRows?: ConceptSummaryRow[]
 }
 
+// One row of the `cohortsInfo` table. Unlike `analysisRef`, this table is keyed by cohort (not by
+// analysis) and carries no domainId/analysisType — it describes the case/control cohorts themselves.
+// The `sql` and `json` columns (full cohort definitions) are deliberately not selected: they are
+// large and unused by the explorer.
+export type CohortInfoRow = {
+  cohortId: number
+  cohortName: string | null
+  shortName: string | null
+  subsetParent: number | null
+  isSubset: boolean
+  subsetDefinitionId: number | null
+  cohortEntries: number | null
+  cohortSubjects: number | null
+  // "use" in SQL — "cases" or "controls" in the shipped exports.
+  cohortUse: string | null
+}
+
+// cohortsInfo keyed by cohortId, so statisticalTests.caseCohortId / .controlCohortId resolve in O(1).
+export type CohortInfoIndex = Record<number, CohortInfoRow>
+
 export type BlockMetricRow = Record<string, unknown>
 export type ChartBlockKey = "Binary" | "Count" | "Age" | "Days" | "Continuous" | "Categorical"
 export type ChartMetricKey = "-log10" | "effectSize"

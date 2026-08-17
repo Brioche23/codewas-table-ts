@@ -29,6 +29,7 @@ import {
 import { COLUMNS } from "../../utils/constants"
 import { CHART_BLOCK_FIELD_PREFIX, SCATTER_POINT_CAP } from "./constants"
 import { getChartMetricValue } from "./utils/heatmapUtils"
+import { negLog10 } from "./utils/utils"
 import type { ChartBlockKey, ChartMetricKey, ConceptSummaryRow } from "./types"
 import { useClipboard } from "./context/ClipboardContext"
 
@@ -304,7 +305,7 @@ function getBlockDetail(row: ConceptSummaryRow, block: ChartBlockKey): BlockDeta
   const detail: BlockDetail = {
     testName: readString(row, `${prefix}TestName`),
     pValue,
-    logp: pValue != null && pValue > 0 ? -Math.log10(pValue) : null,
+    logp: negLog10(pValue),
     effectSize: readNumber(row, `${prefix}EffectSize`),
     smd: readNumber(row, `${prefix}Smd`),
     unit: block === "Continuous" ? readString(row, "continuousUnit") : null,
