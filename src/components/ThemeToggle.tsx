@@ -15,6 +15,7 @@ import MenuItem from "@mui/material/MenuItem"
 import MenuList from "@mui/material/MenuList"
 import Stack from "@mui/material/Stack"
 import { useState, useRef, type SyntheticEvent, type KeyboardEvent, useEffect } from "react"
+import { DarkMode, LightMode } from "@mui/icons-material"
 
 export function ThemeToggle() {
   const { mode, setMode } = useColorScheme()
@@ -52,7 +53,7 @@ export function ThemeToggle() {
 
 export default function MenuListComposition() {
   const [open, setOpen] = useState(false)
-  const { setMode } = useColorScheme()
+  const { mode, setMode } = useColorScheme()
   const anchorRef = useRef<HTMLButtonElement>(null)
 
   const handleToggle = () => {
@@ -92,20 +93,32 @@ export default function MenuListComposition() {
   }, [open])
 
   return (
-    <Stack direction="row" spacing={2}>
-      <div>
+    <Box>
+      {mode === "dark" ? (
         <Button
           ref={anchorRef}
           size="small"
-          id="composition-button"
-          aria-controls={open ? "composition-menu" : undefined}
-          aria-expanded={open}
-          aria-haspopup="true"
-          onClick={handleToggle}
+          // id="composition-button"
+          // aria-controls={open ? "composition-menu" : undefined}
+          // aria-expanded={open}
+          // aria-haspopup="true"
+          onClick={() => handleItemClick("light")}
+          sx={{ minWidth: 0 }}
         >
-          Theme
+          <DarkMode fontSize="xs" />
         </Button>
-        <Popper
+      ) : (
+        <Button
+          size="small"
+          id="composition-button"
+          onClick={() => handleItemClick("dark")}
+          sx={{ minWidth: 0 }}
+        >
+          <LightMode fontSize="xs" />
+        </Button>
+      )}
+
+      {/* <Popper
           open={open}
           anchorEl={anchorRef.current}
           role={undefined}
@@ -136,8 +149,7 @@ export default function MenuListComposition() {
               </Paper>
             </Grow>
           )}
-        </Popper>
-      </div>
-    </Stack>
+        </Popper> */}
+    </Box>
   )
 }

@@ -1,4 +1,12 @@
-import { BottomNavigation, BottomNavigationAction, Box, Paper, Typography } from "@mui/material"
+import {
+  BottomNavigation,
+  BottomNavigationAction,
+  Box,
+  Paper,
+  Typography,
+  Stack,
+  Divider,
+} from "@mui/material"
 import type { Dispatch, SetStateAction } from "react"
 import type { LoadedDataSource, PageViewOptions } from "../utils/types"
 import { PieChart, TableChart } from "@mui/icons-material"
@@ -95,16 +103,24 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
           textAlign: "start",
           display: "flex",
           placeContent: "space-between",
+          alignItems: "center",
         }}
       >
         <Typography variant="caption" color="text.secondary">
           {metadata ?? "Loading..."}
         </Typography>
-        {/* <ThemeToggle /> */}
-        {/* <MenuListComposition /> */}
-        <Typography variant="caption" color="text.secondary">
-          CodeWAS Beta | FinnGen
-        </Typography>
+
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Typography variant="caption" color="text.secondary">
+            CodeWAS Beta
+          </Typography>
+          <Divider orientation="vertical" variant="middle" flexItem />
+          <Typography variant="caption" color="text.secondary">
+            FinnGen
+          </Typography>
+          <Divider orientation="vertical" variant="middle" flexItem />
+          <ThemeToggle />
+        </Stack>
       </Box>
     </Paper>
   )
