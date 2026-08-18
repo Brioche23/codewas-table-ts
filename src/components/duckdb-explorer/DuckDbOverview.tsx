@@ -126,7 +126,7 @@ function truncateToWidth(context: CanvasRenderingContext2D, text: string, maxWid
 
 function conceptLabel(row: ConceptSummaryRow) {
   return row.conceptName
-    ? `${row.conceptName} ${row.conceptCode}`
+    ? `${row.conceptName} | ${row.conceptCode}`
     : (row.conceptCode ?? String(row.conceptId))
 }
 
@@ -536,7 +536,7 @@ function OverviewLevel({
         {hoveredColumn && hoveredBlock ? (
           <>
             <strong>{conceptLabel(hoveredColumn.row)}</strong>
-            {hoveredColumn.row.conceptCode ? ` | ${hoveredColumn.row.conceptCode}` : ""}
+            {/* {hoveredColumn.row.conceptCode ? ` | ${hoveredColumn.row.conceptCode}` : ""} */}
             {hoveredColumn.directChildCount > 0
               ? ` | ${hoveredColumn.directChildCount.toLocaleString()} direct children · ${hoveredColumn.agg.count.toLocaleString()} in subtree — click to open below`
               : " | leaf — click to open in the table"}

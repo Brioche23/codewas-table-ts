@@ -14,7 +14,7 @@ import type { PageViewOptions } from "./utils/types"
 // Shared base config so both themes are built by a single createTheme() call.
 // (createTheme's 2nd-arg merge form does NOT re-process keys like `spacing`,
 //  which is why putting `spacing: 6` there broke theme.spacing().)
-const baseThemeOptions = {
+export const baseThemeOptions = {
   colorSchemes: {
     light: true,
     dark: true,
@@ -32,6 +32,12 @@ const baseThemeOptions = {
     },
     success: {
       main: "#3a7d2e",
+    },
+    cases: {
+      main: "rgb(172, 71, 195)",
+    },
+    controls: {
+      main: "rgb(93, 144, 238)",
     },
   },
   typography: {
@@ -55,13 +61,46 @@ const baseThemeOptions = {
 // BOTH states. MenuItem is already flex+center by default, so it only needs the icon↔text gap; the
 // CLOSED Select renders the selected value into `.MuiSelect-select`, which isn't flex by default — so
 // that slot needs the same flex/center/gap. Merged via createTheme's 2nd arg so it isn't reprocessed.
+//
+// Compact sizing lives here too. Every input in the app should be dense by default, which is the
+// theme.components case in MUI's customization ladder (sx -> styled -> theme -> global) rather than
+// a shared `sx` spread across ~15 call sites. `size="small"` as a defaultProp also catches the chart
+// controls that never passed it (DuckDbHeatmap, DuckDbCharts) and were rendering at the 56px medium
+// height; the padding/font overrides then take small from MUI's 40px down to ~28px.
 const inputThemeOverrides = {
   components: {
+    MuiFormControl: { defaultProps: { size: "small" as const } },
+    MuiTextField: { defaultProps: { size: "small" as const } },
     MuiSelect: {
-      styleOverrides: { select: { display: "flex", alignItems: "center", gap: 8 } },
+      defaultProps: { size: "small" as const },
+      styleOverrides: {
+        // minHeight: MUI pins .MuiSelect-select to 1.4375em, which would hold the box at ~40px no
+        // matter how little padding the input has.
+        select: { display: "flex", alignItems: "center", gap: 8, minHeight: "unset" },
+      },
     },
+    MuiInputBase: { styleOverrides: { root: { fontSize: "0.75rem" } } },
+    MuiOutlinedInput: { styleOverrides: { input: { paddingTop: 4, paddingBottom: 4 } } },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontSize: "0.75rem",
+          // An outlined label sits inside the box until it shrinks, and MUI's offset assumes the
+          // full-height small input, so it has to come up to match the reduced padding. Scoped to
+          // outlined + not-shrunk so filled/standard labels and floating labels stay put.
+          "&.MuiInputLabel-outlined:not(.MuiInputLabel-shrink)": {
+            transform: "translate(10px, 5px) scale(1)",
+          },
+        },
+      },
+    },
+    // Toggles too, so the scatter's "Regression line" switch matches the selects beside it.
+    MuiSwitch: { defaultProps: { size: "small" as const } },
+    MuiCheckbox: { defaultProps: { size: "small" as const } },
+    // Font only, no minHeight: the open dropdown should match the field's text size, but its rows
+    // stay full height so they remain comfortable click targets.
     MuiMenuItem: {
-      styleOverrides: { root: { gap: 8 } },
+      styleOverrides: { root: { gap: 8, fontSize: "0.75rem" } },
     },
   },
 }

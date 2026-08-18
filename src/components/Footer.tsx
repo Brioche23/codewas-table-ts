@@ -2,6 +2,7 @@ import { BottomNavigation, BottomNavigationAction, Box, Paper, Typography } from
 import type { Dispatch, SetStateAction } from "react"
 import type { LoadedDataSource, PageViewOptions } from "../utils/types"
 import { PieChart, TableChart } from "@mui/icons-material"
+import ThemeToggle from "./ThemeToggle"
 
 interface FooterProps {
   text: string | null
@@ -61,11 +62,6 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
   return (
     <Paper
       sx={{
-        // position: "sticky",
-        // bottom: 0,
-        // borderTop: "1px solid",
-        // borderColor: "divider",
-        // display: "grid",
         zIndex: 10,
       }}
       elevation={3}
@@ -101,15 +97,9 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
           placeContent: "space-between",
         }}
       >
-        {/* {text && (
-          <Typography variant="body2" noWrap>
-          {text}
-          </Typography>
-          )} */}
         <Typography variant="caption" color="text.secondary">
           {metadata ?? "Loading..."}
         </Typography>
-
         {/* <ThemeToggle /> */}
         {/* <MenuListComposition /> */}
         <Typography variant="caption" color="text.secondary">

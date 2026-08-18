@@ -12,9 +12,10 @@ import {
 import type { BinaryDistribution, DistributionRow, SummaryStats } from "../utils/types"
 import { scaleOrdinal, scaleLinear } from "d3-scale"
 import { schemeTableau10 } from "d3-scale-chromatic"
+import { baseThemeOptions } from "../App"
 
-const casesColor = "#000000"
-const controlsColor = "#afaeae"
+const casesColor = "cases.main"
+const controlsColor = "controls.main"
 
 // ─── MeanComparisonChart ──────────────────────────────────────────────────
 //
@@ -160,12 +161,12 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               y={cy - 5}
               width={sdW * 2}
               height={10}
-              fill={casesColor}
+              fill={baseThemeOptions.palette.cases.main}
               fillOpacity={0.15}
               rx={2}
             />
             {/* Dot — cases */}
-            <circle cx={cx} cy={cy} r={5} fill={casesColor} />
+            <circle cx={cx} cy={cy} r={5} fill={baseThemeOptions.palette.cases.main} />
           </g>
 
           <g className="controls" transform={`translate(0, 15)`}>
@@ -177,13 +178,13 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               y={cy - 5}
               width={sdW2 * 2}
               height={10}
-              fill={controlsColor}
+              fill={baseThemeOptions.palette.controls.main}
               fillOpacity={0.15}
               rx={2}
             />
 
             {/* Dot — controls */}
-            <circle cx={cx2} cy={cy} r={5} fill={controlsColor} />
+            <circle cx={cx2} cy={cy} r={5} fill={baseThemeOptions.palette.controls.main} />
           </g>
         </svg>
       </Tooltip>

@@ -128,7 +128,7 @@ export default function DownloadMenu({
           aria-haspopup="true"
           onClick={handleToggle}
           startIcon={<Download />}
-          // size="small"
+          size="small"
         >
           Download
         </Button>

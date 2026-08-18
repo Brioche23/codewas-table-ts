@@ -436,6 +436,7 @@ export default function DuckDbExplorer({
     columns,
     data: tableMode === "hierarchy" ? hierarchyRows : tableRows,
     // enableSorting: false,
+
     enableColumnPinning: true,
     enableColumnFilters: true,
     enablePagination: true,
@@ -444,12 +445,53 @@ export default function DuckDbExplorer({
     enableStickyFooter: true,
     enableColumnActions: false,
     enableColumnOrdering: false,
+    // MRT's own global search is dead weight here: manualFiltering means MRT never filters client
+    // side, and nothing wires onGlobalFilterChange into the SQL, so typing in it did nothing. The
+    // toolbar's Search field below is the real one. Dropping it also removes an icon button.
+    enableGlobalFilter: false,
+    // Unlike the bottom toolbar, this one's inner row is in flow — MRT switches it to
+    // position: relative as soon as renderTopToolbarCustomActions is set — so the toolbar auto-sizes
+    // to its content and minHeight can safely go to 0.
+    muiTopToolbarProps: {
+      sx: {
+        minHeight: 0,
+        "& > div:last-of-type": { gap: 1, p: 0.5 },
+        "& .MuiIconButton-root": { p: 0.5 },
+        "& .MuiIconButton-root .MuiSvgIcon-root": { fontSize: "1.15rem" },
+      },
+    },
     // Fill the flex parent and keep the header/toolbars fixed while the rows scroll inside.
     muiTablePaperProps: {
       sx: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 },
     },
     muiTableContainerProps: {
       sx: { flex: 1, minHeight: 0, overflow: "auto" },
+    },
+    // Compact pagination: drop the first/last jump buttons (prev/next plus the row counter cover it)
+    // and offer only page sizes this table realistically uses.
+    muiPaginationProps: {
+      showFirstButton: false,
+      showLastButton: false,
+      rowsPerPageOptions: [20, 50, 100],
+    },
+    // The bottom toolbar reserves minHeight: 3.5rem and the pagination row adds 12px of its own
+    // vertical padding, which is most of the strip's height. Both are trimmed here; the selectors
+    // target MRT's own stable class names.
+    //
+    // minHeight cannot go to 0: MRT positions the pagination wrapper absolutely (right: 0, top: 0),
+    // so it contributes no height and the toolbar would collapse onto its only in-flow child — an
+    // empty <span/> — leaving the pagination hanging past the bottom edge, behind the footer. This
+    // floor has to stay >= the pagination's own height (~29px measured with the font sizes below).
+    muiBottomToolbarProps: {
+      sx: {
+        minHeight: "2rem",
+        "& .MuiTablePagination-root": { gap: 1, px: 1, py: 0.25 },
+        "& .MuiInputLabel-root, & .MuiTablePagination-root .MuiTypography-root": {
+          fontSize: "0.7rem",
+        },
+        "& .MuiSelect-select": { fontSize: "0.7rem", py: 0 },
+        "& .MuiIconButton-root": { p: 0.25 },
+      },
     },
     enableExpanding: tableMode === "hierarchy",
     // Always treat filtering as manual: the rows we hand MRT are already filtered by SQL (the applied
@@ -528,7 +570,10 @@ export default function DuckDbExplorer({
         direction="row"
         spacing={2}
         sx={{
-          mb: 0,
+          // 4px, not the 8px this had: the outlined Selects' floating labels sit ~5px above their
+          // input box and the toolbar clips overflow, so dropping this to 0 shears the label text off.
+          // 4px here + the toolbar's own 4px padding clears them.
+          my: 0.5,
           flexWrap: "wrap",
           placeContent: "space-between",
           alignContent: "center",
@@ -536,7 +581,7 @@ export default function DuckDbExplorer({
         }}
       >
         <Stack direction="row" spacing={2}>
-          <FormControl sx={{ minWidth: 150 }} size="small">
+          <FormControl sx={{ minWidth: 120 }} size="small">
             <InputLabel id="table-mode-label">Table View</InputLabel>
             <Select
               labelId="table-mode-label"
@@ -554,7 +599,7 @@ export default function DuckDbExplorer({
               <MenuItem value="hierarchy">Hierarchy</MenuItem>
             </Select>
           </FormControl>
-          <FormControl sx={{ minWidth: 160 }} size="small">
+          <FormControl sx={{ minWidth: 130 }} size="small">
             <InputLabel id="count-mode-label">Count Mode</InputLabel>
             <Select
               labelId="count-mode-label"
@@ -568,7 +613,7 @@ export default function DuckDbExplorer({
               <MenuItem value="descendant">All descendants</MenuItem>
             </Select>
           </FormControl>
-          <FormControl sx={{ minWidth: 160 }} size="small">
+          <FormControl sx={{ minWidth: 130 }} size="small">
             <InputLabel id="domain-label">Domain</InputLabel>
             <Select
               labelId="domain-label"

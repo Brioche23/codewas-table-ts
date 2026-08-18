@@ -145,7 +145,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 200 }}>
-          <FormControlLabel control={<Switch defaultChecked />} label="Regression line" />
+          <FormControlLabel control={<Switch defaultChecked />} label="Regression line [VALUE]" />
         </FormControl>
       </Grid>
       <Paper sx={{ width: "100%", height: 400 }}>
