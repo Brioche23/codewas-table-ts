@@ -53,7 +53,7 @@ export function valueChip(value: number | null | undefined, threshold: number, d
   }
   return (
     <Chip
-      label={value.toFixed(digits)}
+      label={value === Infinity ? "∞" : value.toFixed(digits)}
       size="small"
       color={value >= threshold ? "success" : "default"}
       variant={"outlined"}
@@ -234,23 +234,23 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                     : "transparent",
               }}
             >
-              <Typography variant="body2" sx={{ color: "primary.main" }}>
+              <Typography variant="body2" sx={{ color: "primary.main", fontWeight: 700 }}>
                 {row.original.conceptName ?? row.original.conceptId}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              {/* <Typography variant="caption" color="text.secondary">
                 Source code: {row.original.conceptCode ?? "N/A"}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </Typography> */}
+              {/* <Typography variant="body2" color="text.secondary">
                 Concept ID: {row.original.conceptId}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+              </Typography> */}
+              {/* <Typography variant="caption" color="text.secondary">
                 Domain: {row.original.domainId}
-              </Typography>
+              </Typography> */}
               <Box>
                 <Chip
                   size="small"
                   label={row.original.countMode === "descendant" ? "All descendants" : "Exact code"}
-                  variant="outlined"
+                  // variant="outlined"
                 />
                 {row.depth > 0 && (
                   <Chip

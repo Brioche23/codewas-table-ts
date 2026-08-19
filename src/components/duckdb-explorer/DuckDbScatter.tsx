@@ -66,6 +66,10 @@ export function DuckDbScatter({
   )
   const dataset = useMemo(() => allScatterPoints.slice(0, SCATTER_POINT_CAP), [allScatterPoints])
 
+  const regression = useMemo(
+    () => linearRegression(dataset as { x: number; y: number }[]),
+    [dataset],
+  )
   const rowsByKey = useMemo(() => {
     const map = new Map<string, ConceptSummaryRow>()
     for (const row of rows) map.set(row.rowKey, row)
@@ -144,8 +148,12 @@ export function DuckDbScatter({
         </Grid>
         <FormControl size="small">
           <FormControlLabel
-            control={<Switch defaultChecked size="small" onChange={toggleRegression} />}
-            label="Regression line"
+            control={<Switch checked={showRegression} size="small" onChange={toggleRegression} />}
+            label={
+              Number.isFinite(regression.m)
+                ? `Regression line (β = ${regression.m.toFixed(3)}, R² = ${regression.r2.toFixed(2)})`
+                : "Regression line"
+            }
           />
         </FormControl>
       </Grid>
@@ -188,7 +196,9 @@ export function DuckDbScatter({
               copy(dataset[d.dataIndex].label, "Copied Concept Name")
             }}
           >
-            {showRegression && <RegressionLine seriesId="has-value" colorIndex={2} />}{" "}
+            {showRegression && (
+              <RegressionLine seriesId="has-value" fit={regression} colorIndex={2} />
+            )}
             <HoveredPointHighlight dataset={dataset} />
           </ScatterChart>
         </Paper>
@@ -197,7 +207,15 @@ export function DuckDbScatter({
   )
 }
 
-function RegressionLine({ seriesId, colorIndex }: { seriesId: string; colorIndex: number }) {
+function RegressionLine({
+  seriesId,
+  fit,
+  colorIndex,
+}: {
+  seriesId: string
+  fit: { m: number; b: number }
+  colorIndex: number
+}) {
   const theme = useTheme()
   const palette = rainbowSurgePalette(theme.palette.mode)
   const stroke = palette[colorIndex]
@@ -207,7 +225,7 @@ function RegressionLine({ seriesId, colorIndex }: { seriesId: string; colorIndex
   const yScale = useYScale(series.yAxisId!)
   const clipPathId = `linear-regression-clip-${useId()}`
 
-  const { m, b } = linearRegression(series.data ?? [])
+  const { m, b } = fit
 
   const xDomain = xScale.domain() as [number, number]
   const x1 = xScale(xDomain[0])
@@ -476,25 +494,27 @@ function MetricChip({
 
 function linearRegression(points: ReadonlyArray<{ x: number; y: number }>) {
   const n = points.length
-
-  // Calculate sums
   let sumX = 0,
     sumY = 0,
     sumXY = 0,
-    sumX2 = 0
+    sumX2 = 0,
+    sumY2 = 0
 
   for (let i = 0; i < n; i += 1) {
-    const x = points[i].x
-    const y = points[i].y
+    const { x, y } = points[i]
     sumX += x
     sumY += y
     sumXY += x * y
     sumX2 += x * x
+    sumY2 += y * y
   }
 
-  // Calculate slope (m) and intercept (b)
   const m = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
   const b = (sumY - m * sumX) / n
 
-  return { m, b }
+  // Pearson r, so the label can report goodness of fit alongside the slope
+  const den = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY))
+  const r = den === 0 ? NaN : (n * sumXY - sumX * sumY) / den
+
+  return { m, b, r, r2: r * r }
 }

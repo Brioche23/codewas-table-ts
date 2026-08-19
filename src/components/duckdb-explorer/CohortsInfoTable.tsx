@@ -39,7 +39,7 @@ const headCellSx = {
 } as const
 
 export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
-  const cohorts = Object.values(cohortsInfo)
+  const cohorts = Object.values(cohortsInfo).filter((c) => c.cohortUse)
   if (cohorts.length === 0) return null
 
   return (
@@ -53,7 +53,7 @@ export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
         fontSize: 12,
       }}
     >
-      <Typography sx={headCellSx}>Cohorts info</Typography>
+      {/* <Typography sx={headCellSx}>Cohorts info</Typography> */}
       <TableContainer>
         <Table size="small" aria-label="cohorts info" sx={{ width: "auto" }}>
           {/* <TableHead>

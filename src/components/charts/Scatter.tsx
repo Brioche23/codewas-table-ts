@@ -216,6 +216,9 @@ function RegressionLine({ seriesId, colorIndex }: { seriesId: string; colorIndex
       <ChartsClipPath id={clipPathId} />
       <g clipPath={`url(#${clipPathId})`}>
         <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={stroke} strokeWidth={1} strokeOpacity={0.5} />
+        <text x={x1} y={y1}>
+          {m}
+        </text>
       </g>
     </Fragment>
   )
