@@ -46,7 +46,7 @@ export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
   if (cohorts.length === 0) return null
 
   return (
-    <TableContainer component={Box} sx={{ width: "auto", minWidth: "220px" }}>
+    <TableContainer component={Box} sx={{ width: "auto", minWidth: "350px", maxWidth: "500px" }}>
       <Table size="small" aria-label="cohorts info">
         {/* <TableHead>
           <TableRow>
@@ -61,8 +61,8 @@ export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
         <TableBody>
           {cohorts.map((cohort) => (
             <TableRow key={cohort.cohortId}>
-              {/* <TableCell sx={cellSx}>{cohort.cohortName}</TableCell> */}
-              <TableCell sx={cellSx}>{cohort.shortName}</TableCell>
+              <TableCell sx={cellSx}>{cohort.cohortName}</TableCell>
+              {/* <TableCell sx={cellSx}>{cohort.shortName}</TableCell> */}
               <TableCell sx={{ ...cellSx, color: `${cohort.cohortUse}.main`, fontWeight: 700 }}>
                 {cohort.cohortUse}
               </TableCell>
