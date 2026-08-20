@@ -91,7 +91,7 @@ export function FilterWrapper({ table }: { table: MRT_TableInstance<ConceptRow> 
           onClearAll={() => table.resetColumnFilters()}
           onSave={handleSave}
         />
-        <Divider orientation="vertical" flexItem />
+        {activeFilters.length > 0 && <Divider orientation="vertical" flexItem />}
         <FilterPresets
           presets={presets}
           selectedPresetId={selectedPresetId}

@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from "react"
-import { Badge, Box, Button, Divider } from "@mui/material"
+import { Badge, Box, Button, Divider, Stack } from "@mui/material"
 import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
 import type { FilterPreset } from "../../utils/types"
 import { FilterChips, type ActiveFilter } from "../filters/FilterChips"
@@ -140,32 +140,16 @@ export function DuckDbFilterBar({
   }
 
   return (
-    <Box
+    <Stack
+      direction={"row"}
+      spacing={"auto"}
       sx={{
-        display: "flex",
-        gap: 2,
+        width: "100%",
         alignItems: "center",
-        flexWrap: "wrap",
+        // flexWrap: "wrap",
         p: 1,
-        borderBottom: "1px solid",
-        borderColor: "divider",
       }}
     >
-      {/* <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
-        {rowCount} rows
-      </Typography> */}
-      <Badge color="warning" variant="dot" invisible={!isDirty}>
-        <Button
-          size="small"
-          variant={isDirty ? "contained" : "outlined"}
-          color="primary"
-          disabled={!isDirty}
-          onClick={onApply}
-        >
-          Apply Filters
-        </Button>
-      </Badge>
-      <Divider orientation="vertical" flexItem />
       <FilterChips filters={activeFilters} onClearAll={handleClearAll} onSave={handleSave} />
       {presets.length > 0 && <Divider orientation="vertical" flexItem />}
       <FilterPresets
@@ -175,6 +159,18 @@ export function DuckDbFilterBar({
         onDelete={handleDelete}
         onEdit={handleEdit}
       />
-    </Box>
+      {presets && <Divider orientation="vertical" flexItem />}
+      <Badge color="warning" variant="dot" invisible={!isDirty}>
+        <Button
+          size="small"
+          variant={isDirty ? "contained" : "outlined"}
+          color="primary"
+          disabled={!isDirty}
+          onClick={onApply}
+        >
+          Apply
+        </Button>
+      </Badge>
+    </Stack>
   )
 }

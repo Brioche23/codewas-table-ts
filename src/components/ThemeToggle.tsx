@@ -7,14 +7,8 @@ import FormLabel from "@mui/material/FormLabel"
 import { useColorScheme } from "@mui/material/styles"
 
 import Button from "@mui/material/Button"
-import ClickAwayListener from "@mui/material/ClickAwayListener"
-import Grow from "@mui/material/Grow"
-import Paper from "@mui/material/Paper"
-import Popper from "@mui/material/Popper"
-import MenuItem from "@mui/material/MenuItem"
-import MenuList from "@mui/material/MenuList"
-import Stack from "@mui/material/Stack"
-import { useState, useRef, type SyntheticEvent, type KeyboardEvent, useEffect } from "react"
+
+import { useState, useRef, useEffect } from "react"
 import { DarkMode, LightMode } from "@mui/icons-material"
 
 export function ThemeToggle() {
@@ -55,27 +49,6 @@ export default function MenuListComposition() {
   const [open, setOpen] = useState(false)
   const { mode, setMode } = useColorScheme()
   const anchorRef = useRef<HTMLButtonElement>(null)
-
-  const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen)
-  }
-
-  const handleClose = (event: Event | SyntheticEvent) => {
-    if (anchorRef.current && anchorRef.current.contains(event.target as HTMLElement)) {
-      return
-    }
-
-    setOpen(false)
-  }
-
-  function handleListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
-    if (event.key === "Tab") {
-      event.preventDefault()
-      setOpen(false)
-    } else if (event.key === "Escape") {
-      setOpen(false)
-    }
-  }
 
   function handleItemClick(menuMode: "light" | "dark" | "system") {
     setMode(menuMode)

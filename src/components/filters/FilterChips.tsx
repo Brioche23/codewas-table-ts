@@ -33,7 +33,8 @@ const modalStyle = {
   transform: "translate(-50%, -50%)",
   width: 400,
   bgcolor: "background.paper",
-  border: "2px solid #000",
+  border: "2px solid",
+  borderColor: "divider",
   boxShadow: 24,
   p: 4,
   display: "flex",
@@ -83,20 +84,8 @@ export function FilterChips({ filters, onClearAll, onSave }: FilterChipsProps) {
         />
       ))}
 
-      <Chip
-        label="Clear all"
-        icon={<Clear />}
-        variant="outlined"
-        onClick={onClearAll}
-        size="small"
-      />
-      <Chip
-        label="Save Preset"
-        icon={<Save />}
-        variant="outlined"
-        onClick={handleOpen}
-        size="small"
-      />
+      <Chip label="Clear" icon={<Clear />} variant="outlined" onClick={onClearAll} size="small" />
+      <Chip label="Save " icon={<Save />} variant="outlined" onClick={handleOpen} size="small" />
 
       <Modal open={open} onClose={handleClose}>
         <Box sx={modalStyle}>

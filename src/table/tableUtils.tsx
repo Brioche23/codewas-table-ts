@@ -2,14 +2,24 @@ import { Chip, Typography } from "@mui/material"
 import type { MRT_ColumnDef } from "material-react-table"
 import type { ConceptRow } from "../utils/types"
 
-export const valueChip = (value: number | null, threshold: number) => {
+// Mirrors the DuckDb-mode chip tones (see duckdb-explorer/tableColumns): purple means
+// significance, blue means effect size.
+type ChipTone = "pvalue" | "primary"
+
+export const valueChip = (
+  value: number | null,
+  threshold: number,
+  { tone = "pvalue" }: { tone?: ChipTone } = {},
+) => {
   if (value === null) return <Chip label="n/a" size="small" />
 
-  const color = value >= threshold ? "success" : "error"
+  // Full palette paths, not bare channel names: `color="success"` resolves to the palette
+  // *object* and silently emits nothing.
+  const color = value >= threshold ? `${tone}.main` : "text.disabled"
 
   // return <Chip label={fmt(value)} size="small" color={color} />
   return (
-    <Typography variant="body2" color={color}>
+    <Typography variant="body2" sx={{ color }}>
       {fmt(value)}
     </Typography>
   )

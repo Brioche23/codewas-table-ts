@@ -116,7 +116,6 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
             ))}
           </Select>
         </FormControl>
-
         {/* Y axis: picks a column */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Y Axis</InputLabel>
@@ -132,7 +131,6 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
             ))}
           </Select>
         </FormControl>
-
         {/* Metric: picks a key (pValue, effectSize, etc.) */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Metric</InputLabel>

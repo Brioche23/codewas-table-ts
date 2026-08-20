@@ -34,7 +34,8 @@ const modalStyle = {
   transform: "translate(-50%, -50%)",
   width: 400,
   bgcolor: "background.paper",
-  border: "2px solid #000",
+  border: "2px solid",
+  borderColor: "divider",
   boxShadow: 24,
   p: 4,
   display: "flex",
@@ -111,7 +112,7 @@ export function FilterPresets({
 
       <Modal open={!!editingPreset} onClose={handleCloseEdit}>
         <Box sx={modalStyle}>
-          <Typography variant="h6">Edit preset</Typography>
+          <Typography variant="h6">Edit</Typography>
 
           <TextField
             label="Preset name"

@@ -129,6 +129,7 @@ export default function DownloadMenu({
           onClick={handleToggle}
           startIcon={<Download />}
           size="small"
+          variant="outlined"
         >
           Download
         </Button>

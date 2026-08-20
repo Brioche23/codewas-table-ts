@@ -96,7 +96,7 @@ export function DuckDbScatter({
 
   return (
     <Stack spacing={3}>
-      <Grid container spacing={2} sx={{ p: 1 }}>
+      <Grid container spacing={2} sx={{ p: 1, pt: 2 }}>
         {sharedControls}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <FormControl fullWidth size={"small"}>

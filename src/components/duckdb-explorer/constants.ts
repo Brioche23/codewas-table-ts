@@ -1,4 +1,5 @@
 import type { MRT_ColumnFiltersState } from "material-react-table"
+import { dataHues } from "../../theme"
 import type { AnalysisBlock, ChartBlockKey } from "./types"
 
 export const DISPLAY_ANALYSIS_TYPES: AnalysisBlock[] = [
@@ -54,7 +55,8 @@ export const OVERVIEW_MIN_LABEL_PX = 64
 // Color ramp behind the heatmap's color *fallback* (HEATMAP_ENCODING in utils/heatmapPatterns) and the
 // swatches sampled from it. Give the two ends; everything interpolates between (see rampColor in
 // utils/heatmapUtils). Cells themselves are encoded with texture — the ramp is not on that path.
-export const OVERVIEW_RAMP_FROM = "#ffefef"
-export const OVERVIEW_RAMP_TO = "#a600f5"
+// The ramp shows evidence strength (-log10 p), so it runs along the p-value hue.
+export const OVERVIEW_RAMP_FROM = dataHues.pvalueFaint
+export const OVERVIEW_RAMP_TO = dataHues.pvalue
 // The number of steps in both heatmap scales — and so the number of draggable breakpoints on the
 // global scale (steps - 1) — comes from HEATMAP_PATTERNS.length in utils/heatmapPatterns.

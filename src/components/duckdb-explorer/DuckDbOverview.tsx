@@ -45,7 +45,7 @@ import type { ChartBlockKey, ConceptSummaryRow, HeatmapScaleMode } from "./types
 import { formatNumber } from "./utils/utils"
 import MultiTrackColorSlider from "./UI/MultiTrackColorSlider"
 import { Info, Restore, Search } from "@mui/icons-material"
-import React from "react"
+import { useTheme } from "@mui/material/styles"
 
 // Canvas geometry (CSS pixels). The overview is transposed: analyses are the (few, fixed) rows and
 // concepts are the (many) columns. Columns follow the parent→children hierarchy (buildHierarchyIndex):
@@ -65,14 +65,10 @@ const MIN_CANVAS_WIDTH = LABEL_WIDTH + 120
 const AFFORD_BAND_H = 15 // max bar height (a parent with the most children in its panel)
 const AFFORD_MIN_BAR_H = 4 // min bar height so a single-child parent still reads as a bar
 const LEAF_TICK_H = 3
-const PARENT_COLOR = "#1976d2"
-const LEAF_COLOR = "#c2c2c2"
 
 // Per-row sort glyph in the label gutter: a fixed icon column near the gutter's right edge.
 const SORT_ICON_RIGHT_PAD = 4
 const SORT_ICON_W = 16
-const SORT_ACTIVE_COLOR = "#0d47a1"
-const SORT_INACTIVE_COLOR = "#bbbbbb"
 
 const VERTICAL_GUTTER = 0
 const HORIZONTAL_GUTTER = 0
@@ -156,6 +152,36 @@ function OverviewLevel({
   // null = use the relevance default (so the default stays dynamic until the user picks a row).
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null)
 
+  // The canvas paints with plain strings, so every color has to be resolved from the theme by
+  // hand. It must be the theme from *context* (useTheme), not the `appTheme` object: `appTheme
+  // .palette` is the default color scheme frozen at createTheme() time, so reading it — at module
+  // scope or inside a callback — always yields the light palette no matter what the toggle says.
+  // ThemeProvider swaps what context holds; it does not mutate the object you imported.
+  const theme = useTheme()
+  const canvasColors = useMemo(() => {
+    const isLight = theme.palette.mode === "light"
+    return {
+      canvasBg: theme.palette.background.paper,
+      gutterBg: theme.palette.background.paper,
+      gutterText: theme.palette.text.primary,
+      emptyText: theme.palette.text.secondary,
+      // Affordance band: parent bars in the app blue, leaf ticks in the faintest text tone.
+      parentBar: theme.palette.primary.main,
+      leafTick: theme.palette.text.disabled,
+      sortActive: theme.palette.primary.main,
+      sortInactive: theme.palette.text.disabled,
+      labelBg: theme.palette.background.paper,
+      // 12px canvas text over `paper` — the `main` step is too light to read against it, so labels
+      // take the darker (light mode) / lighter (dark mode) end of the ramp.
+      labelParent: isLight ? theme.palette.primary.dark : theme.palette.primary.light,
+      labelLeaf: theme.palette.text.primary,
+      // Expanded column: `secondary` (amber) so a persistent selection is a different hue from the
+      // blue hover outline, not just a different shade of it.
+      expanded: isLight ? theme.palette.secondary.dark : theme.palette.secondary.light,
+      hover: theme.palette.primary.main,
+    }
+  }, [theme])
+
   useLayoutEffect(() => {
     const element = containerRef.current
     if (!element) return
@@ -237,13 +263,13 @@ function OverviewLevel({
     const context = prepareCanvas(canvas, canvasWidth, CANVAS_HEIGHT)
     if (!context) return
 
-    context.fillStyle = "#edf2f7"
+    context.fillStyle = canvasColors.canvasBg
     context.fillRect(0, 0, canvasWidth, CANVAS_HEIGHT)
     context.font = "12px Hack, monospace"
     context.textBaseline = "middle"
 
     if (shown.length === 0) {
-      context.fillStyle = "#888"
+      context.fillStyle = canvasColors.emptyText
       context.textAlign = "left"
       context.fillText("No concepts at this level.", 12, HEADER_WIDTH + ROW_HEIGHT)
       return
@@ -280,9 +306,9 @@ function OverviewLevel({
         )
       }
 
-      context.fillStyle = "#edf2f7"
+      context.fillStyle = canvasColors.gutterBg
       context.fillRect(0, y, LABEL_WIDTH - HORIZONTAL_GUTTER, ROW_HEIGHT - VERTICAL_GUTTER)
-      context.fillStyle = "#222"
+      context.fillStyle = canvasColors.gutterText
       context.textAlign = "left"
       const lines = getHeatmapHeaderLines(block)
       lines.forEach((line, lineIndex) => {
@@ -292,7 +318,7 @@ function OverviewLevel({
 
       // Sort affordance: the active row shows its direction arrow; others a faint toggle hint.
       const isSortBlock = b === sortBlockIndex
-      context.fillStyle = isSortBlock ? SORT_ACTIVE_COLOR : SORT_INACTIVE_COLOR
+      context.fillStyle = isSortBlock ? canvasColors.sortActive : canvasColors.sortInactive
       context.textAlign = "center"
       context.fillText(
         isSortBlock ? (effectiveSort.dir === "desc" ? "▼" : "▲") : "⇅",
@@ -303,14 +329,14 @@ function OverviewLevel({
     }
 
     // Header strip: gutter caption + rotated concept labels (all when wide enough, else only hovered).
-    context.fillStyle = "#edf2f7"
+    context.fillStyle = canvasColors.gutterBg
     context.fillRect(0, 0, LABEL_WIDTH - HORIZONTAL_GUTTER, HEADER_WIDTH)
-    context.fillStyle = "#444"
+    context.fillStyle = canvasColors.gutterText
     context.textAlign = "left"
     context.fillText("Concept →", 10, HEADER_WIDTH / 2)
 
     // Child-count sort toggle, stacked in the sort-icon column above the per-analysis sort arrows.
-    context.fillStyle = sortByChildren ? SORT_ACTIVE_COLOR : SORT_INACTIVE_COLOR
+    context.fillStyle = sortByChildren ? canvasColors.sortActive : canvasColors.sortInactive
     context.textAlign = "right"
     context.fillText("children", LABEL_WIDTH - SORT_ICON_RIGHT_PAD - SORT_ICON_W, HEADER_WIDTH / 2)
     context.textAlign = "center"
@@ -330,10 +356,10 @@ function OverviewLevel({
         const barHeight =
           // AFFORD_MIN_BAR_H +
           (AFFORD_BAND_H - AFFORD_MIN_BAR_H) * Math.sqrt(shown[i].directChildCount / maxChildCount)
-        context.fillStyle = PARENT_COLOR
+        context.fillStyle = canvasColors.parentBar
         context.fillRect(x, HEADER_WIDTH - barHeight, cellWidth, barHeight)
       } else {
-        context.fillStyle = LEAF_COLOR
+        context.fillStyle = canvasColors.leafTick
         context.fillRect(x, HEADER_WIDTH - LEAF_TICK_H, cellWidth, LEAF_TICK_H)
       }
     }
@@ -367,7 +393,7 @@ function OverviewLevel({
       }
       if (withBackground) {
         const left = align === "left" ? x : align === "right" ? x - textWidth : x - textWidth / 2
-        context.fillStyle = "#edf2f7"
+        context.fillStyle = canvasColors.labelBg
         context.fillRect(left - 3, labelY - 8, textWidth + 6, 16)
       }
       context.fillStyle = color
@@ -380,15 +406,20 @@ function OverviewLevel({
     // When columns are wide enough, label every one (kept inside its own column so they don't collide).
     if (showAllLabels) {
       for (let i = 0; i < shown.length; i++)
-        drawColumnLabel(i, shown[i].hasChildren ? "#0d47a1" : "#333", columnWidth - 6, false)
+        drawColumnLabel(
+          i,
+          shown[i].hasChildren ? canvasColors.labelParent : canvasColors.labelLeaf,
+          columnWidth - 6,
+          false,
+        )
     }
 
     // Persistent highlight for the expanded column (its children are the panel below).
     if (activeIndex >= 0) {
       const x = LABEL_WIDTH + activeIndex * columnWidth
-      context.fillStyle = "#1b5e20"
+      context.fillStyle = canvasColors.expanded
       context.fillRect(x, 0, Math.max(cellWidth, 2), 4)
-      context.strokeStyle = "#1b5e20"
+      context.strokeStyle = canvasColors.expanded
       context.lineWidth = 2
       context.strokeRect(
         x + 1,
@@ -396,13 +427,13 @@ function OverviewLevel({
         Math.max(cellWidth - HORIZONTAL_GUTTER, 2),
         HEATMAP_BLOCKS.length * ROW_HEIGHT - 2,
       )
-      drawColumnLabel(activeIndex, "#1b5e20", labelMaxX - labelMinX, true)
+      drawColumnLabel(activeIndex, canvasColors.expanded, labelMaxX - labelMinX, true)
     }
 
     // Hover highlight: outline the hovered column across all rows, and always label it.
     if (hovered && shown[hovered.column]) {
       const x = LABEL_WIDTH + hovered.column * columnWidth
-      context.strokeStyle = "#0d47a1"
+      context.strokeStyle = canvasColors.hover
       context.lineWidth = 1.5
       context.strokeRect(
         x + 0.5,
@@ -410,7 +441,7 @@ function OverviewLevel({
         Math.max(cellWidth, 2),
         HEATMAP_BLOCKS.length * ROW_HEIGHT - VERTICAL_GUTTER,
       )
-      drawColumnLabel(hovered.column, "#0d47a1", labelMaxX - labelMinX, true)
+      drawColumnLabel(hovered.column, canvasColors.hover, labelMaxX - labelMinX, true)
     }
   }, [
     activeRowKey,
@@ -425,6 +456,7 @@ function OverviewLevel({
     shown,
     sortBlockIndex,
     sortByChildren,
+    canvasColors,
   ])
 
   useEffect(() => {
@@ -591,7 +623,7 @@ function ColorRangeSlider({
 }
 
 function InfoModal() {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
   const handleOpen = () => setOpen(true)
   const handleClose = () => setOpen(false)
 
@@ -609,7 +641,7 @@ function InfoModal() {
 
   return (
     <Box>
-      <Button onClick={handleOpen} startIcon={<Info />}>
+      <Button onClick={handleOpen} startIcon={<Info />} variant="outlined" size="small">
         About
       </Button>
 
@@ -639,7 +671,7 @@ function InfoModal() {
                 sx={{
                   width: 14,
                   height: 14,
-                  bgcolor: PARENT_COLOR,
+                  bgcolor: "primary.main",
                   borderRadius: 0.5,
                   display: "inline-block",
                 }}
@@ -656,14 +688,14 @@ function InfoModal() {
                 sx={{
                   width: 14,
                   height: 6,
-                  bgcolor: LEAF_COLOR,
+                  bgcolor: "text.disabled",
                   borderRadius: 0.5,
                   display: "inline-block",
                 }}
               />
               leaf → opens the concept dialog.
             </Box>
-            <Box>The currently expanded column is outlined in green.</Box>
+            <Box>The currently expanded column is outlined in amber.</Box>
             <Box>
               When the scale is set to <b>Global</b> you can use the slider to adjust the thresholds
               at which each texture level kicks in.
@@ -869,9 +901,7 @@ export function DuckDbOverview({
             </Box>
           )}
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <InfoModal />
-        </Grid>
+        <InfoModal />
       </Grid>
 
       <Stack spacing={1.5} sx={{ px: 1 }}>

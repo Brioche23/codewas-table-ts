@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material"
 import type { CohortInfoIndex } from "./types"
+import { useState } from "react"
 
 type CohortsInfoTableProps = {
   cohortsInfo: CohortInfoIndex
@@ -23,7 +24,7 @@ type CohortsInfoTableProps = {
 const cellSx = {
   border: 0,
   py: 0.25,
-  px: 1,
+  px: 0.5,
   whiteSpace: "nowrap",
   fontSize: 12,
 } as const
@@ -39,24 +40,15 @@ const headCellSx = {
 } as const
 
 export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
+  const [tableHovered, setTableHovered] = useState(false)
+
   const cohorts = Object.values(cohortsInfo).filter((c) => c.cohortUse)
   if (cohorts.length === 0) return null
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      sx={{
-        // backgroundColor: "background.paper",
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        fontSize: 12,
-      }}
-    >
-      {/* <Typography sx={headCellSx}>Cohorts info</Typography> */}
-      <TableContainer>
-        <Table size="small" aria-label="cohorts info" sx={{ width: "auto" }}>
-          {/* <TableHead>
+    <TableContainer component={Box} sx={{ width: "auto", minWidth: "220px" }}>
+      <Table size="small" aria-label="cohorts info">
+        {/* <TableHead>
           <TableRow>
             <TableCell sx={headCellSx}>Name</TableCell>
             <TableCell sx={headCellSx}>Abbr</TableCell>
@@ -66,22 +58,21 @@ export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
             </TableCell>
           </TableRow>
         </TableHead> */}
-          <TableBody>
-            {cohorts.map((cohort) => (
-              <TableRow key={cohort.cohortId}>
-                <TableCell sx={cellSx}>{cohort.cohortName}</TableCell>
-                <TableCell sx={cellSx}>{cohort.shortName}</TableCell>
-                <TableCell sx={{ ...cellSx, color: `${cohort.cohortUse}.main`, fontWeight: 700 }}>
-                  {cohort.cohortUse}
-                </TableCell>
-                <TableCell sx={cellSx} align="right">
-                  {cohort.cohortSubjects?.toLocaleString() ?? "N/A"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Stack>
+        <TableBody>
+          {cohorts.map((cohort) => (
+            <TableRow key={cohort.cohortId}>
+              {/* <TableCell sx={cellSx}>{cohort.cohortName}</TableCell> */}
+              <TableCell sx={cellSx}>{cohort.shortName}</TableCell>
+              <TableCell sx={{ ...cellSx, color: `${cohort.cohortUse}.main`, fontWeight: 700 }}>
+                {cohort.cohortUse}
+              </TableCell>
+              <TableCell sx={cellSx} align="right">
+                {cohort.cohortSubjects?.toLocaleString() ?? "N/A"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }

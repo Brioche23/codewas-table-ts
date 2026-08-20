@@ -2,7 +2,6 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   Box,
-  Paper,
   Typography,
   Stack,
   Divider,
@@ -68,11 +67,12 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
   const metadata = describeDataSource(dataSource, conceptStats)
 
   return (
-    <Paper
+    <Stack
       sx={{
         zIndex: 10,
+        borderTop: "1px solid",
+        borderColor: "divider",
       }}
-      elevation={3}
     >
       <BottomNavigation
         showLabels
@@ -80,17 +80,17 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
         onChange={(_event, newValue) => {
           setPageView(newValue)
         }}
-        sx={{ maxHeight: 40 }}
+        sx={{ maxHeight: 35, backgroundColor: "background.default" }}
       >
         <BottomNavigationAction
           label="Table"
           value="table"
-          icon={<TableChart sx={{ fontSize: 10 }} />}
+          icon={<TableChart sx={{ fontSize: 16 }} />}
         />
         <BottomNavigationAction
           label="Charts"
           value="charts"
-          icon={<PieChart sx={{ fontSize: 10 }} />}
+          icon={<PieChart sx={{ fontSize: 16 }} />}
         />
       </BottomNavigation>
       <Box
@@ -122,6 +122,6 @@ export function Footer({ dataSource, conceptStats, pageView, setPageView }: Foot
           <ThemeToggle />
         </Stack>
       </Box>
-    </Paper>
+    </Stack>
   )
 }

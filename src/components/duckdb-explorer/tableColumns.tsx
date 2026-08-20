@@ -46,22 +46,37 @@ function NA_Chip() {
   )
 }
 
-export function valueChip(value: number | null | undefined, threshold: number, digits = 2) {
+// Which palette channel a threshold chip highlights with. Purple is reserved for
+// significance, so effect sizes pass "primary" and read as a different kind of number.
+type ChipTone = "pvalue" | "primary"
+
+export function valueChip(
+  value: number | null | undefined,
+  threshold: number,
+  { digits = 2, tone = "pvalue" }: { digits?: number; tone?: ChipTone } = {},
+) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return <NA_Chip />
     // return value
   }
+  const highlight = value >= threshold
   return (
     <Chip
       label={value === Infinity ? "∞" : value.toFixed(digits)}
       size="small"
-      color={value >= threshold ? "success" : "default"}
-      variant={"outlined"}
+      // Tint from `main` instead of the `light` step: one hue definition covers both schemes,
+      // where a fixed `light` would be the wrong end of the ramp in dark mode. `undefined`
+      // (not "default", which is not a color) leaves below-threshold chips on Chip's own style.
+      sx={(theme) => ({
+        backgroundColor: highlight ? alpha(theme.palette[tone].main, 0.16) : undefined,
+        color: highlight ? theme.palette[tone].main : undefined,
+        fontWeight: highlight ? 600 : undefined,
+      })}
     />
   )
 }
 
-// -log10(p) threshold above which the chip turns green (genome-wide-significance style cutoff).
+// -log10(p) threshold above which the chip turns purple (genome-wide-significance style cutoff).
 const LOG_P_THRESHOLD = 8
 
 // Cell renderer for the -log10(p) columns. A value sitting at the underflow ceiling means the
@@ -72,7 +87,7 @@ function logPChip(value: number | null | undefined) {
       <Chip
         label={`>${MAX_NEG_LOG10.toFixed(0)}`}
         size="small"
-        color="success"
+        color="pvalue"
         variant="outlined"
       />
     )
@@ -171,7 +186,7 @@ export function makeContinuousColumns(
         header: "Eff.",
         accessorFn: (row) => row[`${prefix}EffectSize` as keyof ConceptSummaryRow] as number | null,
         filterFn: numericExpressionFilter,
-        Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), colorThreshold),
+        Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), colorThreshold, { tone: "primary" }),
         size: 50,
       },
     ],
@@ -345,7 +360,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
           header: "OR",
           accessorFn: (row) => row.binaryEffectSize ?? null,
           filterFn: numericExpressionFilter,
-          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2),
+          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2, { tone: "primary" }),
           size: 80,
         },
       ],
@@ -406,7 +421,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
           header: "Effect",
           accessorFn: (row) => row.categoricalEffectSize ?? null,
           filterFn: numericExpressionFilter,
-          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2),
+          Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), 1.2, { tone: "primary" }),
           size: 50,
         },
       ],

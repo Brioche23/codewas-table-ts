@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react"
 import { rampColor } from "./heatmapUtils"
+import { appTheme } from "../../../theme"
 
 /* ============================================================================
  * HEATMAP TEXTURE RAMP — the whole tweak surface lives in this block.
@@ -15,9 +16,9 @@ import { rampColor } from "./heatmapUtils"
 // into the same levels so the two encodings are directly comparable.
 export const HEATMAP_ENCODING: "pattern" | "color" = "color"
 
-export const PATTERN_INK = "#000000" // the marks
-export const PATTERN_BG = "#ffffff" // behind the marks
-export const PATTERN_EMPTY = "#ffffff" // cells with no value at all
+export const PATTERN_INK = appTheme.palette.pvalue.main // the marks
+export const PATTERN_BG = appTheme.palette.background.default // behind the marks
+export const PATTERN_EMPTY = appTheme.palette.grey[300] // cells with no value at all
 
 // Shapes the continuous scale before quantizing: 1 = linear, < 1 lifts weak
 // cells into higher levels, > 1 pushes everything toward the bottom.

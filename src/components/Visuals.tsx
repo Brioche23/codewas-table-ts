@@ -12,7 +12,7 @@ import {
 import type { BinaryDistribution, DistributionRow, SummaryStats } from "../utils/types"
 import { scaleOrdinal, scaleLinear } from "d3-scale"
 import { schemeTableau10 } from "d3-scale-chromatic"
-import { baseThemeOptions } from "../App"
+import { useTheme } from "@mui/material/styles"
 
 const casesColor = "cases.main"
 const controlsColor = "controls.main"
@@ -76,6 +76,10 @@ interface MeanComparisonChartProps {
 }
 
 export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanComparisonChartProps) {
+  // Read the live theme rather than the raw token object: SVG `fill` can't take a palette
+  // path the way `sx` can, and going through the theme is what makes these dots follow the
+  // light/dark toggle.
+  const theme = useTheme()
   const { meanValueCases, meanValueControls, sdValueCases, sdValueControls } = stats
 
   // Build a domain that comfortably fits both means ± their SDs
@@ -154,23 +158,23 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
         <svg width={W} height={H} style={{ overflow: "visible", cursor: "default" }}>
           <g className="cases">
             {/* Baseline */}
-            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#ccc" strokeWidth={1} />
+            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke={theme.palette.divider} strokeWidth={1} />
             {/* SD band — cases */}
             <rect
               x={cx - sdW}
               y={cy - 5}
               width={sdW * 2}
               height={10}
-              fill={baseThemeOptions.palette.cases.main}
+              fill={theme.palette.cases.main}
               fillOpacity={0.15}
               rx={2}
             />
             {/* Dot — cases */}
-            <circle cx={cx} cy={cy} r={5} fill={baseThemeOptions.palette.cases.main} />
+            <circle cx={cx} cy={cy} r={5} fill={theme.palette.cases.main} />
           </g>
 
           <g className="controls" transform={`translate(0, 15)`}>
-            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#ccc" strokeWidth={1} />
+            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke={theme.palette.divider} strokeWidth={1} />
 
             {/* SD band — controls */}
             <rect
@@ -178,13 +182,13 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
               y={cy - 5}
               width={sdW2 * 2}
               height={10}
-              fill={baseThemeOptions.palette.controls.main}
+              fill={theme.palette.controls.main}
               fillOpacity={0.15}
               rx={2}
             />
 
             {/* Dot — controls */}
-            <circle cx={cx2} cy={cy} r={5} fill={baseThemeOptions.palette.controls.main} />
+            <circle cx={cx2} cy={cy} r={5} fill={theme.palette.controls.main} />
           </g>
         </svg>
       </Tooltip>
