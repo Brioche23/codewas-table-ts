@@ -51,8 +51,8 @@ export const dataHues = {
   pvalue: "#9053C6",
   // Near-white on the pvalue hue — the low end of the heatmap's evidence ramp.
   pvalueFaint: "#F4EEFA",
-  cases: "#B4646B",
-  controls: "#6C9379",
+  cases: "#5458bc",
+  controls: "#96b2c1",
 } as const
 
 // createTheme only runs augmentColor() on the known channels (primary, secondary, error,
@@ -64,8 +64,8 @@ const lightPalette: PaletteOptions = {
   primary: { main: dataHues.primary, light: "#7BA3BE", dark: "#3A6580", contrastText: "#FFFFFF" },
   secondary: { main: "#A8813F", light: "#C9A76E", dark: "#7E5F2A", contrastText: "#FFFFFF" },
   pvalue: { main: dataHues.pvalue, light: "#B98CDC", dark: "#6B3A9C", contrastText: "#FFFFFF" },
-  cases: { main: dataHues.cases, light: "#D19AA0", dark: "#8C464C", contrastText: "#FFFFFF" },
-  controls: { main: dataHues.controls, light: "#9BBBA4", dark: "#4E6F5A", contrastText: "#FFFFFF" },
+  cases: { main: dataHues.cases },
+  controls: { main: dataHues.controls },
   background: { default: "#E8F0F9", paper: "#EDF2F7" },
   // Solid, not alpha hex: these sit on paper, on zebra-striped table rows and on tinted
   // chips, and an alpha text color composites differently against each one.
@@ -78,8 +78,8 @@ const darkPalette: PaletteOptions = {
   primary: { main: "#8DB3CE", light: "#B0CBDE", dark: "#5F8CAA", contrastText: "#0F1A22" },
   secondary: { main: "#D0AB6E", light: "#E3CA9C", dark: "#9E7C42", contrastText: "#1C1610" },
   pvalue: { main: "#BA90DF", light: "#D3B4EC", dark: "#8B5CB5", contrastText: "#17101F" },
-  cases: { main: "#D8949A", light: "#E8BCC0", dark: "#A96A70", contrastText: "#1E1214" },
-  controls: { main: "#9CBFA8", light: "#C0D8C8", dark: "#6E9179", contrastText: "#101A14" },
+  cases: { main: "#D8949A" },
+  controls: { main: "#9CBFA8" },
   background: { default: "#131A20", paper: "#19222A" },
   text: { primary: "#D3DEE6", secondary: "#93A7B4", disabled: "#5E7280" },
   divider: "#2A3640",
