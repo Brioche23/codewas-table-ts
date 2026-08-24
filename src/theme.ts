@@ -52,7 +52,9 @@ export const dataHues = {
   // Near-white on the pvalue hue — the low end of the heatmap's evidence ramp.
   pvalueFaint: "#F4EEFA",
   cases: "#5458bc",
+  casesDark: "#5458bc",
   controls: "#96b2c1",
+  controlsDark: "#618194",
 } as const
 
 // createTheme only runs augmentColor() on the known channels (primary, secondary, error,
@@ -78,8 +80,8 @@ const darkPalette: PaletteOptions = {
   primary: { main: "#8DB3CE", light: "#B0CBDE", dark: "#5F8CAA", contrastText: "#0F1A22" },
   secondary: { main: "#D0AB6E", light: "#E3CA9C", dark: "#9E7C42", contrastText: "#1C1610" },
   pvalue: { main: "#BA90DF", light: "#D3B4EC", dark: "#8B5CB5", contrastText: "#17101F" },
-  cases: { main: "#D8949A" },
-  controls: { main: "#9CBFA8" },
+  cases: { main: dataHues.casesDark },
+  controls: { main: dataHues.controlsDark },
   background: { default: "#131A20", paper: "#19222A" },
   text: { primary: "#D3DEE6", secondary: "#93A7B4", disabled: "#5E7280" },
   divider: "#2A3640",

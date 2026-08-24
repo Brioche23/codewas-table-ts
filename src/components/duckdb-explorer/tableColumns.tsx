@@ -84,12 +84,7 @@ const LOG_P_THRESHOLD = 8
 function logPChip(value: number | null | undefined) {
   if (value != null && !Number.isNaN(value) && value >= MAX_NEG_LOG10) {
     return (
-      <Chip
-        label={`>${MAX_NEG_LOG10.toFixed(0)}`}
-        size="small"
-        color="pvalue"
-        variant="outlined"
-      />
+      <Chip label={`>${MAX_NEG_LOG10.toFixed(0)}`} size="small" color="pvalue" variant="outlined" />
     )
   }
   return valueChip(value, LOG_P_THRESHOLD)
@@ -186,7 +181,8 @@ export function makeContinuousColumns(
         header: "Eff.",
         accessorFn: (row) => row[`${prefix}EffectSize` as keyof ConceptSummaryRow] as number | null,
         filterFn: numericExpressionFilter,
-        Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), colorThreshold, { tone: "primary" }),
+        Cell: ({ cell }) =>
+          valueChip(cell.getValue<number | null>(), colorThreshold, { tone: "primary" }),
         size: 50,
       },
     ],
@@ -222,7 +218,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
   return withAlternatingGroupShading([
     {
       id: "info",
-      accessorKey: "info",
+      // accessorKey: "info",
       header: "Info",
       columns: [
         {

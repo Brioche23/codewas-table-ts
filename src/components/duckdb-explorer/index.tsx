@@ -518,7 +518,7 @@ export default function DuckDbExplorer({
       // Pinning state holds *leaf* column ids only — TanStack matches them against each column's
       // leaves, so the "info" group id would never resolve. Its two leaves have to be named instead.
       columnPinning: { left: ["mrt-row-expand", "conceptInfo", "ancestorConceptIds", "info"] },
-      showColumnFilters: true,
+      showColumnFilters: false,
     },
     rowCount: tableMode === "flat" ? tableRowCount : undefined,
     state: {
