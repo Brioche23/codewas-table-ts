@@ -48,7 +48,9 @@ export function InfoFilter({ table }: InfoFilterProps) {
     if (activeFilters.length === 0) return allRows
 
     return allRows.filter((row) =>
-      activeFilters.every(({ col, filterFn, value }) => filterFn!(row, col!.id, value, () => {})),
+      activeFilters.every(({ col, filterFn, value }) =>
+        filterFn!(row as never, col!.id, value, () => {}),
+      ),
     )
   }, [
     table.getPreFilteredRowModel().rows,

@@ -1,10 +1,13 @@
 import {
   FormControl,
+  FormControlLabel,
+  FormGroup,
   Grid,
   InputLabel,
   MenuItem,
   Paper,
   Select,
+  Switch,
   useTheme,
   type SelectChangeEvent,
 } from "@mui/material"
@@ -64,6 +67,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
   })
 
   const [scatterPlotValue, setScatterPlotValue] = useState<Metric>("-log10")
+  const [showRegression, setShowRegression] = useState(true)
 
   const rows = data.getSortedRowModel().rows
   console.log(rows.length)
@@ -112,7 +116,6 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
             ))}
           </Select>
         </FormControl>
-
         {/* Y axis: picks a column */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Y Axis</InputLabel>
@@ -128,7 +131,6 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
             ))}
           </Select>
         </FormControl>
-
         {/* Metric: picks a key (pValue, effectSize, etc.) */}
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Metric</InputLabel>
@@ -139,6 +141,9 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
               </MenuItem>
             ))}
           </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <FormControlLabel control={<Switch defaultChecked />} label="Regression line [VALUE]" />
         </FormControl>
       </Grid>
       <Paper sx={{ width: "100%", height: 400 }}>
@@ -179,7 +184,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
           ]}
           grid={{ vertical: true, horizontal: true }}
         >
-          <RegressionLine seriesId="has-value" colorIndex={2} />
+          {showRegression && <RegressionLine seriesId="has-value" colorIndex={2} />}
         </ScatterChart>
       </Paper>
     </Grid>
@@ -209,6 +214,9 @@ function RegressionLine({ seriesId, colorIndex }: { seriesId: string; colorIndex
       <ChartsClipPath id={clipPathId} />
       <g clipPath={`url(#${clipPathId})`}>
         <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={stroke} strokeWidth={1} strokeOpacity={0.5} />
+        <text x={x1} y={y1}>
+          {m}
+        </text>
       </g>
     </Fragment>
   )

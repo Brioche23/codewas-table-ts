@@ -149,7 +149,7 @@ export function makeStatGroup({
         ),
         ...groupCellProps(color),
         accessorFn: (row) => paths.t(row)?.effectSize ?? null,
-        Cell: ({ cell }) => valueChip(cell.getValue<number>(), effectSizeThreshold),
+        Cell: ({ cell }) => valueChip(cell.getValue<number>(), effectSizeThreshold, { tone: "primary" }),
         filterVariant: "range",
         // aggregationFn: "mean",
         // AggregatedCell: ({ cell }) => (
@@ -172,7 +172,7 @@ export function makeStatGroup({
 // Lives outside the component — no deps on props/state, never triggers re-renders
 
 export const makeInfoColumn = (
-  conceptsById: Record<number, ConceptMetadata>,
+  _conceptsById: Record<number, ConceptMetadata>,
 ): MRT_ColumnDef<ConceptRow> => {
   return {
     id: "main_info",
@@ -517,7 +517,7 @@ export const binaryColumn: MRT_ColumnDef<ConceptRow> = {
       // ),
       ...groupCellProps(COLUMNS_COLORS.color2),
       accessorFn: (row) => getBinaryTest(row)?.effectSize ?? null,
-      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
+      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2, { tone: "primary" }),
       filterVariant: "range",
     },
   ],
@@ -674,7 +674,7 @@ export const categoryColumn: MRT_ColumnDef<ConceptRow> = {
       ),
       ...groupCellProps(COLUMNS_COLORS.color1),
       accessorFn: (row) => getCategoricalTest(row)?.effectSize ?? null,
-      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2),
+      Cell: ({ cell }) => valueChip(cell.getValue<number>(), 1.2, { tone: "primary" }),
       filterVariant: "range",
       // aggregationFn: "mean",
       // AggregatedCell: ({ cell }) => (

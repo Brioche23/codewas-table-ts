@@ -98,11 +98,45 @@ export interface ConceptTableProps {
   pageView: PageViewOptions
 }
 
+export interface DuckDbTableCount {
+  tableName: string
+  rowCount: number
+}
+
+export interface DuckDbPreviewSection {
+  title: string
+  rows: Record<string, unknown>[]
+}
+
+export interface DuckDbDataSource {
+  kind: "duckdb"
+  sourceLabel: string
+  sourceBytes: Uint8Array
+  fileSize: number // source file size in bytes
+  loadMs: number // time spent loading/processing the database
+  columnCount: number // distinct analysis types (heatmap/table column groups)
+  tableCounts: DuckDbTableCount[]
+  previewSections: DuckDbPreviewSection[]
+  runQuery: (sql: string) => Promise<Record<string, unknown>[]>
+}
+
+export interface JsonDataSource {
+  kind: "json"
+  rows: ConceptRow[]
+  fileSize?: number // source file size in bytes (when known)
+  loadMs?: number // time spent fetching/parsing (when known)
+}
+
+export type LoadedDataSource = JsonDataSource | DuckDbDataSource
+
 // Shape of a saved preset stored in localStorage
 export type FilterPreset = {
   id: string // unique id, e.g. crypto timestamp
   name: string
   filters: MRT_ColumnFiltersState // only the filters the user checked
+  countMode?: string // DuckDB full-snapshot extras (absent for JSON presets)
+  selectedDomain?: string
+  searchText?: string
 }
 
 export type Columns = "Binary" | "Count" | "Age" | "Days" | "Continuous" | "Categorical"

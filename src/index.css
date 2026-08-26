@@ -17,8 +17,10 @@
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  /* The page surface is owned by the MUI theme via CssBaseline (see src/theme.ts). Painting
+     :root here as well pinned <html> to a hardcoded color, and because the block below keys
+     off prefers-color-scheme it followed the OS rather than the in-app theme toggle — so
+     toggling to dark left a white page behind a dark body. */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -50,18 +52,26 @@
 
 #root {
   /* width: 1126px; */
-  max-width: 1440px;
+  /* max-width: 1440px; */
+  height: 100svh;
   margin: 0 auto;
   text-align: center;
   /* border-inline: 1px solid var(--border); */
-  min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  /* The shell owns the viewport; inner regions (the table) scroll, not the page. */
+  overflow: hidden;
 }
 
 body {
   margin: 0;
+}
+
+main {
+  flex: 1;
+  /* Allow the main region to shrink below its content so the table can scroll inside it. */
+  min-height: 0;
 }
 
 h1,

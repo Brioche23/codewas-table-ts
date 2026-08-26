@@ -1,8 +1,21 @@
-import { useState, useEffect } from "react"
-import type { ConceptRow } from "../utils/types"
+import { useEffect, useState } from "react"
+import { loadDuckDbDataSource } from "../utils/duckdb"
+import type { LoadedDataSource } from "../utils/types"
+
+function normalizeJsonPayload(payload: unknown) {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+
+  if (payload && typeof payload === "object" && Array.isArray((payload as { results?: unknown[] }).results)) {
+    return (payload as { results: unknown[] }).results
+  }
+
+  throw new Error("Unsupported JSON payload shape")
+}
 
 export function useDataSource() {
-  const [data, setData] = useState<ConceptRow[] | null>(null)
+  const [dataSource, setDataSource] = useState<LoadedDataSource | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filePath, setPath] = useState<string | null>(null)
@@ -13,18 +26,33 @@ export function useDataSource() {
 
     setPath(path)
 
-    if (!path) return // no param → let FileUpload handle it
+    if (!path) return
 
     setLoading(true)
+    const startedAt = performance.now()
     fetch(path)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-        return res.json()
-      })
-      .then((json) => setData(json))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, []) // runs once on mount
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
 
-  return { data, setData, loading, error, filePath }
+        if (path.endsWith(".duckdb")) {
+          return loadDuckDbDataSource(path, new Uint8Array(await response.arrayBuffer()))
+        }
+
+        const buffer = await response.arrayBuffer()
+        const payload = JSON.parse(new TextDecoder().decode(buffer))
+        return {
+          kind: "json" as const,
+          rows: normalizeJsonPayload(payload) as any,
+          fileSize: buffer.byteLength,
+          loadMs: performance.now() - startedAt,
+        }
+      })
+      .then((source) => setDataSource(source))
+      .catch((caughtError) => setError(caughtError instanceof Error ? caughtError.message : String(caughtError)))
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { dataSource, setDataSource, loading, error, filePath }
 }

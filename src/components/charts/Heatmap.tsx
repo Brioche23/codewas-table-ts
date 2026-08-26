@@ -98,7 +98,6 @@ function HeatmapCells({
   const offsetX = -width / 2 + cellW / 2
   const offsetY = height / 2 - cellH / 2
 
-  const labelWidth = 80 // px reserved for the label column
   const heatmapOffsetX = offsetX
   // const heatmapOffsetX = offsetX + labelWidth / 2 // shift cells right to make room
 
@@ -178,13 +177,8 @@ function OrthoCamera({ width, height }: CameraProps) {
   return null
 }
 
-export function Heatmap({
-  table,
-  metricKey = "pValue",
-  tableContainerRef,
-  isGrouping,
-}: HeatmapProps) {
-  const [canvasSize, setCanvasSize] = useState({ width: 300, height: 500 })
+export function Heatmap({ table, metricKey = "pValue" }: HeatmapProps) {
+  const [canvasSize] = useState({ width: 300, height: 500 })
   const [hoveredRow, setHoveredRow] = useState<MRT_Row<ConceptRow> | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
