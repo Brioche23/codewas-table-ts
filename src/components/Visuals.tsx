@@ -44,7 +44,9 @@ function GenericTable<T extends object>({ rows, size = "small", rowColor }: Gene
         <TableHead>
           <TableRow>
             {headers.map((header) => (
-              <TableCell key={String(header)}>{String(header)}</TableCell>
+              <TableCell key={String(header)} sx={{ color: "primary.contrastText" }}>
+                {String(header)}
+              </TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -60,7 +62,9 @@ function GenericTable<T extends object>({ rows, size = "small", rowColor }: Gene
               }}
             >
               {headers.map((header) => (
-                <TableCell key={String(header)}>{String(row[header])}</TableCell>
+                <TableCell key={String(header)} sx={{ color: "primary.contrastText" }}>
+                  {String(row[header])}
+                </TableCell>
               ))}
             </TableRow>
           ))}
@@ -156,43 +160,66 @@ export function MeanComparisonChart({ stats, distributions, unit = "" }: MeanCom
         arrow
       >
         <svg width={W} height={H} style={{ overflow: "visible", cursor: "default" }}>
-          <g className="cases">
-            {/* Baseline */}
-            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke={theme.palette.divider} strokeWidth={1} />
-            {/* SD band — cases */}
-            <rect
-              x={cx - sdW}
-              y={cy - 5}
-              width={sdW * 2}
-              height={10}
-              fill={theme.palette.cases.main}
-              fillOpacity={0.15}
-              rx={2}
-            />
-            {/* Dot — cases */}
-            <circle cx={cx} cy={cy} r={5} fill={theme.palette.cases.main} />
-          </g>
-
-          <g className="controls" transform={`translate(0, 15)`}>
-            <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke={theme.palette.divider} strokeWidth={1} />
-
-            {/* SD band — controls */}
-            <rect
-              x={cx2 - sdW2}
-              y={cy - 5}
-              width={sdW2 * 2}
-              height={10}
-              fill={theme.palette.controls.main}
-              fillOpacity={0.15}
-              rx={2}
-            />
-
-            {/* Dot — controls */}
-            <circle cx={cx2} cy={cy} r={5} fill={theme.palette.controls.main} />
-          </g>
+          <BoxPlot
+            name={"cases"}
+            x1={PAD}
+            x2={W - PAD}
+            cx={cx}
+            cy={cy}
+            color={theme.palette.cases.main}
+            sd={sdW}
+          />
+          <BoxPlot
+            name={"cases"}
+            transform={`translate(0, 15)`}
+            x1={PAD}
+            x2={W - PAD}
+            cx={cx2}
+            cy={cy}
+            color={theme.palette.controls.main}
+            sd={sdW2}
+          />
         </svg>
       </Tooltip>
     </Box>
+  )
+}
+
+interface BoxPlotProps {
+  name: "cases" | "controls"
+  transform?: string
+  x1: number
+  x2: number
+  cx: number
+  cy: number
+  color: string
+  sd: number
+  h?: number
+}
+
+function BoxPlot({ name, transform = "", x1, x2, cx, cy, color, sd, h = 10 }: BoxPlotProps) {
+  return (
+    <g className={name} transform={transform}>
+      {/* Baseline */}
+      <line x1={x1} y1={cy} x2={x2} y2={cy} stroke={color} strokeWidth={1} />
+      {/* SD band — cases */}
+      <rect
+        x={cx - sd}
+        y={cy - h / 2}
+        width={sd * 2}
+        height={h}
+        fill={color}
+        fillOpacity={0.25}
+        rx={2}
+      />
+      <rect x={cx} y={cy - h / 2} width={2} height={h} fill={color} />
+
+      <rect x={x1} y={cy - h / 2 + 1} width={1} height={h - 2} fill={color} />
+      <rect x={x2} y={cy - h / 2 + 1} width={1} height={h - 2} fill={color} />
+
+      {/* Dot — cases */}
+      {/* <circle cx={cx} cy={cy} r={5} fill={theme.palette.cases.main} /> */}
+    </g>
   )
 }
 

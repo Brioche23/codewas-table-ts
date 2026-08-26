@@ -89,6 +89,10 @@ type Column = {
   directChildCount: number
 }
 
+// Canvas-space box of a drawn column label, kept so the ones that open the concept dialog (leaves
+// and the pinned label of the expanded column) can be hit-tested on click.
+type LabelRect = { left: number; top: number; width: number; height: number }
+
 // What a panel is sorted by: one of the analysis blocks (by subtree -log10(p)) or the direct-child count.
 type SortKey = { type: "block"; block: ChartBlockKey } | { type: "children" }
 
@@ -136,6 +140,7 @@ function OverviewLevel({
   perColumnMax,
   bucketBreakpoints,
   onPick,
+  onOpenConcept,
 }: {
   title: string
   columns: Column[]
@@ -144,11 +149,18 @@ function OverviewLevel({
   perColumnMax: Record<ChartBlockKey, number>
   bucketBreakpoints: number[]
   onPick: (column: Column) => void
+  onOpenConcept: (column: Column) => void
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [canvasWidth, setCanvasWidth] = useState(MIN_CANVAS_WIDTH)
   const [hovered, setHovered] = useState<{ column: number; block: number } | null>(null)
+  // Column index whose header label the pointer is over (-1 = none): underlines it and swaps the
+  // caption hint, so the label being clickable is discoverable.
+  const [hoveredLabel, setHoveredLabel] = useState(-1)
+  // Boxes of the labels that open the concept dialog, keyed by column index and recorded by the
+  // draw pass so clicks can hit-test them.
+  const labelRectsRef = useRef(new Map<number, LabelRect>())
   // null = use the relevance default (so the default stays dynamic until the user picks a row).
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null)
 
@@ -249,6 +261,7 @@ function OverviewLevel({
   const shown = effectiveSort.dir === "asc" ? [...kept].reverse() : kept
   const hiddenCount = columns.length - kept.length
   const columnWidth = shown.length > 0 ? gridWidth / shown.length : gridWidth
+  const activeIndex = activeRowKey ? shown.findIndex((c) => c.row.rowKey === activeRowKey) : -1
 
   // Busiest parent in this level — the reference the sqrt-scaled child-count bars normalize against.
   // Over `columns` (not `shown`) so the scale is stable regardless of the width cap.
@@ -262,6 +275,8 @@ function OverviewLevel({
     if (!canvas) return
     const context = prepareCanvas(canvas, canvasWidth, CANVAS_HEIGHT)
     if (!context) return
+    const labelRects = new Map<number, LabelRect>()
+    labelRectsRef.current = labelRects
 
     context.fillStyle = canvasColors.canvasBg
     context.fillRect(0, 0, canvasWidth, CANVAS_HEIGHT)
@@ -277,7 +292,6 @@ function OverviewLevel({
 
     const showAllLabels = columnWidth >= OVERVIEW_MIN_LABEL_PX
     const cellWidth = columnWidth > 4 ? columnWidth - VERTICAL_GUTTER : columnWidth
-    const activeIndex = activeRowKey ? shown.findIndex((c) => c.row.rowKey === activeRowKey) : -1
 
     // Cells + analysis row labels.
     for (let b = 0; b < HEATMAP_BLOCKS.length; b++) {
@@ -375,6 +389,7 @@ function OverviewLevel({
       color: string,
       maxWidth: number,
       withBackground: boolean,
+      underline = false,
     ) => {
       const column = shown[index]
       if (!column) return
@@ -391,8 +406,8 @@ function OverviewLevel({
         align = "right"
         x = labelMaxX
       }
+      const left = align === "left" ? x : align === "right" ? x - textWidth : x - textWidth / 2
       if (withBackground) {
-        const left = align === "left" ? x : align === "right" ? x - textWidth : x - textWidth / 2
         context.fillStyle = canvasColors.labelBg
         context.fillRect(left - 3, labelY - 8, textWidth + 6, 16)
       }
@@ -401,17 +416,29 @@ function OverviewLevel({
       context.textBaseline = "middle"
       context.fillText(text, x, labelY)
       context.textAlign = "left"
+      if (underline) context.fillRect(left, labelY + 7, textWidth, 1)
+      return {
+        left: left - 3,
+        top: labelY - 8,
+        width: textWidth + 6,
+        height: 16,
+      } satisfies LabelRect
     }
 
     // When columns are wide enough, label every one (kept inside its own column so they don't collide).
+    // A leaf's label is a hit target for the concept dialog — the same thing its column does — so its
+    // box is recorded; a parent's label is not (its column drills into the panel below instead).
     if (showAllLabels) {
-      for (let i = 0; i < shown.length; i++)
-        drawColumnLabel(
+      for (let i = 0; i < shown.length; i++) {
+        const rect = drawColumnLabel(
           i,
           shown[i].hasChildren ? canvasColors.labelParent : canvasColors.labelLeaf,
           columnWidth - 6,
           false,
+          hoveredLabel === i,
         )
+        if (rect && !shown[i].hasChildren) labelRects.set(i, rect)
+      }
     }
 
     // Persistent highlight for the expanded column (its children are the panel below).
@@ -427,7 +454,16 @@ function OverviewLevel({
         Math.max(cellWidth - HORIZONTAL_GUTTER, 2),
         HEATMAP_BLOCKS.length * ROW_HEIGHT - 2,
       )
-      drawColumnLabel(activeIndex, canvasColors.expanded, labelMaxX - labelMinX, true)
+      // The pinned label doubles as a hit target: clicking it opens the concept dialog, while
+      // clicking the column itself only toggles the child panel below.
+      const labelRect = drawColumnLabel(
+        activeIndex,
+        canvasColors.expanded,
+        labelMaxX - labelMinX,
+        true,
+        hoveredLabel === activeIndex,
+      )
+      if (labelRect) labelRects.set(activeIndex, labelRect)
     }
 
     // Hover highlight: outline the hovered column across all rows, and always label it.
@@ -444,12 +480,13 @@ function OverviewLevel({
       drawColumnLabel(hovered.column, canvasColors.hover, labelMaxX - labelMinX, true)
     }
   }, [
-    activeRowKey,
+    activeIndex,
     bucketBreakpoints,
     canvasWidth,
     columnWidth,
     effectiveSort.dir,
     hovered,
+    hoveredLabel,
     maxChildCount,
     perColumnMax,
     scaleMode,
@@ -492,6 +529,27 @@ function OverviewLevel({
     return block
   }
 
+  // Hit-test the dialog-opening labels (leaves + the pinned one) against the boxes the last paint
+  // recorded. Returns the column index, or -1.
+  const resolveLabel = (event: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas) return -1
+    const bounds = canvas.getBoundingClientRect()
+    const x = event.clientX - bounds.left
+    const y = event.clientY - bounds.top
+    const rects = labelRectsRef.current
+    const hits = (rect: LabelRect | undefined) =>
+      rect != null &&
+      x >= rect.left &&
+      x <= rect.left + rect.width &&
+      y >= rect.top &&
+      y <= rect.top + rect.height
+    // Painted last wins: the pinned label is drawn over the per-column ones it overlaps.
+    if (activeIndex >= 0 && hits(rects.get(activeIndex))) return activeIndex
+    for (const [index, rect] of rects) if (hits(rect)) return index
+    return -1
+  }
+
   // Hit-test the child-count sort toggle (caption + glyph) in the header row of the gutter.
   const resolveHeaderSort = (event: MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -522,6 +580,7 @@ function OverviewLevel({
     })
   }
 
+  const hoveredLabelColumn = hoveredLabel >= 0 ? (shown[hoveredLabel] ?? null) : null
   const hoveredColumn = hovered ? shown[hovered.column] : null
   const hoveredBlock = hovered ? HEATMAP_BLOCKS[hovered.block] : null
   const hoveredValue = hovered && hoveredColumn ? hoveredColumn.agg.maxLogp[hovered.block] : null
@@ -546,9 +605,20 @@ function OverviewLevel({
         <canvas
           ref={canvasRef}
           style={{ display: "block", cursor: "pointer" }}
-          onMouseMove={(event) => setHovered(resolveCell(event))}
-          onMouseLeave={() => setHovered(null)}
+          onMouseMove={(event) => {
+            setHoveredLabel(resolveLabel(event))
+            setHovered(resolveCell(event))
+          }}
+          onMouseLeave={() => {
+            setHovered(null)
+            setHoveredLabel(-1)
+          }}
           onClick={(event) => {
+            const labelHit = resolveLabel(event)
+            if (labelHit >= 0) {
+              onOpenConcept(shown[labelHit])
+              return
+            }
             if (resolveHeaderSort(event)) {
               toggleSort({ type: "children" })
               return
@@ -565,7 +635,12 @@ function OverviewLevel({
         />
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-        {hoveredColumn && hoveredBlock ? (
+        {hoveredLabelColumn ? (
+          <>
+            <strong>{conceptLabel(hoveredLabelColumn.row)}</strong>
+            {" | click the name to open the concept dialog"}
+          </>
+        ) : hoveredColumn && hoveredBlock ? (
           <>
             <strong>{conceptLabel(hoveredColumn.row)}</strong>
             {/* {hoveredColumn.row.conceptCode ? ` | ${hoveredColumn.row.conceptCode}` : ""} */}
@@ -957,6 +1032,7 @@ export function DuckDbOverview({
             perColumnMax={perColumnMax}
             bucketBreakpoints={breakpoints}
             onPick={(column) => handlePick(depth, column)}
+            onOpenConcept={(column) => onSelectConcept(column.row.rowKey)}
           />
         ))}
       </Stack>

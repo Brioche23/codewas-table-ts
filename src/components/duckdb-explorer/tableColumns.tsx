@@ -12,6 +12,7 @@ import {
   negLog10,
   parseCategoricalDistribution,
 } from "./utils/utils"
+import { AccountTreeRounded } from "@mui/icons-material"
 
 export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   row,
@@ -245,24 +246,41 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                     : "transparent",
               }}
             >
-              <Typography variant="body2" sx={{ color: "primary.main", fontWeight: 700 }}>
-                {row.original.conceptName ?? row.original.conceptId}
-              </Typography>
-              {/* <Typography variant="caption" color="text.secondary">
-                Source code: {row.original.conceptCode ?? "N/A"}
-              </Typography> */}
+              <Stack
+                direction={"row"}
+                spacing={1}
+                sx={{
+                  color: "primary.main",
+                  fontWeight: 700,
+                  // justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {row.original.conceptName ?? row.original.conceptId}
+                </Typography>
+                {row.original.countMode === "descendant" && <AccountTreeRounded fontSize="xs" />}
+              </Stack>
+              <Stack direction={"row"}>
+                <Typography variant="caption" color="text.secondary">
+                  {row.original.conceptCode ?? "N/A"}
+                </Typography>{" "}
+                |
+                <Typography variant="caption" color="text.secondary">
+                  {row.original.domainId}
+                </Typography>
+              </Stack>
               {/* <Typography variant="body2" color="text.secondary">
                 Concept ID: {row.original.conceptId}
               </Typography> */}
-              {/* <Typography variant="caption" color="text.secondary">
-                Domain: {row.original.domainId}
-              </Typography> */}
+              {/* TODO Icon not chip */}
               <Box>
-                <Chip
+                {/* <Chip
                   size="small"
                   label={row.original.countMode === "descendant" ? "All descendants" : "Exact code"}
                   // variant="outlined"
-                />
+                /> */}
+
                 {row.depth > 0 && (
                   <Chip
                     size="small"
