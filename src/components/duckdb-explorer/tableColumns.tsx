@@ -182,8 +182,7 @@ export function makeContinuousColumns(
         header: "Eff.",
         accessorFn: (row) => row[`${prefix}EffectSize` as keyof ConceptSummaryRow] as number | null,
         filterFn: numericExpressionFilter,
-        Cell: ({ cell }) =>
-          valueChip(cell.getValue<number | null>(), colorThreshold, { tone: "primary" }),
+        Cell: ({ cell }) => valueChip(cell.getValue<number | null>(), colorThreshold),
         size: 50,
       },
     ],
@@ -256,16 +255,32 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                   alignItems: "center",
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 700,
+                    // Names run long, so they wrap inside the column's fixed width instead of
+                    // spilling out of it. Compact density puts `nowrap` on every body cell, and a
+                    // flex child won't shrink past its longest word on its own — hence all three.
+                    whiteSpace: "normal",
+                    overflowWrap: "anywhere",
+                    minWidth: 0,
+                    lineHeight: 1.3,
+                  }}
+                >
                   {row.original.conceptName ?? row.original.conceptId}
                 </Typography>
-                {row.original.countMode === "descendant" && <AccountTreeRounded fontSize="xs" />}
+                {row.original.countMode === "descendant" && (
+                  <AccountTreeRounded fontSize="xs" sx={{ flexShrink: 0 }} />
+                )}
               </Stack>
               <Stack direction={"row"}>
                 <Typography variant="caption" color="text.secondary">
                   {row.original.conceptCode ?? "N/A"}
-                </Typography>{" "}
-                |
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ px: 0.5 }}>
+                  |
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {row.original.domainId}
                 </Typography>
@@ -292,7 +307,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
               </Box>
             </Stack>
           ),
-          size: 180,
+          size: 240,
         },
         {
           accessorKey: "ancestorConceptIds",

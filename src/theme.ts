@@ -29,6 +29,7 @@ declare module "@mui/material/styles" {
     cases?: PaletteColorOptions
     controls?: PaletteColorOptions
     pvalue?: PaletteColorOptions
+    or: PaletteColorOptions
   }
 }
 
@@ -66,6 +67,7 @@ const lightPalette: PaletteOptions = {
   primary: { main: dataHues.primary, light: "#7BA3BE", dark: "#3A6580", contrastText: "#FFFFFF" },
   secondary: { main: "#A8813F", light: "#C9A76E", dark: "#7E5F2A", contrastText: "#FFFFFF" },
   pvalue: { main: dataHues.pvalue, light: "#B98CDC", dark: "#6B3A9C", contrastText: "#FFFFFF" },
+  or: { main: "#FFFFFF" },
   cases: { main: dataHues.cases },
   controls: { main: dataHues.controls },
   background: { default: "#E8F0F9", paper: "#EDF2F7" },
@@ -80,7 +82,9 @@ const darkPalette: PaletteOptions = {
   primary: { main: "#8DB3CE", light: "#B0CBDE", dark: "#5F8CAA", contrastText: "#0F1A22" },
   secondary: { main: "#D0AB6E", light: "#E3CA9C", dark: "#9E7C42", contrastText: "#1C1610" },
   pvalue: { main: "#BA90DF", light: "#D3B4EC", dark: "#8B5CB5", contrastText: "#17101F" },
+  or: { main: "#131A20" },
   cases: { main: dataHues.casesDark },
+
   controls: { main: dataHues.controlsDark },
   background: { default: "#131A20", paper: "#19222A" },
   text: { primary: "#D3DEE6", secondary: "#93A7B4", disabled: "#5E7280" },
