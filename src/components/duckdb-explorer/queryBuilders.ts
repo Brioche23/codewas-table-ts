@@ -1,5 +1,11 @@
 import type { MRT_ColumnFiltersState, MRT_PaginationState, MRT_SortingState } from "material-react-table"
-import { DISPLAY_ANALYSIS_TYPES } from "./constants"
+import {
+  AI_CATEGORY_ALL,
+  AI_CATEGORY_ANY,
+  AI_PRIORITIZATION_TABLE,
+  DISPLAY_ANALYSIS_TYPES,
+} from "./constants"
+import type { AiFilter } from "./types"
 import { MAX_NEG_LOG10 } from "./utils/utils"
 
 export function escapeSqlString(value: string) {
@@ -124,6 +130,56 @@ export function buildSortExpression(sorting: MRT_SortingState) {
   return clauses.length > 0 ? `ORDER BY ${clauses.join(", ")}` : "ORDER BY conceptName ASC"
 }
 
+// AI verdicts collapsed to the grain of `base` (conceptId + countMode). `aiPrioritization` has one
+// row per statistical test, so several analyses can score the same concept; the verdict is taken
+// from the best-ranked candidate row and `rationale` is read from that *same* row — hence arg_min on
+// one shared ordering key rather than independent MAX()es, which could pair a category with another
+// row's reasoning. countMode stays in the key because the source table carries it: a concept scored
+// only in "descendant" mode gets no verdict on its "code" row, rather than borrowing one.
+//
+// Rows the AI never saw are marked aiSent = false and carry the literal category 'NA'. Dropping
+// them here means the LEFT JOIN below leaves aiCategory NULL, which is the same state as a concept
+// with no aiPrioritization row at all — so "not reviewed" has exactly one representation.
+function buildAiStatsCte() {
+  const rank = "coalesce(candidateRank, 2147483647)"
+  return `
+    ai_stats AS (
+      SELECT
+        conceptId,
+        countMode,
+        arg_min(category, ${rank}) AS aiCategory,
+        arg_min(rationale, ${rank}) AS aiRationale
+      FROM ${AI_PRIORITIZATION_TABLE}
+      WHERE coalesce(aiSent, FALSE)
+        AND trim(coalesce(category, '')) <> ''
+        AND upper(trim(category)) <> 'NA'
+      GROUP BY conceptId, countMode
+    )
+  `
+}
+
+// The AI category is a view selector (like Count Mode and Domain), not an MRT column filter, so it
+// is applied inside `final_rows` — every builder below reads from that CTE and inherits it, and the
+// unfiltered "total" count keeps it too.
+function buildAiCategoryCondition(ai: AiFilter) {
+  if (!ai.enabled || ai.category === AI_CATEGORY_ALL) return null
+  if (ai.category === AI_CATEGORY_ANY) return "ai.aiCategory IS NOT NULL"
+  return `ai.aiCategory = '${escapeSqlString(ai.category)}'`
+}
+
+// Distinct categories the AI actually assigned, for the toolbar selector. 'NA' and blanks are the
+// not-reviewed marker, not a category, so they never reach the dropdown.
+export function buildAiCategoriesQuery() {
+  return `
+    SELECT DISTINCT category AS aiCategory
+    FROM ${AI_PRIORITIZATION_TABLE}
+    WHERE coalesce(aiSent, FALSE)
+      AND trim(coalesce(category, '')) <> ''
+      AND upper(trim(category)) <> 'NA'
+    ORDER BY aiCategory
+  `
+}
+
 function buildContinuousBlockQueryFromBase(
   analysisType: string,
   prefix: "counts" | "age" | "days" | "continuous",
@@ -174,13 +230,20 @@ function buildContinuousBlockQueryFromBase(
   `
 }
 
-function buildSummaryQueryCtes(countMode: string, domainId: string, searchText: string) {
+function buildSummaryQueryCtes(
+  countMode: string,
+  domainId: string,
+  searchText: string,
+  ai: AiFilter,
+) {
   const safeCountMode = countMode === "all" ? null : escapeSqlString(countMode)
   const safeDomain = domainId === "all" ? null : escapeSqlString(domainId)
   const safeSearch = searchText.trim() ? escapeSqlString(searchText.trim().toLowerCase()) : null
+  const aiCondition = buildAiCategoryCondition(ai)
 
   return `
-    WITH base AS (
+    WITH ${ai.enabled ? `${buildAiStatsCte()},` : ""}
+    base AS (
       SELECT
         st.conceptId,
         cr.conceptName,
@@ -315,7 +378,13 @@ function buildSummaryQueryCtes(countMode: string, domainId: string, searchText: 
         cts.* EXCLUDE (conceptId, domainId, countMode),
         ags.* EXCLUDE (conceptId, domainId, countMode),
         dys.* EXCLUDE (conceptId, domainId, countMode),
-        cos.* EXCLUDE (conceptId, domainId, countMode)
+        cos.* EXCLUDE (conceptId, domainId, countMode)${
+          ai.enabled
+            ? `,
+        ai.aiCategory,
+        ai.aiRationale`
+            : ""
+        }
       FROM base AS b
       LEFT JOIN binary_stats AS bs ON bs.conceptId = b.conceptId AND bs.domainId = b.domainId AND bs.countMode = b.countMode
       LEFT JOIN categorical_stats AS cs ON cs.conceptId = b.conceptId AND cs.domainId = b.domainId AND cs.countMode = b.countMode
@@ -323,6 +392,8 @@ function buildSummaryQueryCtes(countMode: string, domainId: string, searchText: 
       LEFT JOIN age_stats AS ags ON ags.conceptId = b.conceptId AND ags.domainId = b.domainId AND ags.countMode = b.countMode
       LEFT JOIN days_stats AS dys ON dys.conceptId = b.conceptId AND dys.domainId = b.domainId AND dys.countMode = b.countMode
       LEFT JOIN continuous_stats AS cos ON cos.conceptId = b.conceptId AND cos.domainId = b.domainId AND cos.countMode = b.countMode
+      ${ai.enabled ? "LEFT JOIN ai_stats AS ai ON ai.conceptId = b.conceptId AND ai.countMode = b.countMode" : ""}
+      ${aiCondition ? `WHERE ${aiCondition}` : ""}
     )
   `
 }
@@ -334,8 +405,9 @@ export function buildPagedSummaryQuery(
   columnFilters: MRT_ColumnFiltersState,
   sorting: MRT_SortingState,
   pagination: MRT_PaginationState,
+  ai: AiFilter,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   const orderBy = buildSortExpression(sorting)
@@ -355,8 +427,9 @@ export function buildSummaryCountQuery(
   domainId: string,
   searchText: string,
   columnFilters: MRT_ColumnFiltersState,
+  ai: AiFilter,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
@@ -372,9 +445,10 @@ export function buildFullSummaryQuery(
   domainId: string,
   searchText: string,
   columnFilters: MRT_ColumnFiltersState,
+  ai: AiFilter,
   limit?: number | null,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
@@ -395,9 +469,10 @@ export function buildHeatmapQuery(
   domainId: string,
   searchText: string,
   columnFilters: MRT_ColumnFiltersState,
+  ai: AiFilter,
   limit?: number | null,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
@@ -435,8 +510,9 @@ export function buildHierarchyMetaQuery(
   domainId: string,
   searchText: string,
   columnFilters: MRT_ColumnFiltersState,
+  ai: AiFilter,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const conditions = buildFilterConditions(columnFilters)
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""
   return `
@@ -461,8 +537,9 @@ export function buildSummaryRowsByRowKeysQuery(
   domainId: string,
   searchText: string,
   rowKeys: string[],
+  ai: AiFilter,
 ) {
-  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText)
+  const ctes = buildSummaryQueryCtes(countMode, domainId, searchText, ai)
   const safeRowKeys = rowKeys.map((rowKey) => `'${escapeSqlString(rowKey)}'`).join(", ")
   return `
     ${ctes}

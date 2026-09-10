@@ -1,10 +1,11 @@
 import { useState, type Dispatch, type SetStateAction } from "react"
-import { Badge, Box, Button, Divider, Stack } from "@mui/material"
+import { Badge, Button, Divider, Stack } from "@mui/material"
 import type { MRT_ColumnFiltersState, MRT_TableInstance } from "material-react-table"
 import type { FilterPreset } from "../../utils/types"
 import { FilterChips, type ActiveFilter } from "../filters/FilterChips"
 import { FilterPresets } from "../filters/FilterPresets"
 import { loadPresets, savePresets } from "../filters/presetStorage"
+import { AI_CATEGORY_ALL, AI_CATEGORY_ANY } from "./constants"
 import type { ConceptSummaryRow } from "./types"
 
 const STORAGE_KEY = "duckdb-filter-presets"
@@ -16,6 +17,7 @@ const DEFAULT_DOMAIN = "all"
 const COUNT_MODE_ID = "__countMode"
 const DOMAIN_ID = "__selectedDomain"
 const SEARCH_ID = "__searchText"
+const AI_CATEGORY_ID = "__aiCategory"
 
 type DuckDbFilterBarProps = {
   table: MRT_TableInstance<ConceptSummaryRow>
@@ -27,6 +29,10 @@ type DuckDbFilterBarProps = {
   setCountMode: Dispatch<SetStateAction<string>>
   selectedDomain: string
   setSelectedDomain: Dispatch<SetStateAction<string>>
+  selectedAiCategory: string
+  // Not a raw setState: changing the category also reveals/hides the rationale column, so the
+  // explorer passes a handler that does both.
+  setSelectedAiCategory: (next: string) => void
   appliedSearchText: string
   commitSearchText: (next: string) => void
   isDirty: boolean
@@ -48,6 +54,8 @@ export function DuckDbFilterBar({
   setCountMode,
   selectedDomain,
   setSelectedDomain,
+  selectedAiCategory,
+  setSelectedAiCategory,
   appliedSearchText,
   commitSearchText,
   isDirty,
@@ -82,6 +90,16 @@ export function DuckDbFilterBar({
       onClear: () => setSelectedDomain(DEFAULT_DOMAIN),
     })
   }
+  if (selectedAiCategory !== AI_CATEGORY_ALL) {
+    extraEntries.push({
+      id: AI_CATEGORY_ID,
+      label: "AI Category",
+      // AI_CATEGORY_ANY is a sentinel, not a category the AI ever assigned, so it gets a readable
+      // label instead of leaking "__any" into the chip.
+      value: selectedAiCategory === AI_CATEGORY_ANY ? "Any" : selectedAiCategory,
+      onClear: () => setSelectedAiCategory(AI_CATEGORY_ALL),
+    })
+  }
   if (appliedSearchText.trim() !== "") {
     extraEntries.push({
       id: SEARCH_ID,
@@ -97,6 +115,7 @@ export function DuckDbFilterBar({
     commitColumnFilters([])
     setCountMode(DEFAULT_COUNT_MODE)
     setSelectedDomain(DEFAULT_DOMAIN)
+    setSelectedAiCategory(AI_CATEGORY_ALL)
     commitSearchText("")
   }
 
@@ -110,6 +129,7 @@ export function DuckDbFilterBar({
     }
     if (includedIds.includes(COUNT_MODE_ID)) preset.countMode = countMode
     if (includedIds.includes(DOMAIN_ID)) preset.selectedDomain = selectedDomain
+    if (includedIds.includes(AI_CATEGORY_ID)) preset.aiCategory = selectedAiCategory
     if (includedIds.includes(SEARCH_ID)) preset.searchText = appliedSearchText
     const updated = [...presets, preset]
     setPresets(updated)
@@ -136,6 +156,7 @@ export function DuckDbFilterBar({
     commitColumnFilters(preset.filters)
     setCountMode(preset.countMode ?? DEFAULT_COUNT_MODE)
     setSelectedDomain(preset.selectedDomain ?? DEFAULT_DOMAIN)
+    setSelectedAiCategory(preset.aiCategory ?? AI_CATEGORY_ALL)
     commitSearchText(preset.searchText ?? "")
   }
 

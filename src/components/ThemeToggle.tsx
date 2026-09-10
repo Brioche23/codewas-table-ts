@@ -78,7 +78,7 @@ export default function MenuListComposition() {
           onClick={() => handleItemClick("light")}
           sx={{ minWidth: 0 }}
         >
-          <DarkMode fontSize="xs" />
+          <DarkMode sx={{ fontSize: 12 }} />
         </Button>
       ) : (
         <Button
@@ -87,7 +87,7 @@ export default function MenuListComposition() {
           onClick={() => handleItemClick("dark")}
           sx={{ minWidth: 0 }}
         >
-          <LightMode fontSize="xs" />
+          <LightMode sx={{ fontSize: 12 }} />
         </Button>
       )}
 

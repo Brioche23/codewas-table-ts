@@ -1,17 +1,5 @@
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Box,
-  Stack,
-  Typography,
-} from "@mui/material"
+import { Table, TableBody, TableCell, TableContainer, TableRow, Box } from "@mui/material"
 import type { CohortInfoIndex } from "./types"
-import { useState } from "react"
 
 type CohortsInfoTableProps = {
   cohortsInfo: CohortInfoIndex
@@ -29,35 +17,13 @@ const cellSx = {
   fontSize: 12,
 } as const
 
-const headCellSx = {
-  ...cellSx,
-  fontSize: 12,
-  fontWeight: 600,
-  letterSpacing: "0.04em",
-  lineHeight: 1.3,
-  opacity: 0.7,
-  textTransform: "uppercase",
-} as const
-
 export function CohortsInfoTable({ cohortsInfo }: CohortsInfoTableProps) {
-  const [tableHovered, setTableHovered] = useState(false)
-
   const cohorts = Object.values(cohortsInfo).filter((c) => c.cohortUse)
   if (cohorts.length === 0) return null
 
   return (
     <TableContainer component={Box} sx={{ width: "auto", minWidth: "350px", maxWidth: "500px" }}>
       <Table size="small" aria-label="cohorts info">
-        {/* <TableHead>
-          <TableRow>
-            <TableCell sx={headCellSx}>Name</TableCell>
-            <TableCell sx={headCellSx}>Abbr</TableCell>
-            <TableCell sx={headCellSx}>Use</TableCell>
-            <TableCell sx={headCellSx} align="right">
-              Subjects
-            </TableCell>
-          </TableRow>
-        </TableHead> */}
         <TableBody>
           {cohorts.map((cohort) => (
             <TableRow key={cohort.cohortId}>

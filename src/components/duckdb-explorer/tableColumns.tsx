@@ -1,4 +1,4 @@
-import { Box, Chip, Stack, Typography } from "@mui/material"
+import { Box, Chip, Stack, Tooltip, Typography } from "@mui/material"
 import { alpha, type Theme } from "@mui/material/styles"
 import type { MRT_ColumnDef, MRT_FilterFn } from "material-react-table"
 import { CasesControlCell } from "../../table/custom-cells/CasesControlsCell"
@@ -12,7 +12,7 @@ import {
   negLog10,
   parseCategoricalDistribution,
 } from "./utils/utils"
-import { AccountTreeRounded } from "@mui/icons-material"
+import { AccountTreeRounded, AutoAwesomeRounded } from "@mui/icons-material"
 
 export const numericExpressionFilter: MRT_FilterFn<ConceptSummaryRow> = (
   row,
@@ -189,6 +189,85 @@ export function makeContinuousColumns(
   }
 }
 
+// Chip tone per AI category. theme.ts leaves success/warning/info at the MUI defaults precisely
+// because they carry real semantics here, and that is what these labels want: "expected" reads as
+// confirmed, "unexpected" as worth a look. The reserved channels stay reserved — purple is only ever
+// a p-value. A category from a newer prompt version that isn't listed falls back to the neutral chip
+// rather than borrowing a meaning it may not have.
+const AI_CATEGORY_TONE: Record<string, "success" | "warning" | "info"> = {
+  expected: "success",
+  unexpected: "warning",
+  novel: "info",
+}
+
+// The AI verdict as it appears inside the pinned Info cell. The rationale rides along as a tooltip so
+// the reasoning is reachable even when the Rationale column is hidden. A plain render function, like
+// valueChip/logPChip above, rather than a component — this module exports column builders, not
+// components, and a local component here breaks fast refresh for the whole file.
+function aiCategoryChip(category: string, rationale?: string | null) {
+  const chip = (
+    <Chip
+      size="small"
+      variant="outlined"
+      color={AI_CATEGORY_TONE[category.trim().toLowerCase()] ?? "default"}
+      icon={<AutoAwesomeRounded sx={{ fontSize: 12 }} />}
+      label={category}
+      sx={{ maxWidth: "100%" }}
+    />
+  )
+  if (!rationale) return chip
+  return (
+    <Tooltip title={rationale} placement="right">
+      {chip}
+    </Tooltip>
+  )
+}
+
+// Only mounted when the loaded database ships `aiPrioritization`. Filtering and sorting are off
+// because neither buildFilterConditions nor buildSortExpression maps this column — an input here
+// would silently do nothing, since the rows come back already filtered by SQL. The category itself
+// is not a column: it lives in the Info cell above, and is filtered from the toolbar selector.
+function makeAiReviewColumns(): MRT_ColumnDef<ConceptSummaryRow> {
+  return {
+    id: "aiReview",
+    header: "AI Review",
+    columns: [
+      {
+        id: "aiRationale",
+        accessorKey: "aiRationale",
+        header: "Rationale",
+        size: 300,
+        enableColumnFilter: false,
+        enableSorting: false,
+        Cell: ({ cell }) => {
+          const value = cell.getValue<string | null>()
+          if (!value) return <NA_Chip />
+          return (
+            <Tooltip title={value} placement="right">
+              <Typography
+                variant="caption"
+                sx={{
+                  // Compact density forces nowrap on body cells, so wrapping has to be restated;
+                  // the clamp keeps a paragraph-long rationale from setting the row height.
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 4,
+                  overflow: "hidden",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                  lineHeight: 1.35,
+                }}
+              >
+                {value}
+              </Typography>
+            </Tooltip>
+          )
+        },
+      },
+    ],
+  }
+}
+
 // Faint wash used to separate adjacent column groups. Translucent on purpose: MRT applies our sx last,
 // so an opaque color would hide the row-level tints (focus highlight, hierarchy depth) painted on <tr>.
 const groupShadeSx = (theme: Theme) => ({
@@ -214,7 +293,7 @@ function withAlternatingGroupShading(
   })
 }
 
-export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
+export function buildColumns(aiAvailable = false): MRT_ColumnDef<ConceptSummaryRow>[] {
   return withAlternatingGroupShading([
     {
       id: "info",
@@ -271,7 +350,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                   {row.original.conceptName ?? row.original.conceptId}
                 </Typography>
                 {row.original.countMode === "descendant" && (
-                  <AccountTreeRounded fontSize="xs" sx={{ flexShrink: 0 }} />
+                  <AccountTreeRounded sx={{ fontSize: 12, flexShrink: 0 }} />
                 )}
               </Stack>
               <Stack direction={"row"}>
@@ -295,6 +374,9 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
                   label={row.original.countMode === "descendant" ? "All descendants" : "Exact code"}
                   // variant="outlined"
                 /> */}
+
+                {row.original.aiCategory &&
+                  aiCategoryChip(row.original.aiCategory, row.original.aiRationale)}
 
                 {row.depth > 0 && (
                   <Chip
@@ -325,6 +407,7 @@ export function buildColumns(): MRT_ColumnDef<ConceptSummaryRow>[] {
         },
       ],
     },
+    ...(aiAvailable ? [makeAiReviewColumns()] : []),
     {
       id: "binary",
       header: "Binary",

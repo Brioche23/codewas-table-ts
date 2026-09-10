@@ -23,7 +23,14 @@ import {
   type MRT_VisibilityState,
 } from "material-react-table"
 import type { DuckDbDataSource, PageViewOptions } from "../../utils/types"
-import { CHART_ROWS_LIMIT, DEFAULT_COLUMN_FILTERS, DISPLAY_ANALYSIS_TYPES } from "./constants"
+import {
+  AI_CATEGORY_ALL,
+  AI_CATEGORY_ANY,
+  AI_PRIORITIZATION_TABLE,
+  CHART_ROWS_LIMIT,
+  DEFAULT_COLUMN_FILTERS,
+  DISPLAY_ANALYSIS_TYPES,
+} from "./constants"
 import { ConceptDetailDialog } from "./ConceptDetailDialog"
 import { DuckDbCharts } from "./DuckDbCharts"
 import { DuckDbFilterBar } from "./DuckDbFilterBar"
@@ -35,6 +42,7 @@ import {
   withEmptySubRows,
 } from "./utils/hierarchyUtils"
 import {
+  buildAiCategoriesQuery,
   buildHeatmapQuery,
   buildHierarchyMetaQuery,
   buildPagedSummaryQuery,
@@ -44,6 +52,7 @@ import {
 import { mapCohortInfoRow, mapHeatmapRow, mapHierarchyMetaRow, mapSummaryRow } from "./rowMappers"
 import { buildColumns } from "./tableColumns"
 import type {
+  AiFilter,
   BlockMetricRow,
   ChartScope,
   CohortInfoIndex,
@@ -77,6 +86,8 @@ export default function DuckDbExplorer({
   const [selectedDomain, setSelectedDomain] = useState("all")
   const [searchText, setSearchText] = useState("")
   const [domains, setDomains] = useState<string[]>([])
+  const [aiCategories, setAiCategories] = useState<string[]>([])
+  const [selectedAiCategory, setSelectedAiCategory] = useState(AI_CATEGORY_ALL)
   const [cohortsInfo, setCohortsInfo] = useState<CohortInfoIndex>({})
   const [chartRows, setChartRows] = useState<ConceptSummaryRow[]>([])
   const [tableRows, setTableRows] = useState<ConceptSummaryRow[]>([])
@@ -103,10 +114,24 @@ export default function DuckDbExplorer({
   const [appliedSearchText, setAppliedSearchText] = useState("")
   const [columnVisibility, setColumnVisibility] = useState<MRT_VisibilityState>({
     ancestorConceptIds: false,
+    aiRationale: false,
   })
   const [sorting, setSorting] = useState<MRT_SortingState>([{ id: "binaryEffect", desc: true }])
   const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 20 })
   const hierarchyLoadingParentRowKeysRef = useRef(new Set<string>())
+
+  // The AI review tables are optional. `dataSource.tableCounts` is already the full main-schema
+  // listing taken at load time, so presence is known synchronously during render — no probe query,
+  // and no first pass that queries a shape the database does not have.
+  const aiAvailable = useMemo(
+    () => dataSource.tableCounts.some((table) => table.tableName === AI_PRIORITIZATION_TABLE),
+    [dataSource],
+  )
+  // Bundled into one memo so the query effects below can depend on it by identity.
+  const aiFilter = useMemo<AiFilter>(
+    () => ({ enabled: aiAvailable, category: selectedAiCategory }),
+    [aiAvailable, selectedAiCategory],
+  )
 
   // Commit the staged column filters + search into the applied snapshot (button / Enter key).
   const applyFilters = useCallback(() => {
@@ -124,6 +149,25 @@ export default function DuckDbExplorer({
     setSearchText(next)
     setAppliedSearchText(next)
   }, [])
+
+  // The rationale is long free text, so it only claims column width while the user is actually
+  // working with the AI verdicts. Both updates happen here, in the one place the category can
+  // change (selector, chip clear, preset), so they land in a single commit — and so hiding the
+  // column by hand afterwards sticks until the category moves again.
+  const changeAiCategory = useCallback(
+    (next: string) => {
+      // Presets are shared across every DuckDB file the user opens, so one saved against a database
+      // with AI verdicts can be applied to one without them. There the category filters nothing, so
+      // it is not adopted either — otherwise a chip would claim a filter that is not being applied.
+      const resolved = aiAvailable ? next : AI_CATEGORY_ALL
+      setSelectedAiCategory(resolved)
+      setColumnVisibility((current) => ({
+        ...current,
+        aiRationale: resolved !== AI_CATEGORY_ALL,
+      }))
+    },
+    [aiAvailable],
+  )
 
   const filtersDirty = useMemo(
     () => searchText !== appliedSearchText || !filtersEqual(columnFilters, appliedColumnFilters),
@@ -176,10 +220,24 @@ export default function DuckDbExplorer({
         setCohortsInfo(index)
       })
 
+    if (aiAvailable) {
+      dataSource
+        .runQuery(buildAiCategoriesQuery())
+        .then((rows) => {
+          if (!active) return
+          setAiCategories(rows.map((row) => String(row.aiCategory)))
+        })
+        .catch(() => {
+          // Unreadable AI table: drop the selector rather than offer categories that would filter
+          // every row away.
+          if (active) setAiCategories([])
+        })
+    }
+
     return () => {
       active = false
     }
-  }, [dataSource])
+  }, [aiAvailable, dataSource])
 
   useEffect(() => {
     let active = true
@@ -193,6 +251,7 @@ export default function DuckDbExplorer({
             selectedDomain,
             appliedSearchText,
             chartScope === "filtered" ? appliedColumnFilters : [],
+            aiFilter,
             CHART_ROWS_LIMIT,
           ),
         )
@@ -211,7 +270,15 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [chartScope, appliedColumnFilters, countMode, dataSource, appliedSearchText, selectedDomain])
+  }, [
+    chartScope,
+    aiFilter,
+    appliedColumnFilters,
+    countMode,
+    dataSource,
+    appliedSearchText,
+    selectedDomain,
+  ])
 
   useEffect(() => {
     let active = true
@@ -227,6 +294,7 @@ export default function DuckDbExplorer({
               appliedColumnFilters,
               sorting,
               pagination,
+              aiFilter,
             ),
           ),
           dataSource.runQuery(
@@ -235,6 +303,7 @@ export default function DuckDbExplorer({
               selectedDomain,
               appliedSearchText,
               appliedColumnFilters,
+              aiFilter,
             ),
           ),
         ])
@@ -257,6 +326,7 @@ export default function DuckDbExplorer({
       active = false
     }
   }, [
+    aiFilter,
     appliedColumnFilters,
     countMode,
     dataSource,
@@ -271,7 +341,7 @@ export default function DuckDbExplorer({
   useEffect(() => {
     let active = true
     dataSource
-      .runQuery(buildSummaryCountQuery(countMode, selectedDomain, appliedSearchText, []))
+      .runQuery(buildSummaryCountQuery(countMode, selectedDomain, appliedSearchText, [], aiFilter))
       .then((countRaw) => {
         if (!active) return
         setTotalRowCount(
@@ -284,7 +354,7 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [countMode, dataSource, appliedSearchText, selectedDomain])
+  }, [aiFilter, countMode, dataSource, appliedSearchText, selectedDomain])
 
   // Lift the table's row counts so the footer reflects exactly what the table shows.
   useEffect(() => {
@@ -304,6 +374,7 @@ export default function DuckDbExplorer({
             selectedDomain,
             appliedSearchText,
             appliedColumnFilters,
+            aiFilter,
           ),
         )
         const hierarchyMetaRows = (metadataRowsRaw as BlockMetricRow[]).map(mapHierarchyMetaRow)
@@ -317,6 +388,7 @@ export default function DuckDbExplorer({
                   selectedDomain,
                   appliedSearchText,
                   rootRowKeys,
+                  aiFilter,
                 ),
               )
             : []
@@ -343,7 +415,15 @@ export default function DuckDbExplorer({
     return () => {
       active = false
     }
-  }, [appliedColumnFilters, countMode, dataSource, appliedSearchText, selectedDomain, tableMode])
+  }, [
+    aiFilter,
+    appliedColumnFilters,
+    countMode,
+    dataSource,
+    appliedSearchText,
+    selectedDomain,
+    tableMode,
+  ])
 
   useEffect(() => {
     if (tableMode !== "hierarchy" || !hierarchyIndex) return
@@ -379,6 +459,7 @@ export default function DuckDbExplorer({
             selectedDomain,
             appliedSearchText,
             childRowKeys,
+            aiFilter,
           ),
         )
         if (!active) return
@@ -417,6 +498,7 @@ export default function DuckDbExplorer({
       })
     }
   }, [
+    aiFilter,
     countMode,
     dataSource,
     hierarchyExpanded,
@@ -429,9 +511,9 @@ export default function DuckDbExplorer({
 
   useEffect(() => {
     setPagination((current) => ({ ...current, pageIndex: 0 }))
-  }, [appliedColumnFilters, countMode, appliedSearchText, selectedDomain])
+  }, [aiFilter, appliedColumnFilters, countMode, appliedSearchText, selectedDomain])
 
-  const columns = useMemo(() => buildColumns(), [])
+  const columns = useMemo(() => buildColumns(aiAvailable), [aiAvailable])
 
   const table = useMaterialReactTable({
     columns,
@@ -630,6 +712,25 @@ export default function DuckDbExplorer({
               ))}
             </Select>
           </FormControl>
+          {aiAvailable && aiCategories.length > 0 && (
+            <FormControl sx={{ minWidth: 150 }} size="small">
+              <InputLabel id="ai-category-label">AI Category</InputLabel>
+              <Select
+                labelId="ai-category-label"
+                value={selectedAiCategory}
+                label="AI Category"
+                onChange={(event) => changeAiCategory(event.target.value)}
+              >
+                <MenuItem value={AI_CATEGORY_ALL}>All rows</MenuItem>
+                <MenuItem value={AI_CATEGORY_ANY}>Any AI category</MenuItem>
+                {aiCategories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <TextField
             label={
               <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
@@ -660,7 +761,13 @@ export default function DuckDbExplorer({
     setSelectedDetailRow(fallbackRow)
     void dataSource
       .runQuery(
-        buildSummaryRowsByRowKeysQuery(countMode, selectedDomain, appliedSearchText, [rowKey]),
+        buildSummaryRowsByRowKeysQuery(
+          countMode,
+          selectedDomain,
+          appliedSearchText,
+          [rowKey],
+          aiFilter,
+        ),
       )
       .then((rowsRaw) => {
         const full = (rowsRaw as BlockMetricRow[]).map(mapSummaryRow)[0]
@@ -677,6 +784,7 @@ export default function DuckDbExplorer({
     selectedDomain,
     searchText: appliedSearchText,
     columnFilters: appliedColumnFilters,
+    aiFilter,
     exportLoading,
     setExportLoading,
   }
@@ -704,6 +812,8 @@ export default function DuckDbExplorer({
             setCountMode={setCountMode}
             selectedDomain={selectedDomain}
             setSelectedDomain={setSelectedDomain}
+            selectedAiCategory={selectedAiCategory}
+            setSelectedAiCategory={changeAiCategory}
             appliedSearchText={appliedSearchText}
             commitSearchText={commitSearchText}
             isDirty={filtersDirty}

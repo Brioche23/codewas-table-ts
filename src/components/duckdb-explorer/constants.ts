@@ -2,6 +2,19 @@ import type { MRT_ColumnFiltersState } from "material-react-table"
 import { dataHues } from "../../theme"
 import type { AnalysisBlock, ChartBlockKey } from "./types"
 
+// Tables written by the optional AI review pass. Only some exports carry them, so every reference
+// has to be gated on presence (dataSource.tableCounts) — naming a missing table is a hard SQL error,
+// not an empty result. `aiPrioritization` holds the per-concept verdicts the explorer reads;
+// `aiPrioritizationInfo` holds run-level metadata (cost, timings) and is not surfaced yet.
+export const AI_PRIORITIZATION_TABLE = "aiPrioritization"
+export const AI_PRIORITIZATION_INFO_TABLE = "aiPrioritizationInfo"
+
+// Sentinel values for the AI category selector, kept out of the real category value space (which is
+// lowercase words like "expected"). ALL disables the filter; ANY keeps every AI-reviewed row
+// regardless of which category it landed in.
+export const AI_CATEGORY_ALL = "all"
+export const AI_CATEGORY_ANY = "__any"
+
 export const DISPLAY_ANALYSIS_TYPES: AnalysisBlock[] = [
   "Binary",
   "Counts",

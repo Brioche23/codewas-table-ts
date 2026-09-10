@@ -1,7 +1,6 @@
 import {
   FormControl,
   FormControlLabel,
-  FormGroup,
   Grid,
   InputLabel,
   MenuItem,
@@ -67,7 +66,7 @@ export function Scatter({ data }: { data: MRT_TableInstance<ConceptRow> }) {
   })
 
   const [scatterPlotValue, setScatterPlotValue] = useState<Metric>("-log10")
-  const [showRegression, setShowRegression] = useState(true)
+  const [showRegression, _setShowRegression] = useState(true)
 
   const rows = data.getSortedRowModel().rows
   console.log(rows.length)

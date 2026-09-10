@@ -18,7 +18,7 @@ import {
 } from "react"
 import { buildFullSummaryQuery } from "./queryBuilders"
 import { mapSummaryRow } from "./rowMappers"
-import type { BlockMetricRow, MRT_ColumnFiltersState } from "./types"
+import type { AiFilter, BlockMetricRow, MRT_ColumnFiltersState } from "./types"
 import { summaryRowsToTsv, triggerDownload, getSafeDownloadName } from "./utils/utils"
 import type { DuckDbDataSource } from "../../utils/types"
 
@@ -28,6 +28,7 @@ interface DownloadMenuProps {
   selectedDomain: string
   searchText: string
   columnFilters: MRT_ColumnFiltersState
+  aiFilter: AiFilter
   exportLoading: boolean
   setExportLoading: Dispatch<SetStateAction<boolean>>
 }
@@ -38,6 +39,7 @@ export default function DownloadMenu({
   selectedDomain,
   searchText,
   columnFilters,
+  aiFilter,
   exportLoading,
   setExportLoading,
 }: DownloadMenuProps) {
@@ -79,7 +81,7 @@ export default function DownloadMenu({
     setExportLoading(true)
     try {
       const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters),
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, columnFilters, aiFilter),
       )
       const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
       triggerDownload(
@@ -96,7 +98,7 @@ export default function DownloadMenu({
     setExportLoading(true)
     try {
       const rowsRaw = await dataSource.runQuery(
-        buildFullSummaryQuery(countMode, selectedDomain, searchText, []),
+        buildFullSummaryQuery(countMode, selectedDomain, searchText, [], aiFilter),
       )
       const tsv = summaryRowsToTsv((rowsRaw as BlockMetricRow[]).map(mapSummaryRow))
       triggerDownload(

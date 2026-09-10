@@ -120,6 +120,10 @@ export function mapSummaryRow(row: BlockMetricRow): ConceptSummaryRow {
     continuousSmd: (row.continuousSmd as number | null) ?? null,
     continuousTestName: (row.continuousTestName as string | null) ?? null,
     continuousUnit: (row.continuousUnit as string | null) ?? null,
+    // Absent from the projection unless the AI review tables are present; `?? null` covers both
+    // "no AI tables" and "concept the AI never scored".
+    aiCategory: (row.aiCategory as string | null) ?? null,
+    aiRationale: (row.aiRationale as string | null) ?? null,
   }
 }
 

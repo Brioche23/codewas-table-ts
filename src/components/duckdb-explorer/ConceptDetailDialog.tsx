@@ -1,14 +1,5 @@
 import type { ReactNode } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Grid,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material"
+import { Dialog, DialogContent, DialogTitle, Grid, Paper, Stack, Typography } from "@mui/material"
 import { CategoryBar, CategoricalDistributionBar, MeanComparisonChart } from "../Visuals"
 import type { ConceptSummaryRow } from "./types"
 import {

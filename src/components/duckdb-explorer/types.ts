@@ -113,7 +113,19 @@ export type ConceptSummaryRow = {
   continuousSmd?: number | null
   continuousTestName?: string | null
   continuousUnit?: string | null
+  // Verdict from the optional AI review pass (`aiPrioritization`). Undefined when the loaded
+  // database has no AI tables, null when the pass never scored this concept (aiSent = false).
+  aiCategory?: string | null
+  aiRationale?: string | null
   subRows?: ConceptSummaryRow[]
+}
+
+// The AI category selection, as the query builders need it. `enabled` is separate from `category`
+// because it gates the SQL itself: without `aiPrioritization` in the database the join cannot be
+// emitted at all, whatever the user picked.
+export type AiFilter = {
+  enabled: boolean
+  category: string
 }
 
 // One row of the `cohortsInfo` table. Unlike `analysisRef`, this table is keyed by cohort (not by

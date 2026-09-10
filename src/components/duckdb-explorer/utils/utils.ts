@@ -52,6 +52,10 @@ function tsvEscape(value: unknown) {
 }
 
 export function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
+  // The AI review pass is optional, so its two columns are only added when the exported rows
+  // actually carry a verdict — an export from a database without the AI tables keeps the header it
+  // has always had.
+  const includeAi = rows.some((row) => row.aiCategory != null || row.aiRationale != null)
   const exportRows = rows.map((row) => ({
     conceptName: row.conceptName ?? "",
     conceptCode: row.conceptCode ?? "",
@@ -59,6 +63,9 @@ export function summaryRowsToTsv(rows: ConceptSummaryRow[]) {
     ancestorConceptIds: row.ancestorConceptIds ?? "",
     domainId: row.domainId,
     countMode: row.countMode,
+    ...(includeAi
+      ? { aiCategory: row.aiCategory ?? "", aiRationale: row.aiRationale ?? "" }
+      : {}),
     binaryCases: row.binaryCaseYes ?? "",
     binaryControls: row.binaryControlYes ?? "",
     binaryLogP: negLog10(row.binaryPValue) ?? "",

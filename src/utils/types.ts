@@ -136,6 +136,7 @@ export type FilterPreset = {
   filters: MRT_ColumnFiltersState // only the filters the user checked
   countMode?: string // DuckDB full-snapshot extras (absent for JSON presets)
   selectedDomain?: string
+  aiCategory?: string // only meaningful for databases carrying the AI review tables
   searchText?: string
 }
 
